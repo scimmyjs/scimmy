@@ -171,7 +171,7 @@ export class Attribute {
                             
                             // If the value is defined or required, coerce it
                             if (name in source || required) {
-                                let value = subAttribute.coerce(source[name], direction);
+                                let value = subAttribute.coerce(source[name] ?? source[`${name[0]}${name.slice(1)}`], direction);
                                 
                                 // If the value is not empty, apply it to the target
                                 if (value !== undefined) target[name] = value;
@@ -186,7 +186,7 @@ export class Attribute {
                     
                     // Return the collection, or the coerced complex value
                     return (multiValued || isComplexMultiValue ? target : target.pop());
-                    
+                
                 default:
                     // TODO: decimal, integer, and reference handlers
                     return source;
