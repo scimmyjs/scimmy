@@ -1,4 +1,4 @@
-import {Schema, Attribute} from "../scim.js";
+import {Schema, Attribute} from "../types.js";
 
 export class User {
     static get schema() {

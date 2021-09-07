@@ -1,2 +1,4 @@
-export {Attribute} from "./types/attribute.js";
-export {Schema} from "./types/schema.js";
+import * as Types from "./types.js";
+import * as Messages from "./messages.js";
+import * as Schemas from "./schemas.js";
+export {Types, Messages, Schemas};
