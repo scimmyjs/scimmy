@@ -14,7 +14,7 @@ export class Group {
         ])
     ]);
     
-    constructor(resource = {}, direction = "both") {
+    constructor(resource, direction = "both") {
         this.schemas = [Group.#schema.id];
         Object.assign(this, Group.#schema.coerce(resource, direction));
     }

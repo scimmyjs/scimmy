@@ -18,7 +18,7 @@ export class EnterpriseUser {
         ])
     ]);
     
-    constructor(resource = {}, direction = "both") {
+    constructor(resource, direction = "both") {
         this.schemas = [EnterpriseUser.#schema.id];
         Object.assign(this, EnterpriseUser.#schema.coerce(resource, direction));
     }

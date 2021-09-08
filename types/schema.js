@@ -40,6 +40,9 @@ export class Schema {
      * @returns {Object} the coerced value, conforming to all schema attributes' characteristics
      */
     coerce(data, direction = "both") {
+        // Make sure there is data to coerce...
+        if (data === undefined) throw new Error("No data to coerce");
+        
         let target = {},
             // Add schema's name as resource type to meta attribute
             source = {...data, meta: {...(data?.meta ?? {}), resourceType: this.name}};
