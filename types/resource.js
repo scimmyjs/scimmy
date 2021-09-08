@@ -14,27 +14,28 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 export class Resource {
     /**
      * Instantiate a new SCIM resource and parse any supplied parameters
-     * @param {Object} [params={}] - the parameters of the resource instance
-     * @param {String} [params.filter] - the filter to be applied on ingress by implementing resource
+     * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
+     * @param {String} [config.filter] - the filter to be applied on ingress by implementing resource
+     * @param {*[]} [rest] - all other arguments supplied to the resource constructor
      */
-    constructor(params = {}) {
+    constructor(config = {}, ...rest) {
+        let params = config;
+        
+        if (typeof config === "string") {
+            this.id = config;
+            params = rest.shift() ?? {};
+            params.filter = `id eq "${this.id}"`;
+        }
+        
         if (params.filter) this.filter = Resource.#parseFilter(params.filter);
     }
     
     /**
-     * Calls resource's egress method and wraps the results in valid SCIM list response syntax
+     * Calls resource's egress method and wraps the results in valid SCIM list response or single resource syntax
      * @abstract
      */
     read() {
         throw new TypeError("Method 'read' must be implemented by subclass");
-    }
-    
-    /**
-     * Calls resource's egress method and wraps the result in valid SCIM single resource syntax
-     * @abstract
-     */
-    readOne() {
-        throw new TypeError("Method 'readOne' must be implemented by subclass");
     }
     
     /**

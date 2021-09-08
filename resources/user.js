@@ -1,4 +1,4 @@
-import {Resource} from "../types.js";
+import {Resource, Error as SCIMError} from "../types.js";
 import {ListResponse} from "../messages.js";
 import {User as UserSchema} from "../schemas.js";
 
@@ -25,14 +25,23 @@ export class User extends Resource {
     
     /**
      * Instantiate a new SCIM User resource and parse any supplied parameters
-     * @param {Object} [params={}] - the parameters of the user instance
+     * @implements {Resource#constructor}
      */
-    constructor(params) {
-        super(params);
+    constructor(params, ...rest) {
+        super(params, ...rest);
     }
     
     /** @implements {Resource#read} */
     async read() {
-        return new ListResponse((await User.#egress(this)).map(u => new UserSchema(u, "out")));
+        if (!this.id) {
+            return new ListResponse((await User.#egress(this)).map(u => new UserSchema(u, "out")));
+        } else {
+            try {
+                return new UserSchema((await User.#egress(this)).shift(), "out");
+            } catch (ex) {
+                if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+                else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+            }
+        }
     }
 }
