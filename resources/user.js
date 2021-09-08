@@ -1,4 +1,6 @@
 import {Resource} from "../types.js";
+import {ListResponse} from "../messages.js";
+import {User as UserSchema} from "../schemas.js";
 
 /**
  * SCIM User Resource
@@ -31,6 +33,6 @@ export class User extends Resource {
     
     /** @implements {Resource#read} */
     async read() {
-        return await User.#egress(this);
+        return new ListResponse((await User.#egress(this)).map(u => new UserSchema(u, "out")));
     }
 }
