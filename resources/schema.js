@@ -23,6 +23,10 @@ export class Schema extends Resource {
      * @implements {Resource#constructor}
      */
     constructor(params, ...rest) {
+        // Bail out if a resource is requested by filter
+        if (!!(typeof params === "string" ? rest[0] ?? {} : params ?? {}).filter)
+            throw new SCIMError(403, null, "Schema does not support retrieval by filter");
+        
         super(params, ...rest);
     }
     
