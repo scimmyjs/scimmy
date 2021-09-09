@@ -1,6 +1,6 @@
 import {Resource, Error as SCIMError} from "../types.js";
 import {ListResponse} from "../messages.js";
-import * as Schemas from "../schemas.js";
+import Schemas from "../schemas.js";
 
 /**
  * SCIM Schema Resource
@@ -31,7 +31,13 @@ export class Schema extends Resource {
         if (!this.id) {
             return new ListResponse(Object.entries(Schemas).map(([,S]) => S.schema.definition(Schema.basepath())));
         } else {
-            throw new SCIMError(404, null, `Resource ${this.id} not found`);
+            try {
+                return Object.entries(Schemas).map(([,S]) => S.schema)
+                    .find((s) => [s.id, s.name].includes(this.id))
+                    .definition(Schema.basepath());
+            } catch {
+                throw new SCIMError(404, null, `Schema ${this.id} not found`);
+            }
         }
     }
 }
