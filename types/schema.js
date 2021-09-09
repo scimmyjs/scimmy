@@ -34,6 +34,20 @@ export class Schema {
     }
     
     /**
+     * Get the SCIM schema definition for consumption by clients
+     * @param {String} [basepath=""] - the base path for the schema's meta.location property
+     * @returns {Object} the schema definition for consumption by clients
+     */
+    definition(basepath = "") {
+        return {
+            schemas: ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
+            ...this,
+            attributes: this.attributes.slice(3),
+            meta: {resourceType: "Schema", location: `${basepath}/${this.id}`}
+        };
+    }
+    
+    /**
      * Coerce a given value by making sure it conforms to all schema attributes' characteristics
      * @param {Object} data - value to coerce and confirm conformity of properties to schema attributes' characteristics
      * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
