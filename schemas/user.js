@@ -84,8 +84,8 @@ export class User {
         ])
     ]);
     
-    constructor(resource, direction = "both") {
+    constructor(resource, direction = "both", basepath) {
         this.schemas = [User.#schema.id];
-        Object.assign(this, User.#schema.coerce(resource, direction));
+        Object.assign(this, User.#schema.coerce(resource, direction, basepath));
     }
 }

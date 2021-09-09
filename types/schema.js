@@ -51,15 +51,20 @@ export class Schema {
      * Coerce a given value by making sure it conforms to all schema attributes' characteristics
      * @param {Object} data - value to coerce and confirm conformity of properties to schema attributes' characteristics
      * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
+     * @param {String} [basepath] - the URI representing the resource type's location
      * @returns {Object} the coerced value, conforming to all schema attributes' characteristics
      */
-    coerce(data, direction = "both") {
+    coerce(data, direction = "both", basepath) {
         // Make sure there is data to coerce...
         if (data === undefined) throw new Error("No data to coerce");
         
         let target = {},
             // Add schema's name as resource type to meta attribute
-            source = {...data, meta: {...(data?.meta ?? {}), resourceType: this.name}};
+            source = {...data, meta: {
+                ...(data?.meta ?? {}),
+                resourceType: this.name,
+                ...(typeof basepath === "string" ? {location: `${basepath}/${data.id}`} : {})
+            }};
         
         // Go through all attributes and coerce them
         for (let attribute of this.attributes) {
