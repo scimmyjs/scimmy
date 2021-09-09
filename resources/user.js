@@ -7,6 +7,17 @@ import {User as UserSchema} from "../schemas.js";
  * @extends {Resource}
  */
 export class User extends Resource {
+    /** @implements {Resource~#basepath} */
+    static #basepath;
+    /** @implements {Resource~basepath} */
+    static basepath(path) {
+        if (path === undefined) return User.#basepath;
+        else if (User.#basepath === undefined)
+            User.#basepath = (path.endsWith("/Users") ? path : `${path}/Users`);
+        
+        return User;
+    }
+    
     /** @implements {Resource~#ingress} */
     static #ingress = () => {};
     /** @implements {Resource~ingress} */

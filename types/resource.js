@@ -175,6 +175,21 @@ export class Resource {
     }
     
     /**
+     * Base path for resource's location
+     * @abstract
+     */
+    static #basepath;
+    
+    /**
+     * Sets or retrieves the base path for resolution of a resource's location
+     * @param {String} path - the path to use as the base of a resource's location
+     * @abstract
+     */
+    static basepath(path) {
+        throw new TypeError("Method 'basepath' must be implemented by subclass");
+    }
+    
+    /**
      * Handler for ingress/egress of a resource
      * @callback Resource~gressHandler
      * @param {Resource} - the resource performing the ingress/egress
