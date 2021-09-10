@@ -14,6 +14,7 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 export class Resource {
     /**
      * Retrieves a resource's core schema
+     * @returns {Schema}
      * @abstract
      */
     static get schema() {
@@ -36,7 +37,7 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
-     * @param {Object} extension - the schema extension to register
+     * @param {Schema} extension - the schema extension to register
      * @param {Boolean} required - whether or not the extension is required
      */
     static extend(extension, required) {

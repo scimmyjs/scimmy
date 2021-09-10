@@ -2,8 +2,30 @@ import {Attribute} from "./attribute.js";
 
 /**
  * SCIM Schema
+ * @interface
  */
 export class Schema {
+    /**
+     * Retrieves a schema's definition instance
+     * @returns {SchemaDefinition}
+     * @abstract
+     */
+    static get schema() {
+        throw new TypeError("Method 'get' for property 'schema' must be implemented by subclass");
+    }
+    
+    /**
+     * Stores a schema's definition instance
+     * @type {SchemaDefinition}
+     * @abstract
+     */
+    static #schema;
+}
+
+/**
+ * SCIM Schema Definition
+ */
+export class SchemaDefinition {
     /**
      * Constructs an instance of a full SCIM schema definition
      * @param {String} name - friendly name of the SCIM schema
