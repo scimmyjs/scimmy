@@ -38,12 +38,12 @@ export class Schema extends Resource {
     /** @implements {Resource#read} */
     async read() {
         if (!this.id) {
-            return new ListResponse(Object.entries(Schemas).map(([,S]) => S.schema.definition(Schema.basepath())));
+            return new ListResponse(Object.entries(Schemas).map(([,S]) => S.definition.describe(Schema.basepath())));
         } else {
             try {
-                return Object.entries(Schemas).map(([,S]) => S.schema)
+                return Object.entries(Schemas).map(([,S]) => S.definition)
                     .find((s) => [s.id, s.name].includes(this.id))
-                    .definition(Schema.basepath());
+                    .describe(Schema.basepath());
             } catch {
                 throw new SCIMError(404, null, `Schema ${this.id} not found`);
             }

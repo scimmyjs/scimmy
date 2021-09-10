@@ -5,13 +5,13 @@ import {Schema, SchemaDefinition, Attribute} from "../types.js";
  * @implements {Schema}
  */
 export class EnterpriseUser extends Schema {
-    /** @implements {Schema~schema} */
-    static get schema() {
-        return EnterpriseUser.#schema;
+    /** @implements {Schema~definition} */
+    static get definition() {
+        return EnterpriseUser.#definition;
     }
     
-    /** @implements {Schema~#schema} */
-    static #schema = new SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
+    /** @implements {Schema~#definition} */
+    static #definition = new SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
         new Attribute("string", "employeeNumber"),
         new Attribute("string", "costCenter"),
         new Attribute("string", "organization"),
@@ -32,7 +32,7 @@ export class EnterpriseUser extends Schema {
      */
     constructor(resource, direction = "both", basepath) {
         super();
-        this.schemas = [EnterpriseUser.#schema.id];
-        Object.assign(this, EnterpriseUser.#schema.coerce(resource, direction, basepath));
+        this.schemas = [EnterpriseUser.#definition.id];
+        Object.assign(this, EnterpriseUser.#definition.coerce(resource, direction, basepath));
     }
 }

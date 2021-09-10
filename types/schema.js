@@ -10,7 +10,7 @@ export class Schema {
      * @returns {SchemaDefinition}
      * @abstract
      */
-    static get schema() {
+    static get definition() {
         throw new TypeError("Method 'get' for property 'schema' must be implemented by subclass");
     }
     
@@ -19,7 +19,7 @@ export class Schema {
      * @type {SchemaDefinition}
      * @abstract
      */
-    static #schema;
+    static #definition;
 }
 
 /**
@@ -60,7 +60,7 @@ export class SchemaDefinition {
      * @param {String} [basepath=""] - the base path for the schema's meta.location property
      * @returns {Object} the schema definition for consumption by clients
      */
-    definition(basepath = "") {
+    describe(basepath = "") {
         return {
             schemas: ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
             ...this,

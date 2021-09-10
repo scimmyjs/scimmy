@@ -21,8 +21,8 @@ export class User extends Resource {
     
     /** @implements {Resource~extend} */
     static extend(extension, required = false) {
-        if (!User.#extensions.find(e => e.extension === extension))
-            User.#extensions.push({extension: extension, required: required});
+        if (!User.#extensions.find(e => e.schema === extension))
+            User.#extensions.push({schema: extension, required: required});
         
         return User;
     }

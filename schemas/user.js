@@ -5,13 +5,13 @@ import {Schema, SchemaDefinition, Attribute} from "../types.js";
  * @implements {Schema}
  */
 export class User extends Schema {
-    /** @implements {Schema~schema} */
-    static get schema() {
-        return User.#schema;
+    /** @implements {Schema~definition} */
+    static get definition() {
+        return User.#definition;
     }
     
-    /** @implements {Schema~#schema} */
-    static #schema = new SchemaDefinition("User", "urn:ietf:params:scim:schemas:core:2.0:User", "User Account", [
+    /** @implements {Schema~#definition} */
+    static #definition = new SchemaDefinition("User", "urn:ietf:params:scim:schemas:core:2.0:User", "User Account", [
         new Attribute("string", "userName", {required: true, uniqueness: "server"}),
         new Attribute("complex", "name", {}, [
             new Attribute("string", "formatted"),
@@ -98,7 +98,7 @@ export class User extends Schema {
      */
     constructor(resource, direction = "both", basepath) {
         super();
-        this.schemas = [User.#schema.id];
-        Object.assign(this, User.#schema.coerce(resource, direction, basepath));
+        this.schemas = [User.#definition.id];
+        Object.assign(this, User.#definition.coerce(resource, direction, basepath));
     }
 }

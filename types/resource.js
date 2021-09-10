@@ -110,10 +110,10 @@ export class Resource {
      */
     static describe() {
         return {
-            id: this.schema.schema.name, name: this.schema.schema.name, endpoint: this.endpoint,
-            description: this.schema.schema.description, schema: this.schema.schema.id,
+            id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,
+            description: this.schema.definition.description, schema: this.schema.definition.id,
             ...(this.extensions.length === 0 ? {} : {
-                schemaExtensions: this.extensions.map(E => ({schema: E.extension.schema.id, required: E.required}))
+                schemaExtensions: this.extensions.map(E => ({schema: E.schema.definition.id, required: E.required}))
             })
         };
     }

@@ -5,13 +5,13 @@ import {Schema, SchemaDefinition, Attribute} from "../types.js";
  * @implements {Schema}
  */
 export class Group extends Schema {
-    /** @implements {Schema~schema} */
-    static get schema() {
-        return Group.#schema;
+    /** @implements {Schema~definition} */
+    static get definition() {
+        return Group.#definition;
     }
     
-    /** @implements {Schema~#schema} */
-    static #schema = new SchemaDefinition("Group", "urn:ietf:params:scim:schemas:core:2.0:Group", "Group", [
+    /** @implements {Schema~#definition} */
+    static #definition = new SchemaDefinition("Group", "urn:ietf:params:scim:schemas:core:2.0:Group", "Group", [
         new Attribute("string", "displayName", {required: true}),
         new Attribute("complex", "members", {multiValued: true, uniqueness: false}, [
             new Attribute("string", "value", {mutable: "immutable"}),
@@ -28,7 +28,7 @@ export class Group extends Schema {
      */
     constructor(resource, direction = "both", basepath) {
         super();
-        this.schemas = [Group.#schema.id];
-        Object.assign(this, Group.#schema.coerce(resource, direction, basepath));
+        this.schemas = [Group.#definition.id];
+        Object.assign(this, Group.#definition.coerce(resource, direction, basepath));
     }
 }

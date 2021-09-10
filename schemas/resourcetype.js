@@ -5,13 +5,13 @@ import {Schema, SchemaDefinition, Attribute} from "../types.js";
  * @implements {Schema}
  */
 export class ResourceType extends Schema {
-    /** @implements {Schema~schema} */
-    static get schema() {
-        return ResourceType.#schema;
+    /** @implements {Schema~definition} */
+    static get definition() {
+        return ResourceType.#definition;
     }
     
-    /** @implements {Schema~#schema} */
-    static #schema = new SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
+    /** @implements {Schema~#definition} */
+    static #definition = new SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
         new Attribute("string", "id", {direction: "out", mutable: false}),
         new Attribute("string", "name", {direction: "out", required: true, mutable: false}),
         new Attribute("string", "description", {direction: "out", mutable: false}),
@@ -30,7 +30,7 @@ export class ResourceType extends Schema {
      */
     constructor(resource, basepath) {
         super();
-        this.schemas = [ResourceType.#schema.id];
-        Object.assign(this, ResourceType.#schema.coerce(resource, "out", basepath));
+        this.schemas = [ResourceType.#definition.id];
+        Object.assign(this, ResourceType.#definition.coerce(resource, "out", basepath));
     }
 }
