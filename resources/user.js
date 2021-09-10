@@ -7,13 +7,38 @@ import {User as UserSchema} from "../schemas.js";
  * @extends {Resource}
  */
 export class User extends Resource {
+    /** @implements {Resource~schema} */
+    static get schema() {
+        return UserSchema;
+    }
+    
+    /** @implements {Resource~#extensions} */
+    static #extensions = [];
+    /** @implements {Resource~extensions} */
+    static get extensions() {
+        return User.#extensions;
+    }
+    
+    /** @implements {Resource~extend} */
+    static extend(extension, required = false) {
+        if (!User.#extensions.find(e => e.schema === extension))
+            User.#extensions.push({schema: extension, required: required});
+        
+        return User;
+    }
+    
+    /** @implements {Resource~endpoint} */
+    static get endpoint() {
+        return "/Users";
+    }
+    
     /** @implements {Resource~#basepath} */
     static #basepath;
     /** @implements {Resource~basepath} */
     static basepath(path) {
         if (path === undefined) return User.#basepath;
         else if (User.#basepath === undefined)
-            User.#basepath = (path.endsWith("/Users") ? path : `${path}/Users`);
+            User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
         
         return User;
     }

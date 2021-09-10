@@ -13,6 +13,97 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
  */
 export class Resource {
     /**
+     * Retrieves a resource's core schema
+     * @abstract
+     */
+    static get schema() {
+        throw new TypeError("Method 'get' for property 'schema' must be implemented by subclass");
+    }
+    
+    /**
+     * List of extensions to a resource's core schema
+     * @type {Object[]}
+     * @abstract
+     */
+    static #extensions;
+    /**
+     * Get the list of registered schema extensions for a resource
+     * @abstract
+     */
+    static get extensions() {
+        throw new TypeError("Method 'get' for property 'extensions' must be implemented by subclass");
+    }
+    
+    /**
+     * Register an extension to the resource's core schema
+     * @param {Object} extension - the schema extension to register
+     * @param {Boolean} required - whether or not the extension is required
+     */
+    static extend(extension, required) {
+        throw new TypeError("Method 'basepath' must be implemented by subclass");
+    }
+    
+    /**
+     * Retrieves a resource's endpoint relative to the service provider's base URL
+     * @returns {String}
+     * @abstract
+     */
+    static get endpoint() {
+        throw new TypeError("Method 'get' for property 'endpoint' must be implemented by subclass");
+    }
+    
+    /**
+     * Base path for resource's location
+     * @type {String}
+     * @abstract
+     */
+    static #basepath;
+    /**
+     * Sets or retrieves the base path for resolution of a resource's location
+     * @param {String} path - the path to use as the base of a resource's location
+     * @abstract
+     */
+    static basepath(path) {
+        throw new TypeError("Method 'basepath' must be implemented by subclass");
+    }
+    
+    /**
+     * Handler for ingress/egress of a resource
+     * @callback Resource~gressHandler
+     * @param {Resource} - the resource performing the ingress/egress
+     */
+    
+    /**
+     * Ingress handler storage property
+     * @type {Function}
+     * @abstract
+     */
+    static #ingress;
+    /**
+     * Sets the method to be called to retrieve a resource on read
+     * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * @abstract
+     */
+    static ingress(handler) {
+        throw new TypeError("Method 'ingress' must be implemented by subclass");
+    }
+    
+    /**
+     * Egress handler storage property
+     * @type {Function}
+     * @abstract
+     */
+    static #egress;
+    /**
+     * Sets the method to be called to consume a resource on write
+     * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * @abstract
+     */
+    static egress(handler) {
+        throw new TypeError("Method 'egress' must be implemented by subclass");
+    }
+    
+    /**
      * Instantiate a new SCIM resource and parse any supplied parameters
      * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
      * @param {String} [config.filter] - the filter to be applied on ingress by implementing resource
@@ -172,56 +263,5 @@ export class Resource {
         }
         
         return results;
-    }
-    
-    /**
-     * Base path for resource's location
-     * @abstract
-     */
-    static #basepath;
-    
-    /**
-     * Sets or retrieves the base path for resolution of a resource's location
-     * @param {String} path - the path to use as the base of a resource's location
-     * @abstract
-     */
-    static basepath(path) {
-        throw new TypeError("Method 'basepath' must be implemented by subclass");
-    }
-    
-    /**
-     * Handler for ingress/egress of a resource
-     * @callback Resource~gressHandler
-     * @param {Resource} - the resource performing the ingress/egress
-     */
-    
-    /**
-     * Ingress handler storage property
-     * @abstract
-     */
-    static #ingress;
-    
-    /**
-     * Sets the method to be called to retrieve a resource on read
-     * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
-     * @abstract
-     */
-    static ingress(handler) {
-        throw new TypeError("Method 'ingress' must be implemented by subclass");
-    }
-    
-    /**
-     * Egress handler storage property
-     * @abstract
-     */
-    static #egress;
-    
-    /**
-     * Sets the method to be called to consume a resource on write
-     * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
-     * @abstract
-     */
-    static egress(handler) {
-        throw new TypeError("Method 'egress' must be implemented by subclass");
     }
 }
