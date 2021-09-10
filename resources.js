@@ -15,11 +15,14 @@ class Resources {
     
     /**
      * Register a resource implementation for exposure as a ResourceType
-     * @param {String} name - the name of the resource being registered
      * @param {Resource} resource - the resource to register
+     * @param {String} [name] - the name of the resource being registered
      * @returns {Resources} the Resources class for chaining
      */
-    static register(name, resource) {
+    static register(resource, name) {
+        // Source name from resource if not defined
+        if (name === undefined) name = resource.name;
+        
         // Prevent registering a resource implementation that already exists
         if (!!Resources.#resources[name]) throw new TypeError(`Resource '${name}' already registered`);
         else Resources[name] = Resources.#resources[name] = resource;
@@ -37,6 +40,6 @@ class Resources {
 }
 
 // Register default resource implementations
-Resources.register("User", User);
+Resources.register(User);
 
 export default Resources;
