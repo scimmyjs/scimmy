@@ -105,6 +105,20 @@ export class Resource {
     }
     
     /**
+     * Describe this resource implementation
+     * @returns {{schema: String, endpoint: String, name: String, description: String, id: String}}
+     */
+    static describe() {
+        return {
+            id: this.schema.schema.name, name: this.schema.schema.name, endpoint: this.endpoint,
+            description: this.schema.schema.description, schema: this.schema.schema.id,
+            ...(this.extensions.length === 0 ? {} : {
+                schemaExtensions: this.extensions.map(E => ({schema: E.extension.schema.id, required: E.required}))
+            })
+        };
+    }
+    
+    /**
      * Instantiate a new SCIM resource and parse any supplied parameters
      * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
      * @param {String} [config.filter] - the filter to be applied on ingress by implementing resource
