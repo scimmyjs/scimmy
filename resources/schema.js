@@ -7,13 +7,18 @@ import Schemas from "../schemas.js";
  * @extends {Resource}
  */
 export class Schema extends Resource {
+    /** @implements {Resource~endpoint} */
+    static get endpoint() {
+        return "/Schemas";
+    }
+    
     /** @implements {Resource~#basepath} */
     static #basepath;
     /** @implements {Resource~basepath} */
     static basepath(path) {
         if (path === undefined) return Schema.#basepath;
         else if (Schema.#basepath === undefined)
-            Schema.#basepath = (path.endsWith("/Schemas") ? path : `${path}/Schemas`);
+            Schema.#basepath = (path.endsWith(Schema.endpoint) ? path : `${path}${Schema.endpoint}`);
         
         return Schema;
     }
