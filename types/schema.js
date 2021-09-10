@@ -45,8 +45,8 @@ export class SchemaDefinition {
             new Attribute("string", "externalId", {direction: "in", caseExact: true}),
             new Attribute("complex", "meta", {required: true, mutable: false}, [
                 new Attribute("string", "resourceType", {required: true, mutable: false, caseExact: true}),
-                new Attribute("dateTime", "created", {required: true, direction: "out", mutable: false}),
-                new Attribute("dateTime", "lastModified", {required: true, direction: "out", mutable: false}),
+                new Attribute("dateTime", "created", {direction: "out", mutable: false}),
+                new Attribute("dateTime", "lastModified", {direction: "out", mutable: false}),
                 new Attribute("string", "location", {direction: "out", mutable: false}),
                 new Attribute("string", "version", {direction: "out", mutable: false})
             ]),
