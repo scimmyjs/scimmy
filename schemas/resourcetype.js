@@ -17,7 +17,7 @@ export class ResourceType extends Schema {
         new Attribute("string", "description", {direction: "out", mutable: false}),
         new Attribute("reference", "endpoint", {direction: "out", required: true, mutable: false, referenceTypes: ["uri"]}),
         new Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
-        new Attribute("complex", "schemaExtensions", {direction: "out", mutable: false}, [
+        new Attribute("complex", "schemaExtensions", {direction: "out", mutable: false, multiValued: true}, [
             new Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
             new Attribute("boolean", "required", {direction: "out", required: true, mutable: false})
         ])
