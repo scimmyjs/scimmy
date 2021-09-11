@@ -134,6 +134,13 @@ export class Resource {
         }
         
         if (params.filter) this.filter = Resource.#parseFilter(params.filter);
+        if (params.attributes) {
+            if (typeof params.attributes !== "string")
+                throw new SCIMError(400, "invalidFilter", "Expected attributes to be a comma-separated string list");
+            
+            // TODO: decode attributes specified in filter format
+            this.attributes = params.attributes.split(",");
+        }
     }
     
     /**
