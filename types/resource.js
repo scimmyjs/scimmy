@@ -121,19 +121,25 @@ export class Resource {
     constructor(config = {}, ...rest) {
         let params = config;
         
+        // Handle case where ID is supplied as first argument
         if (typeof config === "string") {
+            // Store the ID and get the real parameters
             this.id = config;
             params = rest.shift() ?? {};
+            
+            // Create a filter to match the ID
             params.filter = `id eq "${this.id}"`;
         }
         
+        // Parse the filter if it exists
         if (params.filter) this.filter = new Filter(params.filter);
         if (params.attributes) {
+            // Bail out if attributes isn't a string
             if (typeof params.attributes !== "string")
                 throw new SCIMError(400, "invalidFilter", "Expected attributes to be a comma-separated string list");
             
-            // TODO: decode attributes specified in filter format
-            this.attributes = params.attributes.split(",");
+            // Convert attributes into a filter string, and instantiate a new filter
+            this.attributes = new Filter(params.attributes.split(",").map(a => `${a} pr`).join(" and "));
         }
     }
     
