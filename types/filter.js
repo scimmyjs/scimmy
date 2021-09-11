@@ -120,6 +120,9 @@ export class Filter extends Array {
             
             // Handle "words" in the filter (a.k.a. attributes)
             if (type === "Word") {
+                // Convert attribute name into proper camelCase
+                literal = literal.split(".").map(l => `${l[0].toLowerCase()}${l.slice(1)}`).join(".");
+                
                 // Peek at the next token to see if it's a comparator
                 if (tokens[0]?.type === "Comparator") {
                     // If so, get the comparator (the next token)
