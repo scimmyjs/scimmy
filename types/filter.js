@@ -3,7 +3,7 @@ import {SCIMError} from "./error.js";
 // Logic Operators
 const operators = ["and", "or", "not"];
 // Comparison Operations
-const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr"];
+const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
 const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
 
@@ -137,7 +137,7 @@ export class Filter extends Array {
                     // If so, get the comparator (the next token)
                     let {value: comparator} = tokens.shift(),
                         // If the comparator expects a value to compare against, get it
-                        {value} = (comparator !== "pr" ? tokens.shift() : {});
+                        {value} = (!["pr", "np"].includes(comparator) ? tokens.shift() : {});
                     
                     // Save the comparator and value to the attribute
                     target = [comparator, ...(value !== undefined ? [value] : [])];

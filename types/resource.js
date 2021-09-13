@@ -133,6 +133,18 @@ export class Resource {
         
         // Parse the filter if it exists
         if (params.filter) this.filter = new Filter(params.filter);
+        
+        // Handle excluded attributes
+        if (params.excludedAttributes) {
+            // Bail out if excludedAttributes isn't a string
+            if (typeof params.excludedAttributes !== "string")
+                throw new SCIMError(400, "invalidFilter", "Expected excludedAttributes to be a comma-separated string list");
+            
+            // Convert excludedAttributes into a filter string, and instantiate a new filter
+            this.attributes = new Filter(params.excludedAttributes.split(",").map(a => `${a} np`).join(" and "));
+        }
+        
+        // Handle attributes (overwrites excluded attributes if previously defined)
         if (params.attributes) {
             // Bail out if attributes isn't a string
             if (typeof params.attributes !== "string")

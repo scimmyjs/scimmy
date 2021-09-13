@@ -135,7 +135,17 @@ export class SchemaDefinition {
             
         // Otherwise, filter the data!
         } else {
-            let target = {};
+            // Check for any negative filters
+            for (let key in {...filter}) if (Array.isArray(filter[key]) && filter[key][0] === "np") {
+                // Remove the property from the result, and remove the spent filter
+                delete data[key];
+                delete filter[key];
+            }
+            
+            // Prepare resultant value storage
+            let target = {},
+                // Check to see if there's any filters left
+                presenceFilter = Object.keys(filter).length;
             
             // Go through every value in the data
             for (let key in data) {
@@ -148,7 +158,7 @@ export class SchemaDefinition {
                 // Otherwise, if the attribute ~can~ be returned, process it
                 else if (returned === true) {
                     // If the filter is simply based on presence, assign the result
-                    if (Array.isArray(filter[key]) && filter[key][0] === "pr")
+                    if (!presenceFilter || (Array.isArray(filter[key]) && filter[key][0] === "pr"))
                         target[key] = data[key];
                     // Otherwise if the filter is defined and the attribute is complex, evaluate it
                     else if (key in filter && type === "complex")
