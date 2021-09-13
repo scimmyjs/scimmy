@@ -8,9 +8,14 @@ const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr"]
 const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
 
 /**
+ * SCIM Filter Type
  * @extends {Array}
  */
 export class Filter extends Array {
+    /**
+     * Instantiate and parse a new SCIM filter string
+     * @param {String} [query] - the query string to parse
+     */
     constructor(query = "") {
         super();
         Object.setPrototypeOf(this, Filter.prototype);
@@ -120,8 +125,12 @@ export class Filter extends Array {
             
             // Handle "words" in the filter (a.k.a. attributes)
             if (type === "Word") {
-                // Convert attribute name into proper camelCase
-                literal = literal.split(".").map(l => `${l[0].toLowerCase()}${l.slice(1)}`).join(".");
+                // Put the result back on the stack if it's not already there
+                if (operator !== "not" && !Array.isArray(literal)) results.push(result);
+                
+                // Convert literal name into proper camelCase and expand into individual property names
+                let literals = literal.split(".").map(l => `${l[0].toLowerCase()}${l.slice(1)}`),
+                    target;
                 
                 // Peek at the next token to see if it's a comparator
                 if (tokens[0]?.type === "Comparator") {
@@ -131,17 +140,24 @@ export class Filter extends Array {
                         {value} = (comparator !== "pr" ? tokens.shift() : {});
                     
                     // Save the comparator and value to the attribute
-                    result[literal] = [comparator, ...(value !== undefined ? [value] : [])];
+                    target = [comparator, ...(value !== undefined ? [value] : [])];
                     
                 // Peek at the next token's value to see if the word opens a group
                 } else if (Array.isArray(tokens[0]?.value)) {
                     // If so, get the group, and collapse or store it in the result
                     let {value} = tokens.shift();
-                    result[literal] = (value.length === 1 ? value.pop() ?? {} : value);
+                    target = (value.length === 1 ? value.pop() ?? {} : value);
                 }
                 
-                // Put the result back on the stack if it's not already there
-                if (operator !== "not" && !Array.isArray(literal)) results.push(result);
+                // Go through all nested attribute names
+                while (literals.length > 1) {
+                    // TODO: what if there's a collision?
+                    let key = literals.shift();
+                    result = (result[key] = result[key] ?? {});
+                }
+                
+                // Then assign the targeted value to the nested location
+                result[literals.shift()] = target;
             }
         }
         
