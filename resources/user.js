@@ -80,4 +80,12 @@ export class User extends Resource {
             }
         }
     }
+    
+    /** @implements {Resource#write} */
+    async write(instance) {
+        return new UserSchema(
+            await User.#ingress(this, new UserSchema(instance, "in")),
+            "out", User.basepath(), this.attributes
+        );
+    }
 }
