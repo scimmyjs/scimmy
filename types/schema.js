@@ -136,37 +136,43 @@ export class SchemaDefinition {
         // Otherwise, filter the data!
         } else {
             // Check for any negative filters
-            for (let key in {...filter}) if (Array.isArray(filter[key]) && filter[key][0] === "np") {
-                // Remove the property from the result, and remove the spent filter
-                delete data[key];
-                delete filter[key];
-            }
-            
-            // Prepare resultant value storage
-            let target = {},
-                // Check to see if there's any filters left
-                presenceFilter = Object.keys(filter).length;
-            
-            // Go through every value in the data
-            for (let key in data) {
-                // Get the matching attribute definition and some relevant config values
-                let attribute = attributes.find(a => a.name === key) ?? {},
-                    {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
+            for (let key in {...filter}) {
+                let {config: {returned} = {}} = attributes.find(a => a.name === key) ?? {};
                 
-                // If the attribute is always returned, add it to the result
-                if (returned === "always") target[key] = data[key];
-                // Otherwise, if the attribute ~can~ be returned, process it
-                else if (returned === true) {
-                    // If the filter is simply based on presence, assign the result
-                    if (!presenceFilter || (Array.isArray(filter[key]) && filter[key][0] === "pr"))
-                        target[key] = data[key];
-                    // Otherwise if the filter is defined and the attribute is complex, evaluate it
-                    else if (key in filter && type === "complex")
-                        target[key] = this.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                if (returned !== "always" && Array.isArray(filter[key]) && filter[key][0] === "np") {
+                    // Remove the property from the result, and remove the spent filter
+                    delete data[key];
+                    delete filter[key];
                 }
             }
             
-            return target;
+            // Check to see if there's any filters left
+            if (!Object.keys(filter).length) return data;
+            else {
+                // Prepare resultant value storage
+                let target = {}
+                
+                // Go through every value in the data and filter attributes
+                for (let key in data) {
+                    // Get the matching attribute definition and some relevant config values
+                    let attribute = attributes.find(a => a.name === key) ?? {},
+                        {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
+                    
+                    // If the attribute is always returned, add it to the result
+                    if (returned === "always") target[key] = data[key];
+                    // Otherwise, if the attribute ~can~ be returned, process it
+                    else if (returned === true) {
+                        // If the filter is simply based on presence, assign the result
+                        if (Array.isArray(filter[key]) && filter[key][0] === "pr")
+                            target[key] = data[key];
+                        // Otherwise if the filter is defined and the attribute is complex, evaluate it
+                        else if (key in filter && type === "complex")
+                            target[key] = this.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                    }
+                }
+                
+                return target;
+            }
         }
     }
 }
