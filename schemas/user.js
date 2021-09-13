@@ -95,10 +95,11 @@ export class User extends Schema {
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location
+     * @param {Filter} [filters] - attribute filters to apply to the coerced value
      */
-    constructor(resource, direction = "both", basepath) {
+    constructor(resource, direction = "both", basepath, filters) {
         super();
         this.schemas = [User.#definition.id];
-        Object.assign(this, User.#definition.coerce(resource, direction, basepath));
+        Object.assign(this, User.#definition.coerce(resource, direction, basepath, filters));
     }
 }

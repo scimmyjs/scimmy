@@ -70,10 +70,10 @@ export class User extends Resource {
     /** @implements {Resource#read} */
     async read() {
         if (!this.id) {
-            return new ListResponse((await User.#egress(this)).map(u => new UserSchema(u, "out", User.basepath())));
+            return new ListResponse((await User.#egress(this)).map(u => new UserSchema(u, "out", User.basepath(), this.attributes)));
         } else {
             try {
-                return new UserSchema((await User.#egress(this)).shift(), "out", User.basepath());
+                return new UserSchema((await User.#egress(this)).shift(), "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
                 else throw new SCIMError(404, null, `Resource ${this.id} not found`);
