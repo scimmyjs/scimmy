@@ -94,7 +94,7 @@ export class SchemaDefinition {
         for (let attribute of this.attributes) {
             let {name} = attribute,
                 // Evaluate the coerced value
-                value = attribute.coerce(source[name] ?? source[`${name[0]}${name.slice(1)}`], direction);
+                value = attribute.coerce(source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`], direction);
             
             // If it's defined, add it to the target
             if (value !== undefined) target[name] = value;

@@ -170,8 +170,8 @@ export class Attribute {
                             let {name, config: {required}} = subAttribute;
                             
                             // If the value is defined or required, coerce it
-                            if (name in source || required) {
-                                let value = subAttribute.coerce(source[name] ?? source[`${name[0]}${name.slice(1)}`], direction);
+                            if (name in source || `${name[0].toUpperCase()}${name.slice(1)}` in source || required) {
+                                let value = subAttribute.coerce(source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`], direction);
                                 
                                 // If the value is not empty, apply it to the target
                                 if (value !== undefined) target[name] = value;
