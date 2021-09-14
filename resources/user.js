@@ -59,6 +59,14 @@ export class User extends Resource {
         return User;
     }
     
+    /** @implements {Resource~#degress} */
+    static #degress = () => {};
+    /** @implements {Resource~degress} */
+    static degress(handler) {
+        User.#degress = handler;
+        return User;
+    }
+    
     /**
      * Instantiate a new SCIM User resource and parse any supplied parameters
      * @implements {Resource#constructor}
@@ -90,5 +98,11 @@ export class User extends Resource {
             await User.#ingress(this, new UserSchema(instance, "in")),
             "out", User.basepath(), this.attributes
         );
+    }
+    
+    /** @implements {Resource#dispose} */
+    async dispose() {
+        if (!!this.id) await User.#degress(this);
+        else throw new SCIMError(404, null, `Resource ${this.id} not found`);
     }
 }
