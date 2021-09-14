@@ -99,7 +99,6 @@ export class User extends Schema {
      */
     constructor(resource, direction = "both", basepath, filters) {
         super();
-        this.schemas = [User.#definition.id];
         Object.assign(this, User.#definition.coerce(resource, direction, basepath, filters));
     }
 }

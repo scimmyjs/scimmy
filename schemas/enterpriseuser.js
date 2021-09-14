@@ -32,7 +32,6 @@ export class EnterpriseUser extends Schema {
      */
     constructor(resource, direction = "both", basepath) {
         super();
-        this.schemas = [EnterpriseUser.#definition.id];
         Object.assign(this, EnterpriseUser.#definition.coerce(resource, direction, basepath));
     }
 }

@@ -41,6 +41,7 @@ export class SchemaDefinition {
         
         // Add common attributes used by all schemas, then add the schema-specific attributes
         this.attributes = [
+            new Attribute("reference", "schemas", {multiValued: true, referenceTypes: ["uri"]}),
             new Attribute("string", "id", {direction: "out", returned: "always", required: true, mutable: false, caseExact: true, uniqueness: "global"}),
             new Attribute("string", "externalId", {direction: "in", caseExact: true}),
             new Attribute("complex", "meta", {required: true, mutable: false}, [
@@ -64,7 +65,7 @@ export class SchemaDefinition {
         return {
             schemas: ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
             ...this,
-            attributes: this.attributes.slice(3),
+            attributes: this.attributes.slice(4),
             meta: {resourceType: "Schema", location: `${basepath}/${this.id}`}
         };
     }
@@ -84,11 +85,15 @@ export class SchemaDefinition {
         let filter = (filters ?? []).slice(0).shift(),
             target = {},
             // Add schema's name as resource type to meta attribute
-            source = {...data, meta: {
-                ...(data?.meta ?? {}),
-                resourceType: this.name,
-                ...(typeof basepath === "string" ? {location: `${basepath}/${data.id}`} : {})
-            }};
+            source = {
+                ...data,
+                schemas: [...new Set(this.id, ...(Array.isArray(data.schemas) ? data.schemas : []))],
+                meta: {
+                    ...(data?.meta ?? {}),
+                    resourceType: this.name,
+                    ...(typeof basepath === "string" ? {location: `${basepath}/${data.id}`} : {})
+                }
+            };
         
         // Go through all attributes and coerce them
         for (let attribute of this.attributes) {
@@ -166,8 +171,13 @@ export class SchemaDefinition {
                         if (Array.isArray(filter[key]) && filter[key][0] === "pr")
                             target[key] = data[key];
                         // Otherwise if the filter is defined and the attribute is complex, evaluate it
-                        else if (key in filter && type === "complex")
-                            target[key] = this.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                        else if (key in filter && type === "complex") {
+                            let value = this.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                            
+                            // Only set the value if it isn't empty
+                            if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
+                                target[key] = value;
+                        }
                     }
                 }
                 

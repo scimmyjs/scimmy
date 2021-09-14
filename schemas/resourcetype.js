@@ -30,7 +30,7 @@ export class ResourceType extends Schema {
      */
     constructor(resource, basepath) {
         super();
-        this.schemas = [ResourceType.#definition.id];
         Object.assign(this, ResourceType.#definition.coerce(resource, "out", basepath));
+        this.schemas = [ResourceType.#definition.id];
     }
 }

@@ -28,7 +28,6 @@ export class Group extends Schema {
      */
     constructor(resource, direction = "both", basepath) {
         super();
-        this.schemas = [Group.#definition.id];
         Object.assign(this, Group.#definition.coerce(resource, direction, basepath));
     }
 }
