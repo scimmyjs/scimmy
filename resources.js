@@ -1,3 +1,4 @@
+import {Resource} from "./types/resource.js";
 import {User} from "./resources/user.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
@@ -9,17 +10,22 @@ class Resources {
     // Store registered resources for later retrieval
     static #resources = {};
     
-    // Expose Schema and ResourceType resources without "registering" them
+    // Expose built-in resources without "registering" them
     static Schema = Schema;
     static ResourceType = ResourceType;
+    static User = User;
     
     /**
      * Register a resource implementation for exposure as a ResourceType
      * @param {Resource} resource - the resource to register
      * @param {String} [name] - the name of the resource being registered
-     * @returns {Resources} the Resources class for chaining
+     * @returns {Resource} the registered resource class for chaining
      */
     static register(resource, name) {
+        // Make sure the registering resource is valid
+        if (!resource || !(resource.prototype instanceof Resource))
+            throw new TypeError("Registering resource must be of type 'Resource'");
+        
         // Source name from resource if not defined
         if (name === undefined) name = resource.name;
         
@@ -27,7 +33,7 @@ class Resources {
         if (!!Resources.#resources[name]) throw new TypeError(`Resource '${name}' already registered`);
         else Resources[name] = Resources.#resources[name] = resource;
         
-        return Resources;
+        return resource;
     }
     
     /**
@@ -38,8 +44,5 @@ class Resources {
         return {...Resources.#resources};
     }
 }
-
-// Register default resource implementations
-Resources.register(User);
 
 export default Resources;
