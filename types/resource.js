@@ -65,18 +65,19 @@ export class Resource {
     /**
      * Handler for ingress/egress of a resource
      * @callback Resource~gressHandler
-     * @param {Resource} - the resource performing the ingress/egress
+     * @param {Resource} resource - the resource performing the ingress/egress
+     * @param {Schema} [instance] - an instance of the resource type that conforms to the resource's schema
      */
     
     /**
-     * Ingress handler storage property
+     * Ingress handler method storage property
      * @type {Function}
      * @abstract
      */
     static #ingress;
     /**
-     * Sets the method to be called to retrieve a resource on read
-     * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * Sets the method to be called to consume a resource on create
+     * @param {Resource~gressHandler} handler - function to invoke to consume a resource on create
      * @abstract
      */
     static ingress(handler) {
@@ -84,18 +85,33 @@ export class Resource {
     }
     
     /**
-     * Egress handler storage property
+     * Egress handler method storage property
      * @type {Function}
      * @abstract
      */
     static #egress;
     /**
-     * Sets the method to be called to consume a resource on write
+     * Sets the method to be called to retrieve a resource on read
      * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
      * @abstract
      */
     static egress(handler) {
         throw new TypeError("Method 'egress' must be implemented by subclass");
+    }
+    
+    /**
+     * Degress handler method storage property
+     * @type {Function}
+     * @abstract
+     */
+    static #degress;
+    /**
+     * Sets the method to be called to dispose of a resource on delete
+     * @param {Resource~gressHandler} handler - function to invoke to dispose of a resource on delete
+     * @abstract
+     */
+    static degress(handler) {
+        throw new TypeError("Method 'degress' must be implemented by subclass");
     }
     
     /**
@@ -168,6 +184,14 @@ export class Resource {
      * @abstract
      */
     write() {
-        throw new TypeError("Method 'readOne' must be implemented by subclass");
+        throw new TypeError("Method 'write' must be implemented by subclass");
+    }
+    
+    /**
+     * Calls resource's degress method for disposal of the SCIM resource
+     * @abstract
+     */
+    dispose() {
+        throw new TypeError("Method 'dispose' must be implemented by subclass");
     }
 }
