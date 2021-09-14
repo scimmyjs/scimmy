@@ -1,5 +1,6 @@
 import {Resource} from "./types/resource.js";
 import {User} from "./resources/user.js";
+import {Group} from "./resources/group.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
 
@@ -14,6 +15,7 @@ class Resources {
     static Schema = Schema;
     static ResourceType = ResourceType;
     static User = User;
+    static Group = Group;
     
     /**
      * Register a resource implementation for exposure as a ResourceType
