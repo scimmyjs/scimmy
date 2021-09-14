@@ -98,7 +98,7 @@ export class User extends Schema {
      * @param {Filter} [filters] - attribute filters to apply to the coerced value
      */
     constructor(resource, direction = "both", basepath, filters) {
-        super();
+        super(User.#definition.id, resource?.schemas);
         Object.assign(this, User.#definition.coerce(resource, direction, basepath, filters));
     }
 }

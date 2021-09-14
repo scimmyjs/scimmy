@@ -1,4 +1,5 @@
 import {Attribute} from "./attribute.js";
+import {SCIMError} from "./error.js";
 
 /**
  * SCIM Schema
@@ -20,6 +21,17 @@ export class Schema {
      * @abstract
      */
     static #definition;
+    
+    /**
+     * Construct a resource instance after verifying schema compatibility
+     * @param {String} id - the SCIM schema ID of the resource being instantiated
+     * @param {String[]} [schemas] - the declared schemas for the resource
+     */
+    constructor(id, schemas) {
+        if (Array.isArray(schemas) && !schemas.includes(id)) throw new SCIMError(
+            400, "invalidSyntax", "The request body supplied a schema type that is incompatible with this resource"
+        );
+    }
 }
 
 /**

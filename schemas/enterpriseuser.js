@@ -31,7 +31,7 @@ export class EnterpriseUser extends Schema {
      * @param {String} [basepath] - the base path for resolution of a resource's location
      */
     constructor(resource, direction = "both", basepath) {
-        super();
+        super(EnterpriseUser.#definition.id, resource?.schemas);
         Object.assign(this, EnterpriseUser.#definition.coerce(resource, direction, basepath));
     }
 }

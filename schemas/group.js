@@ -27,7 +27,7 @@ export class Group extends Schema {
      * @param {String} [basepath] - the base path for resolution of a resource's location
      */
     constructor(resource, direction = "both", basepath) {
-        super();
+        super(Group.#definition.id, resource?.schemas);
         Object.assign(this, Group.#definition.coerce(resource, direction, basepath));
     }
 }
