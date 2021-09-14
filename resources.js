@@ -37,11 +37,16 @@ class Resources {
     }
     
     /**
-     * Get all registered resource implementations for exposure as ResourceTypes
-     * @returns {Object} containing object with registered resource implementations
+     * Get registration status of specific resource implementation, or get all registered resource implementations
+     * @param {Resource|String} [resource] - the resource implementation or name to query registration status for
+     * @returns {Object|Boolean}
+     *   - {Object} Containing object with registered resource implementations for exposure as ResourceTypes
+     *   - {Boolean} the registration status of the specified resource implementation
      */
-    static registered() {
-        return {...Resources.#resources};
+    static registered(resource) {
+        if (!resource) return {...Resources.#resources};
+        else if (!(resource.prototype instanceof Resource)) return false;
+        else return Resources.#resources[typeof resource === "string" ? resource : resource.name] === resource;
     }
 }
 
