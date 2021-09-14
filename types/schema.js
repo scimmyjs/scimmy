@@ -99,7 +99,7 @@ export class SchemaDefinition {
             // Add schema's name as resource type to meta attribute
             source = {
                 ...data,
-                schemas: [...new Set(this.id, ...(Array.isArray(data.schemas) ? data.schemas : []))],
+                schemas: [...new Set([this.id, ...(Array.isArray(data.schemas) ? data.schemas : [])])],
                 meta: {
                     ...(data?.meta ?? {}),
                     resourceType: this.name,
