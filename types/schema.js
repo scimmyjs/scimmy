@@ -37,11 +37,22 @@ export class Schema {
      * @param {String[]} [schemas] - the declared schemas for the resource
      */
     constructor(id, schemas) {
-        if (Array.isArray(schemas) && !schemas.includes(id)) {
-            throw new SCIMError(
-                400, "invalidSyntax",
-                "The request body supplied a schema type that is incompatible with this resource"
-            );
+        if (Array.isArray(schemas)) {
+            if (!schemas.includes(id)) {
+                throw new SCIMError(
+                    400, "invalidSyntax",
+                    "The request body supplied a schema type that is incompatible with this resource"
+                );
+            }
+            
+            for (let extension of this.constructor.definition.attributes.filter(a => a instanceof SchemaDefinition)) {
+                if (extension.required && !schemas.includes(extension.id)) {
+                    throw new SCIMError(
+                        400, "invalidValue",
+                        `The request body is missing schema extension '${extension.id}' required by this resource type`
+                    );
+                }
+            }
         }
     }
 }
@@ -88,7 +99,7 @@ export class SchemaDefinition {
     describe(basepath = "") {
         return {
             schemas: ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
-            ...this,
+            id: this.id, name: this.name, description: this.description,
             attributes: this.attributes.filter(a => (a instanceof Attribute && !a.config.shadow)),
             meta: {resourceType: "Schema", location: `${basepath}/${this.id}`}
         };
@@ -137,13 +148,17 @@ export class SchemaDefinition {
         
         let filter = (filters ?? []).slice(0).shift(),
             target = {},
-            // Add schema's name as resource type to meta attribute
+            // Compile a list of schema IDs to include in the resource
+            schemas = [...new Set([
+                this.id,
+                ...(this.attributes.filter(a => a instanceof SchemaDefinition)
+                    .map(s => s.id).filter(id => !!data[id])),
+                ...(Array.isArray(data.schemas) ? data.schemas : [])
+            ])],
+            // Add schema IDs, and schema's name as resource type to meta attribute
             source = {
-                ...data,
-                schemas: [...new Set([this.id, ...(Array.isArray(data.schemas) ? data.schemas : [])])],
-                meta: {
-                    ...(data?.meta ?? {}),
-                    resourceType: this.name,
+                ...data, schemas: schemas, meta: {
+                    ...(data?.meta ?? {}), resourceType: this.name,
                     ...(typeof basepath === "string" ? {location: `${basepath}/${data.id}`} : {})
                 }
             };
@@ -160,11 +175,9 @@ export class SchemaDefinition {
             } else if (attribute instanceof SchemaDefinition) {
                 let {id: name, required} = attribute;
                 
-                try {
-                    target[name] = attribute.coerce(source[name], direction, basepath, filter);
-                } catch {
-                    if (!!required) throw new TypeError(`Missing values for required schema extension '${name}'`);
-                }
+                // Attempt to coerce the schema extension
+                if (!!required && !source[name]) throw new TypeError(`Missing values for required schema extension '${name}'`);
+                else target[name] = attribute.coerce(source[name], direction, basepath, filter);
             }
         }
         
