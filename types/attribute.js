@@ -150,7 +150,7 @@ export class Attribute {
                     
                     // Throw error if all values aren't valid dates
                     if (!(multiValued ? source.every(validate) : validate(source)))
-                        throw new TypeError(`Attribute ${name} expected value to be a valid date`);
+                        throw new TypeError(`Attribute ${this.name} expected value to be a valid date`);
                     
                     // Convert date values to ISO strings
                     return (multiValued ? source.map(v => new Date(v).toISOString()) : new Date(source).toISOString());
