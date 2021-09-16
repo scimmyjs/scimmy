@@ -25,6 +25,14 @@ export class ResourceType extends Resource {
     }
     
     /**
+     * @override {Resource~extend}
+     * @throws {TypeError} SCIM 'ResourceType' resource does not support extension
+     */
+    static extend() {
+        throw new TypeError("SCIM 'ResourceType' resource does not support extension");
+    }
+    
+    /**
      * Instantiate a new SCIM ResourceType resource and parse any supplied parameters
      * @implements {Resource#constructor}
      */

@@ -7,26 +7,6 @@ import {Group as GroupSchema} from "../schemas.js";
  * @extends {Resource}
  */
 export class Group extends Resource {
-    /** @implements {Resource~schema} */
-    static get schema() {
-        return GroupSchema;
-    }
-    
-    /** @implements {Resource~#extensions} */
-    static #extensions = [];
-    /** @implements {Resource~extensions} */
-    static get extensions() {
-        return Group.#extensions;
-    }
-    
-    /** @implements {Resource~extend} */
-    static extend(extension, required = false) {
-        if (!Group.#extensions.find(e => e.schema === extension))
-            Group.#extensions.push({schema: extension, required: required});
-        
-        return Group;
-    }
-    
     /** @implements {Resource~endpoint} */
     static get endpoint() {
         return "/Groups";
@@ -41,6 +21,18 @@ export class Group extends Resource {
             Group.#basepath = (path.endsWith(Group.endpoint) ? path : `${path}${Group.endpoint}`);
         
         return Group;
+    }
+    
+    /** @implements {Resource~schema} */
+    static get schema() {
+        return GroupSchema;
+    }
+    
+    /** @implements {Resource~#extensions} */
+    static #extensions = [];
+    /** @implements {Resource~extensions} */
+    static get extensions() {
+        return Group.#extensions;
     }
     
     /** @implements {Resource~#ingress} */

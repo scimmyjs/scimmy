@@ -24,6 +24,14 @@ export class Schema extends Resource {
     }
     
     /**
+     * @override {Resource~extend}
+     * @throws {TypeError} SCIM 'Schema' resource does not support extension
+     */
+    static extend() {
+        throw new TypeError("SCIM 'Schema' resource does not support extension");
+    }
+    
+    /**
      * Instantiate a new SCIM Schema resource and parse any supplied parameters
      * @implements {Resource#constructor}
      */

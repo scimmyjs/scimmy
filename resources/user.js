@@ -7,26 +7,6 @@ import {User as UserSchema} from "../schemas.js";
  * @extends {Resource}
  */
 export class User extends Resource {
-    /** @implements {Resource~schema} */
-    static get schema() {
-        return UserSchema;
-    }
-    
-    /** @implements {Resource~#extensions} */
-    static #extensions = [];
-    /** @implements {Resource~extensions} */
-    static get extensions() {
-        return User.#extensions;
-    }
-    
-    /** @implements {Resource~extend} */
-    static extend(extension, required = false) {
-        if (!User.#extensions.find(e => e.schema === extension))
-            User.#extensions.push({schema: extension, required: required});
-        
-        return User;
-    }
-    
     /** @implements {Resource~endpoint} */
     static get endpoint() {
         return "/Users";
@@ -41,6 +21,18 @@ export class User extends Resource {
             User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
         
         return User;
+    }
+    
+    /** @implements {Resource~schema} */
+    static get schema() {
+        return UserSchema;
+    }
+    
+    /** @implements {Resource~#extensions} */
+    static #extensions = [];
+    /** @implements {Resource~extensions} */
+    static get extensions() {
+        return User.#extensions;
     }
     
     /** @implements {Resource~#ingress} */
@@ -87,6 +79,7 @@ export class User extends Resource {
                 return new UserSchema((await User.#egress(this)).shift(), "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+                else if (ex instanceof SCIMError) throw ex;
                 else throw new SCIMError(404, null, `Resource ${this.id} not found`);
             }
         }

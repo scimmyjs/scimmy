@@ -7,44 +7,12 @@ import {Filter} from "./filter.js";
  */
 export class Resource {
     /**
-     * Retrieves a resource's core schema
-     * @returns {Schema}
-     * @abstract
-     */
-    static get schema() {
-        throw new TypeError("Method 'get' for property 'schema' must be implemented by subclass");
-    }
-    
-    /**
-     * List of extensions to a resource's core schema
-     * @type {Object[]}
-     * @abstract
-     */
-    static #extensions;
-    /**
-     * Get the list of registered schema extensions for a resource
-     * @abstract
-     */
-    static get extensions() {
-        throw new TypeError("Method 'get' for property 'extensions' must be implemented by subclass");
-    }
-    
-    /**
-     * Register an extension to the resource's core schema
-     * @param {Schema} extension - the schema extension to register
-     * @param {Boolean} required - whether or not the extension is required
-     */
-    static extend(extension, required) {
-        throw new TypeError("Method 'basepath' must be implemented by subclass");
-    }
-    
-    /**
      * Retrieves a resource's endpoint relative to the service provider's base URL
      * @returns {String}
      * @abstract
      */
     static get endpoint() {
-        throw new TypeError("Method 'get' for property 'endpoint' must be implemented by subclass");
+        throw new TypeError(`Method 'get' for property 'endpoint' not implemented by resource '${this.name}'`);
     }
     
     /**
@@ -59,19 +27,56 @@ export class Resource {
      * @abstract
      */
     static basepath(path) {
-        throw new TypeError("Method 'basepath' must be implemented by subclass");
+        throw new TypeError(`Method 'basepath' not implemented by resource '${this.name}'`);
     }
     
     /**
-     * Handler for ingress/egress of a resource
+     * Retrieves a resource's core schema
+     * @returns {Schema}
+     * @abstract
+     */
+    static get schema() {
+        throw new TypeError(`Method 'get' for property 'schema' not implemented by resource '${this.name}'`);
+    }
+    
+    /**
+     * List of extensions to a resource's core schema
+     * @type {Object[]}
+     * @abstract
+     */
+    static #extensions;
+    /**
+     * Get the list of registered schema extensions for a resource
+     * @abstract
+     */
+    static get extensions() {
+        throw new TypeError(`Method 'get' for property 'extensions' not implemented by resource '${this.name}'`);
+    }
+    
+    /**
+     * Register an extension to the resource's core schema
+     * @param {Schema} extension - the schema extension to register
+     * @param {Boolean} required - whether or not the extension is required
+     */
+    static extend(extension, required) {
+        if (!this.extensions.find(e => e.schema === extension)) {
+            this.extensions.push({schema: extension, required: required});
+            this.schema.extend(extension, required);
+        }
+        
+        return this;
+    }
+    
+    /**
+     * Handler for ingress/egress/degress of a resource
      * @callback Resource~gressHandler
-     * @param {Resource} resource - the resource performing the ingress/egress
+     * @param {Resource} resource - the resource performing the ingress/egress/degress
      * @param {Schema} [instance] - an instance of the resource type that conforms to the resource's schema
      */
     
     /**
      * Ingress handler method storage property
-     * @type {Function}
+     * @type {Resource~gressHandler}
      * @abstract
      */
     static #ingress;
@@ -81,12 +86,12 @@ export class Resource {
      * @abstract
      */
     static ingress(handler) {
-        throw new TypeError("Method 'ingress' must be implemented by subclass");
+        throw new TypeError(`Method 'ingress' not implemented by resource '${this.name}'`);
     }
     
     /**
      * Egress handler method storage property
-     * @type {Function}
+     * @type {Resource~gressHandler}
      * @abstract
      */
     static #egress;
@@ -96,12 +101,12 @@ export class Resource {
      * @abstract
      */
     static egress(handler) {
-        throw new TypeError("Method 'egress' must be implemented by subclass");
+        throw new TypeError(`Method 'egress' not implemented by resource '${this.name}'`);
     }
     
     /**
      * Degress handler method storage property
-     * @type {Function}
+     * @type {Resource~gressHandler}
      * @abstract
      */
     static #degress;
@@ -111,7 +116,7 @@ export class Resource {
      * @abstract
      */
     static degress(handler) {
-        throw new TypeError("Method 'degress' must be implemented by subclass");
+        throw new TypeError(`Method 'degress' not implemented by resource '${this.name}'`);
     }
     
     /**
@@ -131,7 +136,9 @@ export class Resource {
     /**
      * Instantiate a new SCIM resource and parse any supplied parameters
      * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
-     * @param {String} [config.filter] - the filter to be applied on ingress by implementing resource
+     * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
+     * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
+     * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
      * @param {*[]} [rest] - all other arguments supplied to the resource constructor
      */
     constructor(config = {}, ...rest) {
@@ -172,11 +179,12 @@ export class Resource {
     }
     
     /**
-     * Calls resource's egress method and wraps the results in valid SCIM list response or single resource syntax
+     * Calls resource's egress method for data retrieval
+     * Wraps the results in valid SCIM list response or single resource syntax
      * @abstract
      */
     read() {
-        throw new TypeError("Method 'read' must be implemented by subclass");
+        throw new TypeError(`Method 'read' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
@@ -184,7 +192,7 @@ export class Resource {
      * @abstract
      */
     write() {
-        throw new TypeError("Method 'write' must be implemented by subclass");
+        throw new TypeError(`Method 'write' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
@@ -192,6 +200,6 @@ export class Resource {
      * @abstract
      */
     dispose() {
-        throw new TypeError("Method 'dispose' must be implemented by subclass");
+        throw new TypeError(`Method 'dispose' not implemented by resource '${this.constructor.name}'`);
     }
 }
