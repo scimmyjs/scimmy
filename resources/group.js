@@ -78,7 +78,8 @@ export class Group extends Resource {
             try {
                 return new GroupSchema((await Group.#egress(this)).shift(), "out", Group.basepath(), this.attributes);
             } catch (ex) {
-                if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+                if (ex instanceof SCIMError) throw ex;
+                else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
                 else throw new SCIMError(404, null, `Resource ${this.id} not found`);
             }
         }
@@ -86,10 +87,16 @@ export class Group extends Resource {
     
     /** @implements {Resource#write} */
     async write(instance) {
-        return new GroupSchema(
-            await Group.#ingress(this, new GroupSchema(instance, "in")),
-            "out", Group.basepath(), this.attributes
-        );
+        try {
+            return new GroupSchema(
+                await Group.#ingress(this, new GroupSchema(instance, "in")),
+                "out", Group.basepath(), this.attributes
+            );
+        } catch (ex) {
+            if (ex instanceof SCIMError) throw ex;
+            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+        }
     }
     
     /** @implements {Resource#dispose} */

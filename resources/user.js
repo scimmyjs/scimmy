@@ -78,8 +78,8 @@ export class User extends Resource {
             try {
                 return new UserSchema((await User.#egress(this)).shift(), "out", User.basepath(), this.attributes);
             } catch (ex) {
-                if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
-                else if (ex instanceof SCIMError) throw ex;
+                if (ex instanceof SCIMError) throw ex;
+                else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
                 else throw new SCIMError(404, null, `Resource ${this.id} not found`);
             }
         }
@@ -87,10 +87,16 @@ export class User extends Resource {
     
     /** @implements {Resource#write} */
     async write(instance) {
-        return new UserSchema(
-            await User.#ingress(this, new UserSchema(instance, "in")),
-            "out", User.basepath(), this.attributes
-        );
+        try {
+            return new UserSchema(
+                await User.#ingress(this, new UserSchema(instance, "in")),
+                "out", User.basepath(), this.attributes
+            );
+        } catch (ex) {
+            if (ex instanceof SCIMError) throw ex;
+            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+        }
     }
     
     /** @implements {Resource#dispose} */
