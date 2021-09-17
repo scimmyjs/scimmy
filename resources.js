@@ -20,22 +20,45 @@ class Resources {
     /**
      * Register a resource implementation for exposure as a ResourceType
      * @param {Resource} resource - the resource to register
-     * @param {String} [name] - the name of the resource being registered
-     * @returns {Resource} the registered resource class for chaining
+     * @param {String|Object} [config] - the configuration to feed to the resource being registered
+     * @returns {Resource|Resources} the Resources class or registered resource class for chaining
      */
-    static register(resource, name) {
+    static register(resource, config) {
+        // Source name from resource if config is an object
+        let name = (typeof config === "string" ? config : resource.name);
+        if (typeof config === "object") name = config.name ?? name;
+        
         // Make sure the registering resource is valid
         if (!resource || !(resource.prototype instanceof Resource))
             throw new TypeError("Registering resource must be of type 'Resource'");
-        
-        // Source name from resource if not defined
-        if (name === undefined) name = resource.name;
         
         // Prevent registering a resource implementation that already exists
         if (!!Resources.#resources[name]) throw new TypeError(`Resource '${name}' already registered`);
         else Resources[name] = Resources.#resources[name] = resource;
         
-        return resource;
+        // Set up the resource if a config object was supplied
+        if (typeof config === "object") {
+            // Register supplied basepath
+            if (typeof config.basepath === "string")
+                Resources.#resources[name].basepath(config.basepath);
+            
+            // Register supplied ingress, egress, and degress methods
+            if (typeof config.ingress === "function")
+                Resources.#resources[name].ingress(async (...r) => await config.ingress(...r))
+            if (typeof config.egress === "function")
+                Resources.#resources[name].egress(async (...r) => await config.egress(...r))
+            if (typeof config.degress === "function")
+                Resources.#resources[name].degress(async (...r) => await config.degress(...r))
+            
+            // Register any supplied schema extensions
+            if (Array.isArray(config.extensions))
+                for (let {schema, required} of config.extensions) {
+                    Resources.#resources[name].extend(schema, required);
+                }
+        }
+        
+        // If config was supplied, return Resources, otherwise return the registered resource
+        return (typeof config === "object" ? Resources : resource);
     }
     
     /**
