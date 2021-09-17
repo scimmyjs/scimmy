@@ -7,9 +7,9 @@ import {ResourceType} from "./resources/resourcetype.js";
 /**
  * SCIM Resources Container Class
  */
-class Resources {
+export default class Resources {
     // Store registered resources for later retrieval
-    static #resources = {};
+    static #types = {};
     
     // Expose built-in resources without "registering" them
     static Schema = Schema;
@@ -23,7 +23,7 @@ class Resources {
      * @param {String|Object} [config] - the configuration to feed to the resource being registered
      * @returns {Resource|Resources} the Resources class or registered resource class for chaining
      */
-    static register(resource, config) {
+    static declare(resource, config) {
         // Source name from resource if config is an object
         let name = (typeof config === "string" ? config : resource.name);
         if (typeof config === "object") name = config.name ?? name;
@@ -33,27 +33,27 @@ class Resources {
             throw new TypeError("Registering resource must be of type 'Resource'");
         
         // Prevent registering a resource implementation that already exists
-        if (!!Resources.#resources[name]) throw new TypeError(`Resource '${name}' already registered`);
-        else Resources[name] = Resources.#resources[name] = resource;
+        if (!!Resources.#types[name]) throw new TypeError(`Resource '${name}' already registered`);
+        else Resources[name] = Resources.#types[name] = resource;
         
         // Set up the resource if a config object was supplied
         if (typeof config === "object") {
             // Register supplied basepath
             if (typeof config.basepath === "string")
-                Resources.#resources[name].basepath(config.basepath);
+                Resources.#types[name].basepath(config.basepath);
             
             // Register supplied ingress, egress, and degress methods
             if (typeof config.ingress === "function")
-                Resources.#resources[name].ingress(async (...r) => await config.ingress(...r))
+                Resources.#types[name].ingress(async (...r) => await config.ingress(...r))
             if (typeof config.egress === "function")
-                Resources.#resources[name].egress(async (...r) => await config.egress(...r))
+                Resources.#types[name].egress(async (...r) => await config.egress(...r))
             if (typeof config.degress === "function")
-                Resources.#resources[name].degress(async (...r) => await config.degress(...r))
+                Resources.#types[name].degress(async (...r) => await config.degress(...r))
             
             // Register any supplied schema extensions
             if (Array.isArray(config.extensions))
                 for (let {schema, required} of config.extensions) {
-                    Resources.#resources[name].extend(schema, required);
+                    Resources.#types[name].extend(schema, required);
                 }
         }
         
@@ -68,11 +68,14 @@ class Resources {
      *   - {Object} Containing object with registered resource implementations for exposure as ResourceTypes
      *   - {Boolean} the registration status of the specified resource implementation
      */
-    static registered(resource) {
-        if (!resource) return {...Resources.#resources};
-        else if (!(resource.prototype instanceof Resource)) return false;
-        else return Resources.#resources[typeof resource === "string" ? resource : resource.name] === resource;
+    static declared(resource) {
+        // If no resource specified, return declared resources
+        if (!resource) return {...Resources.#types};
+        // If resource is a string, find and return the matching resource type
+        else if (typeof resource === "string") return Resources.#types[resource];
+        // If the resource is an instance of Resource, see if it is already registered
+        else if (resource.prototype instanceof Resource) return Resources.#types[resource.name] === resource;
+        // Otherwise, the resource isn't registered...
+        else return false;
     }
 }
-
-export default Resources;

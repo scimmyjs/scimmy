@@ -47,11 +47,11 @@ export class ResourceType extends Resource {
     /** @implements {Resource#read} */
     async read() {
         if (!this.id) {
-            return new ListResponse(Object.entries(Resources.registered())
+            return new ListResponse(Object.entries(Resources.declared())
                 .map(([,R]) => new ResourceTypeSchema(R.describe(), ResourceType.basepath())));
         } else {
             try {
-                return new ResourceTypeSchema(Resources.registered()[this.id].describe(), ResourceType.basepath());
+                return new ResourceTypeSchema(Resources.declared(this.id).describe(), ResourceType.basepath());
             } catch {
                 throw new SCIMError(404, null, `ResourceType ${this.id} not found`);
             }
