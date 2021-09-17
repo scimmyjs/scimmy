@@ -196,6 +196,15 @@ export class Resource {
     }
     
     /**
+     * Retrieves resources via egress method, and applies specified patch operations
+     * Emits patched resources for consumption with resource's ingress method
+     * @abstract
+     */
+    patch() {
+        throw new TypeError(`Method 'patch' not implemented by resource '${this.constructor.name}'`);
+    }
+    
+    /**
      * Calls resource's degress method for disposal of the SCIM resource
      * @abstract
      */
