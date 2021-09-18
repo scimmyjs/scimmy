@@ -130,13 +130,13 @@ export class Attribute {
             
             // If the attribute is required, make sure it has a value
             if (required && source === undefined)
-                throw new TypeError(`Required attribute ${this.name} is missing`);
+                throw new TypeError(`Required attribute '${this.name}' is missing`);
             // If the attribute is multi-valued, make sure its value is a collection
             if (!isComplexMultiValue && multiValued && source !== undefined && !Array.isArray(source))
-                throw new TypeError(`Attribute ${this.name} expected to be a collection`);
+                throw new TypeError(`Attribute '${this.name}' expected to be a collection`);
             // If the attribute has canonical values, make sure it matches
             if (Array.isArray(canonicalValues) && (!(multiValued ? (source ?? []).every(v => canonicalValues.includes(v)) : canonicalValues.includes(source))))
-                throw new TypeError(`Attribute ${this.name} contains non-canonical value`);
+                throw new TypeError(`Attribute '${this.name}' contains non-canonical value`);
             
             // If the source has a value, parse it
             if (source !== undefined) switch (this.type) {
@@ -146,11 +146,11 @@ export class Attribute {
                 
                 case "dateTime":
                     // Check if value is a valid date
-                    let validate = (v) => (v instanceof Date && v.toString() !== "Invalid Date");
+                    let validate = (v) => (new Date(v).toString() !== "Invalid Date");
                     
                     // Throw error if all values aren't valid dates
                     if (!(multiValued ? source.every(validate) : validate(source)))
-                        throw new TypeError(`Attribute ${this.name} expected value to be a valid date`);
+                        throw new TypeError(`Attribute '${this.name}' expected value to be a valid date`);
                     
                     // Convert date values to ISO strings
                     return (multiValued ? source.map(v => new Date(v).toISOString()) : new Date(source).toISOString());
