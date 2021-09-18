@@ -12,7 +12,6 @@ export class ResourceType extends Schema {
     
     /** @implements {Schema~#definition} */
     static #definition = new SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
-        new Attribute("string", "id", {direction: "out", mutable: false}),
         new Attribute("string", "name", {direction: "out", required: true, mutable: false}),
         new Attribute("string", "description", {direction: "out", mutable: false}),
         new Attribute("reference", "endpoint", {direction: "out", required: true, mutable: false, referenceTypes: ["uri"]}),
@@ -29,8 +28,7 @@ export class ResourceType extends Schema {
      * @param {String} [basepath] - the base path for resolution of a resource's location
      */
     constructor(resource, basepath) {
-        super();
+        super(resource, "out");
         Object.assign(this, ResourceType.#definition.coerce(resource, "out", basepath));
-        this.schemas = [ResourceType.#definition.id];
     }
 }

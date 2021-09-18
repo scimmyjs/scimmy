@@ -33,27 +33,56 @@ export class Schema {
     
     /**
      * Construct a resource instance after verifying schema compatibility
-     * @param {String} id - the SCIM schema ID of the resource being instantiated
-     * @param {String[]} [schemas] - the declared schemas for the resource
+     * @param {Object} data - the source data to feed through the schema definition
+     * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      */
-    constructor(id, schemas) {
-        if (Array.isArray(schemas)) {
-            if (!schemas.includes(id)) {
-                throw new SCIMError(
-                    400, "invalidSyntax",
-                    "The request body supplied a schema type that is incompatible with this resource"
-                );
-            }
+    constructor(data = {}, direction) {
+        let {schemas = []} = data,
+            // Create internally scoped storage object
+            resource = {},
+            // Source attributes and extensions from schema definition
+            {definition} = this.constructor,
+            attributes = definition.attributes.filter(a => a instanceof Attribute),
+            extensions = definition.attributes.filter(a => a instanceof SchemaDefinition);
+        
+        // If schemas attribute is specified, make sure all required schema IDs are present
+        if (Array.isArray(schemas) && schemas.length) {
+            // Check for this schema definition's ID
+            if (!schemas.includes(definition.id))
+                throw new SCIMError(400, "invalidSyntax", "The request body supplied a schema type that is incompatible with this resource");
             
-            for (let extension of this.constructor.definition.attributes.filter(a => a instanceof SchemaDefinition)) {
+            // Check for required schema extension IDs
+            for (let extension of extensions) {
                 if (extension.required && !schemas.includes(extension.id)) {
-                    throw new SCIMError(
-                        400, "invalidValue",
-                        `The request body is missing schema extension '${extension.id}' required by this resource type`
-                    );
+                    throw new SCIMError(400, "invalidValue", `The request body is missing schema extension '${extension.id}' required by this resource type`);
                 }
             }
         }
+        
+        // Predefine getters and setters for all possible attributes
+        for (let attribute of attributes) Object.defineProperty(this, attribute.name, {
+            enumerable: true,
+            // Get and set the value from the internally scoped object
+            get: () => (resource[attribute.name]),
+            set: (value) => {
+                let {name, config: {mutable}} = attribute;
+                
+                // Check for mutability of attribute before setting the value
+                if (mutable !== true && this[name] !== undefined && this[name] !== value)
+                    throw new SCIMError(400, "mutability", `Attribute '${name}' already defined and is not mutable`);
+                
+                try {
+                    // Validate the supplied value through attribute coercion
+                    return (resource[name] = attribute.coerce(value, direction));
+                } catch (ex) {
+                    // Rethrow attribute coercion exceptions as SCIM errors
+                    throw new SCIMError(400, "invalidValue", ex.message);
+                }
+            }
+        });
+        
+        // Prevent unknown attributes from being added
+        Object.preventExtensions(this);
     }
 }
 
@@ -173,6 +202,7 @@ export class SchemaDefinition {
                 // If it's defined, add it to the target
                 if (value !== undefined) target[name] = value;
             } else if (attribute instanceof SchemaDefinition) {
+                // TODO: namespaced schema extension attributes in source data
                 let {id: name, required} = attribute;
                 
                 // Attempt to coerce the schema extension
