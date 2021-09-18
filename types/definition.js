@@ -49,6 +49,52 @@ export class SchemaDefinition {
     }
     
     /**
+     * Find an attribute or extension instance belonging to the schema definition by its name
+     * @param {String} name - the name of the attribute to look for (namespaced or direct)
+     * @return {Attribute|SchemaDefinition} the Attribute or SchemaDefinition instance with matching name
+     */
+    attribute(name) {
+        if (name.startsWith("urn:")) {
+            // Handle namespaced attributes by looking for a matching extension
+            let extension = (name.startsWith(this.id) ? this : this.attributes
+                    .find(a => a instanceof SchemaDefinition && name.startsWith(a.id))),
+                // Get the actual attribute name minus extension ID
+                attribute = name.replace(extension.id, "");
+            
+            // If the actual name is empty, return the extension, otherwise search the extension
+            return (!attribute.length ? extension : extension.attribute(attribute));
+        } else {
+            // Break name into path parts in case of search for sub-attributes
+            let path = name.split("."),
+                // Find the first attribute in the path
+                target = path.shift(),
+                attribute = this.attributes.find(a => a instanceof Attribute && a.name === target),
+                spent = [target];
+            
+            // If nothing was found, the attribute isn't declared by the schema definition
+            if (attribute === undefined)
+                throw new TypeError(`Schema definition '${this.id}' does not declare attribute '${target}'`);
+            
+            // Evaluate the rest of the path
+            while (path.length > 0) {
+                // If the attribute isn't complex, it can't declare sub-attributes
+                if (attribute.type !== "complex")
+                    throw new TypeError(`Attribute '${spent.join(".")}' of schema '${this.id}' is not of type 'complex' and does not define any subAttributes`);
+                
+                // Find the next attribute in the path
+                target = path.shift();
+                attribute = attribute.subAttributes.find(a => a instanceof Attribute && a.name === target);
+                
+                // If nothing found, the attribute doesn't declare the target as a sub-attribute
+                if (attribute === undefined)
+                    throw new TypeError(`Attribute '${spent.join(".")}' of schema '${this.id}' does not declare subAttribute '${target}'`);
+            }
+    
+            return attribute;
+        }
+    }
+    
+    /**
      * Extend a schema definition instance by mixing in other schemas or attributes
      * @param {Array[Schema|Attribute>]} extensions[] - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
