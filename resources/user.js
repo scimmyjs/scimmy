@@ -1,5 +1,5 @@
 import {Resource, Error as SCIMError} from "../types.js";
-import {ListResponse} from "../messages.js";
+import {ListResponse, PatchOp} from "../messages.js";
 import {User as UserSchema} from "../schemas.js";
 
 /**
@@ -88,6 +88,7 @@ export class User extends Resource {
     /** @implements {Resource#write} */
     async write(instance) {
         try {
+            // TODO: handle incoming read-only and immutable attribute tests
             return new UserSchema(
                 await User.#ingress(this, new UserSchema(instance, "in")),
                 "out", User.basepath(), this.attributes
@@ -97,6 +98,12 @@ export class User extends Resource {
             else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
             else throw new SCIMError(404, null, `Resource ${this.id} not found`);
         }
+    }
+    
+    /** @implements {Resource#patch} */
+    async patch(request) {
+        // TODO: write back the resource after patch
+        return new PatchOp(request, new UserSchema((await User.#egress(this)).shift(), "out")).apply();
     }
     
     /** @implements {Resource#dispose} */
