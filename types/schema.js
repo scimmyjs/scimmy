@@ -211,7 +211,7 @@ export class SchemaDefinition {
             }
         }
         
-        return SchemaDefinition.#filter(target, filter, this.attributes);
+        return SchemaDefinition.#filter(target, {...filter}, this.attributes);
     }
     
     /**
