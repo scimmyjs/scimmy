@@ -207,10 +207,11 @@ export class Attribute {
                     
                     // Evaluate complex attribute's sub-attributes
                     if (isComplexMultiValue) {
+                        let resource = {};
+                        
                         // Go through each sub-attribute for coercion
                         for (let subAttribute of this.subAttributes) {
-                            let {name} = subAttribute,
-                                resource = {};
+                            let {name} = subAttribute;
                             
                             // Predefine getters and setters for all possible sub-attributes
                             Object.defineProperty(target, name, {
@@ -229,9 +230,20 @@ export class Attribute {
                                     }
                                 }
                             });
+                        }
+                        
+                        // Prevent changes to target
+                        Object.freeze(target);
+                        
+                        // Then add specified values to the target, invoking sub-attribute coercion
+                        for (let [key, value] of Object.entries(source)) try {
+                            target[`${key[0].toLowerCase()}${key.slice(1)}`] = value;
+                        } catch (ex) {
+                            // Attempted to add an undeclared attribute to the value
+                            if (ex instanceof TypeError && ex.message.endsWith("not extensible"))
+                                ex.message = `Complex attribute '${this.name}' does not declare subAttribute '${key}'`;
                             
-                            // Add the value to the target, invoking sub-attribute coercion
-                            target[name] = source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`];
+                            throw ex;
                         }
                     } else {
                         // Go through each value and coerce their sub-attributes
