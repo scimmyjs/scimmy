@@ -45,6 +45,36 @@ const uniqueness = [
 ];
 
 /**
+ * Attribute value validation method container
+ * @type {{date: validate.date, canonical: validate.canonical}}
+ */
+const validate = {
+    /**
+     * If the attribute has canonical values, make sure value is one of them
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    canonical: (attrib, value) => {
+        if (Array.isArray(attrib.canonicalValues) && !attrib.canonicalValues.includes(value))
+            throw new TypeError(`Attribute '${attrib.name}' does not include canonical value '${value}'`);
+    },
+    
+    /**
+     * Check if value is a valid date
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    date: (attrib, value) => {
+        let date = new Date(value);
+        // Start with the simple date validity test
+        if (!(date.toString() !== "Invalid Date"
+            // Move on to the complex test, as for some reason strings like "Testing, 1, 2" parse as valid dates...
+            && date.toISOString().match(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])(T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?)?$/)))
+            throw new TypeError(`Attribute '${attrib.name}' expected value to be a valid date`);
+    }
+}
+
+/**
  * SCIM Attribute
  */
 export class Attribute {
@@ -76,6 +106,10 @@ export class Attribute {
         };
         
         if (type === "complex") this.subAttributes = [...subAttributes];
+        
+        // Prevent this attribute definition from changing!
+        // Note: config and subAttributes can still be modified, just not replaced.
+        Object.freeze(this);
     }
     
     /**
@@ -134,7 +168,10 @@ export class Attribute {
             // If the attribute is multi-valued, make sure its value is a collection
             if (!isComplexMultiValue && multiValued && source !== undefined && !Array.isArray(source))
                 throw new TypeError(`Attribute '${this.name}' expected to be a collection`);
-            // If the attribute has canonical values, make sure it matches
+            // If the attribute is NOT multi-valued, make sure its value is NOT a collection
+            if (!multiValued && Array.isArray(source))
+                throw new TypeError(`Attribute '${this.name}' is not multi-valued and must not be a collection`);
+            // If the attribute specifies canonical values, make sure all values are valid
             if (Array.isArray(canonicalValues) && (!(multiValued ? (source ?? []).every(v => canonicalValues.includes(v)) : canonicalValues.includes(source))))
                 throw new TypeError(`Attribute '${this.name}' contains non-canonical value`);
             
@@ -142,22 +179,27 @@ export class Attribute {
             if (source !== undefined) switch (this.type) {
                 case "string":
                     // Cast supplied values into strings
-                    return (multiValued ? source.map(v => String(v)) : String(source));
+                    return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) => (target[key] = validate.canonical(this, value) ?? value)
+                    }));
                 
                 case "dateTime":
-                    // Check if value is a valid date
-                    let validate = (v) => (new Date(v).toString() !== "Invalid Date");
-                    
                     // Throw error if all values aren't valid dates
-                    if (!(multiValued ? source.every(validate) : validate(source)))
-                        throw new TypeError(`Attribute '${this.name}' expected value to be a valid date`);
+                    for (let value of (multiValued ? source : [source])) validate.date(this, value);
                     
                     // Convert date values to ISO strings
-                    return (multiValued ? source.map(v => new Date(v).toISOString()) : new Date(source).toISOString());
+                    return (!multiValued ? new Date(source).toISOString() : new Proxy(source.map(v => new Date(v).toISOString()), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) => (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? value)
+                    }));
                 
                 case "boolean":
                     // Cast supplied values into booleans
-                    return (multiValued ? source.map(v => !!v) : !!source);
+                    return (!multiValued ? !!source : new Proxy(source.map(v => !!v), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) => (target[key] = !!value)
+                    }));
                 
                 case "complex":
                     // Prepare for a complex attribute's values
@@ -167,15 +209,29 @@ export class Attribute {
                     if (isComplexMultiValue) {
                         // Go through each sub-attribute for coercion
                         for (let subAttribute of this.subAttributes) {
-                            let {name, config: {required}} = subAttribute;
+                            let {name} = subAttribute,
+                                resource = {};
                             
-                            // If the value is defined or required, coerce it
-                            if (name in source || `${name[0].toUpperCase()}${name.slice(1)}` in source || required) {
-                                let value = subAttribute.coerce(source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`], direction);
-                                
-                                // If the value is not empty, apply it to the target
-                                if (value !== undefined) target[name] = value;
-                            }
+                            // Predefine getters and setters for all possible sub-attributes
+                            Object.defineProperty(target, name, {
+                                enumerable: true,
+                                // Get and set the value from the internally scoped object
+                                get: () => (resource[name]),
+                                // Validate the supplied value through attribute coercion
+                                set: (value) => {
+                                    try {
+                                        // console.log(this.name, name, value);
+                                        return (resource[name] = subAttribute.coerce(value, direction))
+                                    } catch (ex) {
+                                        // Add additional context
+                                        ex.message += ` from complex attribute '${this.name}'`;
+                                        throw ex;
+                                    }
+                                }
+                            });
+                            
+                            // Add the value to the target, invoking sub-attribute coercion
+                            target[name] = source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`];
                         }
                     } else {
                         // Go through each value and coerce their sub-attributes
@@ -185,7 +241,11 @@ export class Attribute {
                     }
                     
                     // Return the collection, or the coerced complex value
-                    return (multiValued || isComplexMultiValue ? target : target.pop());
+                    return (!(multiValued || isComplexMultiValue) ? target.pop() : new Proxy(target, {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) =>
+                            (!!(target[key] = (Number.isInteger(Number(key)) ? this.coerce(value, direction, true) : value)))
+                    }));
                 
                 default:
                     // TODO: decimal, integer, and reference handlers
