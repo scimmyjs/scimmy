@@ -13,13 +13,39 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
  */
 export class Filter extends Array {
     /**
-     * Instantiate and parse a new SCIM filter string
-     * @param {String} [query] - the query string to parse
+     * Instantiate and parse a new SCIM filter string or expression
+     * @param {String|Object[]} [query] - the query string to parse, or an existing set of filter expressions
      */
     constructor(query = "") {
-        super();
+        super(...(Array.isArray(query) ? query : []));
         Object.setPrototypeOf(this, Filter.prototype);
-        if (query.length) this.splice(0, 0, ...Filter.#parse(String(query)));
+        if (typeof query === "string" && query.length) this.splice(0, 0, ...Filter.#parse(String(query)));
+    }
+    
+    /**
+     * Compare and filter a given set of values against this filter instance
+     * @param {Object[]} values - values to evaluate filters against
+     * @return {Object[]} subset of values that match any expressions of this filter instance
+     */
+    match(values) {
+        // Match against any of the filters in the set
+        return values.filter(value => [...this]
+            .some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, [comparator, expected]]) => {
+                // Cast true and false strings to boolean values
+                expected = (expected === "false" ? false : (expected === "true" ? true : expected));
+                
+                switch (comparator) {
+                    case "pr":
+                        return attr in value;
+                    
+                    case "eq":
+                        return value[attr] === expected;
+                    
+                    case "ne":
+                        return value[attr] !== expected;
+                }
+            })))
+        );
     }
     
     /**
