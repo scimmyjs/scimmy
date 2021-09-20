@@ -221,7 +221,6 @@ export class Attribute {
                                 // Validate the supplied value through attribute coercion
                                 set: (value) => {
                                     try {
-                                        // console.log(this.name, name, value);
                                         return (resource[name] = subAttribute.coerce(value, direction))
                                     } catch (ex) {
                                         // Add additional context
