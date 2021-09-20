@@ -1,4 +1,5 @@
 import {Attribute} from "./attribute.js";
+import {Filter} from "./filter.js";
 
 /**
  * SCIM Schema Definition
@@ -88,6 +89,9 @@ export class SchemaDefinition {
                 // If nothing found, the attribute doesn't declare the target as a sub-attribute
                 if (attribute === undefined)
                     throw new TypeError(`Attribute '${spent.join(".")}' of schema '${this.id}' does not declare subAttribute '${target}'`);
+                
+                // Add the found attribute to the spent path
+                spent.push(target);
             }
     
             return attribute;
@@ -185,25 +189,7 @@ export class SchemaDefinition {
         // If there's no filter, just return the data
         if (filter === undefined) return data;
         // If the data is a set, only get values that match the filter
-        else if (Array.isArray(data)) {
-            return data.filter(value => (Array.isArray(filter) ? filter : [filter])
-                // Match against any of the filters in the set
-                .some(f => Object.entries(f).every(([attr, [comparator, expected]]) => {
-                    // Cast true and false strings to boolean values
-                    expected = (expected === "false" ? false : (expected === "true" ? true : expected));
-                    
-                    switch (comparator) {
-                        case "pr":
-                            return attr in value;
-                        
-                        case "eq":
-                            return value[attr] === expected;
-                        
-                        case "ne":
-                            return value[attr] !== expected;
-                    }
-                })));
-        }
+        else if (Array.isArray(data)) return new Filter([filter]).match(data);
         // Otherwise, filter the data!
         else {
             // Check for any negative filters
