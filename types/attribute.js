@@ -240,8 +240,12 @@ export class Attribute {
                             target[`${key[0].toLowerCase()}${key.slice(1)}`] = value;
                         } catch (ex) {
                             // Attempted to add an undeclared attribute to the value
-                            if (ex instanceof TypeError && ex.message.endsWith("not extensible"))
-                                ex.message = `Complex attribute '${this.name}' does not declare subAttribute '${key}'`;
+                            if (ex instanceof TypeError && ex.message.endsWith("not extensible")) {
+                                ex.message = `Complex attribute '${this.name}' `
+                                    + (typeof source !== "object" || Array.isArray(source)
+                                    ? `expected complex value but received '${source}'`
+                                    : `does not declare subAttribute '${key}'`);
+                            }
                             
                             throw ex;
                         }
