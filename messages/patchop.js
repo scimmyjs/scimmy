@@ -1,11 +1,12 @@
 import {isDeepStrictEqual} from "util";
-import {Error as SCIMError, SchemaDefinition, Attribute} from "../types.js";
+import {Error as SCIMError, SchemaDefinition, Filter} from "../types.js";
 
-/**
- * List of valid SCIM patch operations
- * @type {string[]}
- */
+// List of valid SCIM patch operations
 const validOps = ["add", "remove", "replace"];
+// Split a path by fullstops when they aren't in a filter group or decimal
+const pathSeparator = /((?!(?!\w)\d)|(?!\[.*?))\.((?!.*?\])|(?!\d(?!\w)))/g;
+// Extract attributes and filter strings from path parts
+const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
 
 /**
  * SCIM Patch Operation Message Type
@@ -103,6 +104,64 @@ export class PatchOp {
     }
     
     /**
+     * Dig in to an operation's path, making sure it is valid, and yields actual targets to patch
+     * @param {Number} index - the operation's location in the list of operations, for use in error messages
+     * @param {String} path - specifies path to the attribute or value being patched
+     * @param {String} op - the operation being performed, for use in error messages
+     * @return {{complex: boolean, property: string, multiValued: boolean, targets: [Schema[]|Object[]]}}
+     */
+    #resolve(index, path, op) {
+        // Work out parts of the supplied path
+        let paths = path.split(pathSeparator).filter(p => p),
+            targets = [this.#target],
+            property, attribute;
+        
+        try {
+            // Remove any filters from the path and attempt to get targeted attribute definition
+            attribute = this.#schema.attribute(paths.map(p => p.replace(multiValuedFilter, "$1")).join("."));
+        } catch {
+            // Rethrow exceptions as SCIM errors when attribute wasn't found
+            throw new SCIMError(400, "invalidPath", `Invalid path '${path}' for '${op}' op of operation ${index} in PatchOp request body`);
+        }
+        
+        // Traverse the path
+        while (paths.length > 0) {
+            let path = paths.shift(),
+                // Work out if path contains a filter expression
+                [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
+            
+            // We have arrived at our destination
+            if (paths.length === 0) property = key;
+            
+            // Traverse deeper into each existing target
+            for (let target of targets.splice(0)) {
+                try {
+                    if (filter !== undefined) {
+                        // If a filter is specified, apply it to the target and add results back to targets
+                        targets.push(...(new Filter(filter).match(target[key])));
+                    } else {
+                        // Add the traversed value to targets, or back out if already arrived
+                        targets.push(paths.length > 0 ? target[key] : target);
+                    }
+                } catch {
+                    // Nothing to do here, carry on
+                }
+            }
+        }
+        
+        // No targets, bail out!
+        if (targets.length === 0)
+            throw new SCIMError(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
+    
+        return {
+            complex: (attribute instanceof SchemaDefinition ? true : attribute.type === "complex"),
+            multiValued: attribute?.config?.multiValued ?? false,
+            property: property,
+            targets: targets
+        };
+    }
+    
+    /**
      * Perform the "add" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} [path] - if supplied, specifies path to the attribute being added
@@ -116,8 +175,8 @@ export class PatchOp {
             
             // Go through and add the data specified by value
             for (let [key, val] of Object.entries(value)) {
-                try {
-                    // TODO: handle add operation for multiValue attributes
+                if (typeof value[key] === "object") this.add(index, key, value[key]);
+                else try {
                     this.#target[key] = val;
                 } catch (ex) {
                     if (ex instanceof SCIMError) {
@@ -131,7 +190,30 @@ export class PatchOp {
                 }
             }
         } else {
-            // TODO: handle when path specified...
+            // Validate and extract details about the operation
+            let {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
+            
+            // Go and apply the operation to matching targets
+            for (let target of targets) {
+                try {
+                    // The target is expected to be a collection
+                    if (multiValued) {
+                        // Wrap objects as arrays
+                        let values = (Array.isArray(value) ? value : [value]);
+    
+                        // Add the values to the existing collection, or create a new one if it doesn't exist yet
+                        if (Array.isArray(target[property])) target[property].push(...values);
+                        else target[property] = values;
+                    }
+                    // The target is a complex attribute - add specified values to it
+                    else if (complex) Object.assign(target[property], value);
+                    // The target is not a collection or a complex attribute - assign the value
+                    else target[property] = value;
+                } catch (ex) {
+                    // Rethrow exceptions as SCIM errors
+                    throw new SCIMError(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                }
+            }
         }
     }
     
