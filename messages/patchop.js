@@ -1,5 +1,5 @@
 import {isDeepStrictEqual} from "util";
-import {Error as SCIMError, SchemaDefinition, Filter} from "../types.js";
+import {Error as SCIMError, Schema, SchemaDefinition, Filter} from "../types.js";
 
 // List of valid SCIM patch operations
 const validOps = ["add", "remove", "replace"];
@@ -74,6 +74,10 @@ export class PatchOp {
                 throw new SCIMError(400, "invalidPath", `Invalid path '${path}' for operation ${index} in PatchOp request body`);
         }
         
+        // Bail out if resource is specified, and it's not a Schema instance
+        if (!(resource instanceof Schema) && resource !== undefined)
+            throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
+        
         // Store details about the resource being patched
         this.#schema = resource.constructor.definition;
         this.#source = resource;
@@ -86,9 +90,10 @@ export class PatchOp {
     
     /**
      * Apply patch operations to a resource as defined by the PatchOp instance
-     * @return {Schema|Schema[]}
+     * @param {Function} [finalise} - method to call when all operations are complete, to feed target back through model
+     * @return {Schema|Schema[]} an instance of the resource modified as per the included patch operations
      */
-    apply() {
+    async apply(finalise) {
         // Go through all specified operations
         for (let operation of this.Operations) {
             let index = (this.Operations.indexOf(operation) + 1),
@@ -98,8 +103,12 @@ export class PatchOp {
             this[op.toLowerCase()](index, path, value);
         }
         
+        // If finalise is a method, feed it the target to retrieve final representation of resource
+        if (typeof finalise === "function")
+            this.#target = new this.#target.constructor(await finalise(this.#target), "out");
+        
         // Only return value if something has changed
-        if (!isDeepStrictEqual(this.#source, this.#target))
+        if (!isDeepStrictEqual({...this.#source, meta: undefined}, {...this.#target, meta: undefined}))
             return this.#target;
     }
     
