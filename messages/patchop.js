@@ -229,9 +229,53 @@ export class PatchOp {
      * Perform the "remove" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute being removed
+     * @param {*|*[]} value - value being removed from the resource or attribute specified by path
      */
-    remove(index, path) {
-        // TODO: remove op...
+    remove(index, path, value) {
+        // Validate and extract details about the operation
+        let {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
+        
+        // If there's a property defined, we have an easy target for removal
+        if (property) {
+            // Go through and remove the property from the targets
+            for (let target of targets) {
+                try {
+                    // No value filter defined, or target is not multi-valued - unset the property
+                    if (value === undefined || !multiValued) target[property] = undefined;
+                    // Multi-valued target, attempt removal of matching values from attribute
+                    else if (multiValued) {
+                        // Make sure filter values is an array for easy use of "includes" comparison when filtering
+                        let values = (Array.isArray(value) ? value : [value]),
+                            // If values are complex, build a filter to match with - otherwise just use values
+                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Filter(values
+                                .map(f => Object.entries(f)
+                                    // Get rid of any empty values from the filter
+                                    .filter(([, value]) => value !== undefined)
+                                    // Turn it into an equity filter string
+                                    .map(([key, value]) => (`${key} eq ${value}`)).join(" and "))
+                                .join(" or "))
+                                // Get any matching values from the filter
+                                .match(target[property]));
+                        
+                        // Filter out any values that exist in removals list
+                        target[property] = (target[property] ?? []).filter(v => !removals.includes(v));
+                        // Unset the property if it's now empty
+                        if (target[property].length === 0) target[property] = undefined;
+                    }
+                } catch (ex) {
+                    // Rethrow exceptions as SCIM errors
+                    throw new SCIMError(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                }
+            }
+        } else {
+            // Get path to the parent attribute having values removed
+            let parentPath = path.split(pathSeparator).filter(v => v)
+                .map((path, index, paths) => (index < paths.length-1 ? path : path.replace(multiValuedFilter, "$1")))
+                .join(".");
+            
+            // Remove targeted values from parent attributes
+            this.remove(index, parentPath, targets);
+        }
     }
     
     /**
@@ -241,6 +285,15 @@ export class PatchOp {
      * @param {*|*[]} value - value being replaced on the resource or attribute specified by path
      */
     replace(index, path, value) {
-        // TODO: replace op...
+        try {
+            // Call remove, then call add!
+            if (path !== undefined) this.remove(index, path);
+            this.add(index, path, value);
+        } catch (ex) {
+            // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
+            let forReplaceOp = "for 'replace' op";
+            ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
+            throw ex;
+        }
     }
 }
