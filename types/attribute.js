@@ -256,11 +256,11 @@ export class Attribute {
                     }
                     
                     // Return the collection, or the coerced complex value
-                    return (!(multiValued || isComplexMultiValue) ? target.pop() : new Proxy(target, {
+                    return (isComplexMultiValue ? target : (!multiValued ? target.pop() : new Proxy(target, {
                         // Wrap the resulting collection with coercion
                         set: (target, key, value) =>
                             (!!(target[key] = (Number.isInteger(Number(key)) ? this.coerce(value, direction, true) : value)))
-                    }));
+                    })));
                 
                 default:
                     // TODO: decimal, integer, and reference handlers
