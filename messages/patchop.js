@@ -114,11 +114,12 @@ export class PatchOp {
         // Work out parts of the supplied path
         let paths = path.split(pathSeparator).filter(p => p),
             targets = [this.#target],
-            property, attribute;
+            property, attribute, multiValued;
         
         try {
             // Remove any filters from the path and attempt to get targeted attribute definition
             attribute = this.#schema.attribute(paths.map(p => p.replace(multiValuedFilter, "$1")).join("."));
+            multiValued = attribute?.config?.multiValued ?? false;
         } catch {
             // Rethrow exceptions as SCIM errors when attribute wasn't found
             throw new SCIMError(400, "invalidPath", `Invalid path '${path}' for '${op}' op of operation ${index} in PatchOp request body`);
@@ -131,7 +132,10 @@ export class PatchOp {
                 [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
             
             // We have arrived at our destination
-            if (paths.length === 0) property = key;
+            if (paths.length === 0) {
+                property = (!filter ? key : false);
+                multiValued = (multiValued ? !filter : multiValued);
+            }
             
             // Traverse deeper into each existing target
             for (let target of targets.splice(0)) {
@@ -155,7 +159,7 @@ export class PatchOp {
     
         return {
             complex: (attribute instanceof SchemaDefinition ? true : attribute.type === "complex"),
-            multiValued: attribute?.config?.multiValued ?? false,
+            multiValued: multiValued,
             property: property,
             targets: targets
         };
@@ -200,13 +204,17 @@ export class PatchOp {
                     if (multiValued) {
                         // Wrap objects as arrays
                         let values = (Array.isArray(value) ? value : [value]);
-    
+                        
                         // Add the values to the existing collection, or create a new one if it doesn't exist yet
                         if (Array.isArray(target[property])) target[property].push(...values);
                         else target[property] = values;
                     }
                     // The target is a complex attribute - add specified values to it
-                    else if (complex) Object.assign(target[property], value);
+                    else if (complex) {
+                        if (!property) Object.assign(target, value);
+                        else if (target[property] === undefined) target[property] = value;
+                        else Object.assign(target[property], value);
+                    }
                     // The target is not a collection or a complex attribute - assign the value
                     else target[property] = value;
                 } catch (ex) {
