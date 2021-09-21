@@ -102,8 +102,15 @@ export class User extends Resource {
     
     /** @implements {Resource#patch} */
     async patch(request) {
-        // TODO: write back the resource after patch
-        return new PatchOp(request, new UserSchema((await User.#egress(this)).shift(), "out")).apply();
+        try {
+            return await new PatchOp(request, new UserSchema((await User.#egress(this)).shift(), "out"))
+                .apply(async (instance) => await User.#ingress(this, instance))
+                .then(instance => !instance ? undefined : new UserSchema(instance, "out", User.basepath(), this.attributes));
+        } catch (ex) {
+            if (ex instanceof SCIMError) throw ex;
+            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+        }
     }
     
     /** @implements {Resource#dispose} */

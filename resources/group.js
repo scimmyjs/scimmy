@@ -1,6 +1,6 @@
 import {Resource, Error as SCIMError} from "../types.js";
 import {ListResponse, PatchOp} from "../messages.js";
-import {Group as GroupSchema, User as UserSchema} from "../schemas.js";
+import {Group as GroupSchema} from "../schemas.js";
 
 /**
  * SCIM Group Resource
@@ -102,8 +102,15 @@ export class Group extends Resource {
     
     /** @implements {Resource#patch} */
     async patch(request) {
-        // TODO: write back the resource after patch
-        return new PatchOp(request, new GroupSchema((await Group.#egress(this)).shift(), "out")).apply();
+        try {
+            return await new PatchOp(request, new GroupSchema((await Group.#egress(this)).shift(), "out"))
+                .apply(async (instance) => await Group.#ingress(this, instance))
+                .then(instance => !instance ? undefined : new GroupSchema(instance, "out", Group.basepath(), this.attributes));
+        } catch (ex) {
+            if (ex instanceof SCIMError) throw ex;
+            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
+            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+        }
     }
     
     /** @implements {Resource#dispose} */
