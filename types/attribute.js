@@ -2,47 +2,25 @@
  * Collection of valid attribute type characteristic's values
  * @type {string[]}
  */
-const type = [
-    "string",
-    "complex",
-    "boolean",
-    "decimal",
-    "integer",
-    "dateTime",
-    "reference"
-];
+const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
 
 /**
  * Collection of valid attribute mutability characteristic's values
  * @type {string[]}
  */
-const mutability = [
-    "readOnly",
-    "readWrite",
-    "immutable",
-    "writeOnly"
-];
+const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
 
 /**
  * Collection of valid attribute returned characteristic's values
  * @type {string[]}
  */
-const returned = [
-    "always",
-    "never",
-    "default",
-    "request"
-];
+const returned = ["always", "never", "default", "request"];
 
 /**
  * Collection of valid attribute uniqueness characteristic's values
  * @type {string[]}
  */
-const uniqueness = [
-    "none",
-    "server",
-    "global"
-];
+const uniqueness = ["none", "server", "global"];
 
 /**
  * Attribute value validation method container
@@ -96,10 +74,18 @@ export class Attribute {
      * @param {Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        // TODO: validate attribute type, mutability, returned, and uniqueness values
+        // Make sure name and type are supplied, and type is valid
+        if (typeof type !== "string")
+            throw new TypeError(`Required parameter 'type' missing from Attribute instantiation`);
+        if (typeof name !== "string")
+            throw new TypeError(`Required parameter 'name' missing from Attribute instantiation`);
+        if (!types.includes(type))
+            throw new TypeError(`Type '${type}' not recognised in attribute definition '${name}'`);
+        
         this.type = type;
         this.name = name;
         this.config = {
+            // TODO: validate attribute mutability, returned, and uniqueness values
             required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
             description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
             ...config
@@ -178,6 +164,7 @@ export class Attribute {
             // If the source has a value, parse it
             if (source !== undefined) switch (this.type) {
                 case "string":
+                    // TODO: validate strings
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
