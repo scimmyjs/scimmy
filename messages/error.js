@@ -1,3 +1,10 @@
+// HTTP response status codes and SCIM detail error keywords specified by RFC7644§3.12
+const validStatusCodes = [307, 308, 400, 401, 403, 404, 409, 412, 413, 500, 501];
+const validScimTypes = [
+    "invalidFilter", "tooMany", "uniqueness", "mutability", "invalidSyntax",
+    "invalidPath", "noTarget", "invalidValue", "invalidVers", "sensitive"
+];
+
 /**
  * SCIM Error Message Type
  */
@@ -15,9 +22,18 @@ export class Error {
      * @param {String} detail - a human-readable description of what caused the error to occur
      */
     constructor(status, scimType, detail) {
-        // TODO: validate the contents of the instantiated Error message
         this.schemas = [Error.#id];
-        this.status = status;
+        
+        // Validate the supplied parameters
+        if (!validStatusCodes.includes(Number(status)))
+            throw new TypeError(`Incompatible HTTP status code '${status}' supplied to SCIM Error Message constructor`);
+        if (!!scimType && !validScimTypes.includes(scimType))
+            throw new TypeError(`Unknown detail error keyword '${scimType}' supplied to SCIM Error Message constructor`);
+        if (!!scimType && Number(status) !== 400)
+            throw new TypeError(`HTTP status code must be '400' when detail error keyword supplied to SCIM Error Message constructor`);
+        
+        // No exceptions thrown, assign the parameters to the instance
+        this.status = String(status);
         if (!!scimType) this.scimType = scimType;
         this.detail = detail;
     }
