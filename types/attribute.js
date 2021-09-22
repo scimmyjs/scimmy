@@ -43,7 +43,7 @@ const validate = {
      * @param {*} value - the value being validated
      */
     string: (attrib, value) => {
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
                 ? "single value of type 'string'" : "value type 'string' but found type 'complex'"));
@@ -74,7 +74,7 @@ const validate = {
             isNum = !!String(value).match(/^\d+?(\.\d+)?$/),
             isInt = isNum && !String(value).includes(".");
         
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
             throw new TypeError(`Attribute '${name}' expected ` + (Array.isArray(value)
                 ? `single value of type '${type}'` : `value type '${type}' but found type 'complex'`));
@@ -99,7 +99,7 @@ const validate = {
     binary: (attrib, value) => {
         let message;
         
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
             else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
@@ -129,7 +129,7 @@ const validate = {
             typeReferences = attrib.config.referenceTypes.filter(t => !["uri", "external"].includes(t)),
             message;
         
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
             else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
