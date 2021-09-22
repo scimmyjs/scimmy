@@ -176,6 +176,13 @@ export class Resource {
             // Convert attributes into a filter string, and instantiate a new filter
             this.attributes = new Filter(params.attributes.split(",").map(a => `${a} pr`).join(" and "));
         }
+        
+        // Handle sort and pagination parameters
+        for (let key of ["sortBy", "sortOrder", "startIndex", "count"]) {
+            if (params[key] !== undefined) {
+                this.meta = Object.assign(this.meta ?? {}, {[key]: params[key]});
+            }
+        }
     }
     
     /**
