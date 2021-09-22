@@ -38,6 +38,21 @@ const validate = {
     },
     
     /**
+     * If the attribute type is string, make sure value can safely be cast to string
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    string: (attrib, value) => {
+        if (typeof value === "object") {
+            if (!Array.isArray(value)) {
+                throw new TypeError(`Attribute '${attrib.name}' expected value type 'string' but found type 'complex'`);
+            } else {
+                throw new TypeError(`Attribute '${attrib.name}' expected single value of type 'string'`);
+            }
+        }
+    },
+    
+    /**
      * Check if value is a valid date
      * @param {Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
@@ -196,11 +211,14 @@ export class Attribute {
             // If the source has a value, parse it
             if (source !== undefined) switch (this.type) {
                 case "string":
-                    // TODO: validate strings
+                    // Throw error if all values can't be safely cast to strings
+                    for (let value of (multiValued ? source : [source])) validate.string(this, value);
+                    
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (target[key] = validate.canonical(this, value) ?? value)
+                        set: (target, key, value) =>
+                            (target[key] = validate.canonical(this, value) ?? validate.string(this, value) ?? value)
                     }));
                 
                 case "dateTime":
@@ -210,7 +228,8 @@ export class Attribute {
                     // Convert date values to ISO strings
                     return (!multiValued ? new Date(source).toISOString() : new Proxy(source.map(v => new Date(v).toISOString()), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? value)
+                        set: (target, key, value) =>
+                            (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? value)
                     }));
                 
                 case "boolean":
