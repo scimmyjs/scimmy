@@ -92,6 +92,33 @@ const validate = {
     },
     
     /**
+     * If the attribute type is binary, make sure value can safely be cast to buffer
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    binary: (attrib, value) => {
+        let message;
+        
+        if (typeof value === "object") {
+            // Catch case where value is an object or array
+            if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
+            else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
+        } else {
+            // Start by assuming value is not binary or base64
+            message = `Attribute '${attrib.name}' expected value type 'binary' to be base64 encoded string or binary octet stream`;
+            
+            try {
+                message = (!!Buffer.from(value) ? false : message);
+            } catch {
+                // Value is invalid, nothing to do here
+            }
+        }
+        
+        // If there is a message, throw it!
+        if (!!message) throw new TypeError(message);
+    },
+    
+    /**
      * If the attribute type is reference, make sure value is a reference
      * @param {Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
@@ -330,6 +357,17 @@ export class Attribute {
                             (target[key] = validate.canonical(this, value) ?? validate.reference(this, value) ?? String(value))
                     }));
                 
+                case "binary":
+                    // Throw error if all values can't be safely cast to buffers
+                    for (let value of (multiValued ? source : [source])) validate.binary(this, value);
+                    
+                    // Cast supplied values into strings
+                    return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) =>
+                            (target[key] = validate.canonical(this, value) ?? validate.binary(this, value) ?? String(value))
+                    }));
+                
                 case "boolean":
                     // Cast supplied values into booleans
                     return (!multiValued ? !!source : new Proxy(source.map(v => !!v), {
@@ -399,7 +437,6 @@ export class Attribute {
                     })));
                 
                 default:
-                    // TODO: binary handler
                     return source;
             }
         }
