@@ -24,7 +24,7 @@ const uniqueness = ["none", "server", "global"];
 
 /**
  * Attribute value validation method container
- * @type {{date: validate.date, canonical: validate.canonical}}
+ * @type {{canonical: validate.canonical, string: validate.string, date: validate.date, number: validate.number, reference: validate.reference}}
  */
 const validate = {
     /**
@@ -44,11 +44,9 @@ const validate = {
      */
     string: (attrib, value) => {
         if (typeof value === "object") {
-            if (!Array.isArray(value)) {
-                throw new TypeError(`Attribute '${attrib.name}' expected value type 'string' but found type 'complex'`);
-            } else {
-                throw new TypeError(`Attribute '${attrib.name}' expected single value of type 'string'`);
-            }
+            // Catch array and object values as they will not cast to string as expected
+            throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
+                ? "single value of type 'string'" : "value type 'string' but found type 'complex'"));
         }
     },
     
@@ -77,16 +75,70 @@ const validate = {
             isInt = isNum && !String(value).includes(".");
         
         if (typeof value === "object") {
+            // Catch case where value is an object or array
             throw new TypeError(`Attribute '${name}' expected ` + (Array.isArray(value)
                 ? `single value of type '${type}'` : `value type '${type}' but found type 'complex'`));
         }
         
+        // Not a number
         if (!isNum)
             throw new TypeError(`Attribute '${name}' expected value type '${type}' but found type '${typeof value}'`);
+        // Expected decimal, got integer
         if (type === "decimal" && isInt)
             throw new TypeError(`Attribute '${name}' expected value type 'decimal' but found type 'integer'`);
+        // Expected integer, got decimal
         if (type === "integer" && !isInt)
             throw new TypeError(`Attribute '${name}' expected value type 'integer' but found type 'decimal'`);
+    },
+    
+    /**
+     * If the attribute type is reference, make sure value is a reference
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    reference: (attrib, value) => {
+        let listReferences = attrib.config.referenceTypes.map(t => `'${t}'`).join(", "),
+            coreReferences = attrib.config.referenceTypes.filter(t => ["uri", "external"].includes(t)),
+            typeReferences = attrib.config.referenceTypes.filter(t => !["uri", "external"].includes(t)),
+            message;
+        
+        if (typeof value === "object") {
+            // Catch case where value is an object or array
+            if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
+            else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
+        } else if (listReferences.length === 0) {
+            // If the referenceTypes list is empty, no value can match
+            message = `Attribute '${attrib.name}' with type 'reference' does not specify any referenceTypes`;
+        } else {
+            // Start by assuming no reference types match
+            message = `Attribute '${attrib.name}' expected value type 'reference' to refer to one of: ${listReferences}`;
+            
+            // Check for any valid resource type references, if any provided
+            if (typeReferences.some(t => (String(value).startsWith(t) || (String(value).includes(`/${t}`))))) {
+                message = false;
+            }
+            // If reference types includes external, make sure value is a valid URL with hostname
+            else if (coreReferences.includes("external")) {
+                try {
+                    message = (!!new URL(value).hostname ? false : message);
+                } catch {
+                    // Value is invalid, nothing to do here
+                }
+            }
+            // If reference types includes URI, make sure value can be instantiated as a URL
+            else if (coreReferences.includes("uri")) {
+                try {
+                    // See if it can be parsed as a URL
+                    message = (new URL(value) ? false : message);
+                } catch {
+                    // See if it's a relative URI
+                    message = (String(value).startsWith("/") ? false : message);
+                }
+            }
+        }
+        
+        // If there is a message, throw it!
+        if (!!message) throw new TypeError(message);
     }
 }
 
@@ -254,7 +306,7 @@ export class Attribute {
                         set: (target, key, value) =>
                             (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? new Date(value).toISOString())
                     }));
-    
+                
                 case "decimal":
                 case "integer":
                     // Throw error if all values can't be safely cast to numbers
@@ -265,6 +317,17 @@ export class Attribute {
                         // Wrap the resulting collection with coercion
                         set: (target, key, value) =>
                             (target[key] = validate.canonical(this, value) ?? validate.number(this, value) ?? Number(value))
+                    }));
+                
+                case "reference":
+                    // Throw error if all values can't be safely cast to strings
+                    for (let value of (multiValued ? source : [source])) validate.reference(this, value);
+                    
+                    // Cast supplied values into strings
+                    return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) =>
+                            (target[key] = validate.canonical(this, value) ?? validate.reference(this, value) ?? String(value))
                     }));
                 
                 case "boolean":
@@ -336,7 +399,7 @@ export class Attribute {
                     })));
                 
                 default:
-                    // TODO: binary and reference handlers
+                    // TODO: binary handler
                     return source;
             }
         }
