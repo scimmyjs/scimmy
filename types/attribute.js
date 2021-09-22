@@ -74,18 +74,50 @@ export class Attribute {
      * @param {Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        // Make sure name and type are supplied, and type is valid
-        if (typeof type !== "string")
-            throw new TypeError(`Required parameter 'type' missing from Attribute instantiation`);
-        if (typeof name !== "string")
-            throw new TypeError(`Required parameter 'name' missing from Attribute instantiation`);
-        if (!types.includes(type))
-            throw new TypeError(`Type '${type}' not recognised in attribute definition '${name}'`);
+        let errorSuffix = `in attribute definition '${name}'`,
+            // Collect type and name values for validation
+            safelyTyped = [["type", type], ["name", name]],
+            // Collect canonicalValues and referenceTypes values for validation
+            safelyCollected = [["canonicalValues", config.canonicalValues], ["referenceTypes", config.referenceTypes]],
+            // Collect mutability, returned, and uniqueness values for validation
+            safelyConfigured = [
+                ["mutability", config.mutable, mutability],
+                ["returned", config.returned, returned],
+                ["uniqueness", config.uniqueness, uniqueness]
+            ];
         
+        // Make sure name and type are supplied, and type is valid
+        for (let [param, value] of safelyTyped) if (typeof value !== "string")
+            throw new TypeError(`Required parameter '${param}' missing from Attribute instantiation`);
+        if (!types.includes(type)) {
+            throw new TypeError(`Type '${type}' not recognised ${errorSuffix}`);
+        }
+        
+        // Make sure mutability, returned, and uniqueness config values are valid
+        for (let [key, value, values] of safelyConfigured) {
+            if ((typeof value === "string" && !values.includes(value))) {
+                throw new TypeError(`Attribute '${key}' value '${value}' not recognised ${errorSuffix}`);
+            } else if (value !== undefined && !["string", "boolean"].includes(typeof value)) {
+                throw new TypeError(`Attribute '${key}' value must be either string or boolean ${errorSuffix}`);
+            }
+        }
+        
+        // Make sure canonicalValues and referenceTypes are valid if they are specified
+        for (let [key, value] of safelyCollected) {
+            if (value !== undefined && value !== false && !Array.isArray(value)) {
+                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' ${errorSuffix}`)
+            }
+        }
+        
+        // Make sure attribute type is 'complex' if subAttributes are defined
+        if (subAttributes.length && type !== "complex") {
+            throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified ${errorSuffix}`);
+        }
+        
+        // Attribute config is valid, proceed
         this.type = type;
         this.name = name;
         this.config = {
-            // TODO: validate attribute mutability, returned, and uniqueness values
             required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
             description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
             ...config
