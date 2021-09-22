@@ -64,6 +64,29 @@ const validate = {
             // Move on to the complex test, as for some reason strings like "Testing, 1, 2" parse as valid dates...
             && date.toISOString().match(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])(T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?)?$/)))
             throw new TypeError(`Attribute '${attrib.name}' expected value to be a valid date`);
+    },
+    
+    /**
+     * If the attribute type is decimal or integer, make sure value can safely be cast to number
+     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    number: (attrib, value) => {
+        let {type, name} = attrib,
+            isNum = !!String(value).match(/^\d+?(\.\d+)?$/),
+            isInt = isNum && !String(value).includes(".");
+        
+        if (typeof value === "object") {
+            throw new TypeError(`Attribute '${name}' expected ` + (Array.isArray(value)
+                ? `single value of type '${type}'` : `value type '${type}' but found type 'complex'`));
+        }
+        
+        if (!isNum)
+            throw new TypeError(`Attribute '${name}' expected value type '${type}' but found type '${typeof value}'`);
+        if (type === "decimal" && isInt)
+            throw new TypeError(`Attribute '${name}' expected value type 'decimal' but found type 'integer'`);
+        if (type === "integer" && !isInt)
+            throw new TypeError(`Attribute '${name}' expected value type 'integer' but found type 'decimal'`);
     }
 }
 
@@ -218,7 +241,7 @@ export class Attribute {
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
                         set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.string(this, value) ?? value)
+                            (target[key] = validate.canonical(this, value) ?? validate.string(this, value) ?? String(value))
                     }));
                 
                 case "dateTime":
@@ -229,7 +252,19 @@ export class Attribute {
                     return (!multiValued ? new Date(source).toISOString() : new Proxy(source.map(v => new Date(v).toISOString()), {
                         // Wrap the resulting collection with coercion
                         set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? value)
+                            (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? new Date(value).toISOString())
+                    }));
+    
+                case "decimal":
+                case "integer":
+                    // Throw error if all values can't be safely cast to numbers
+                    for (let value of (multiValued ? source : [source])) validate.number(this, value);
+                    
+                    // Cast supplied values into numbers
+                    return (!multiValued ? Number(source) : new Proxy(source.map(v => Number(v)), {
+                        // Wrap the resulting collection with coercion
+                        set: (target, key, value) =>
+                            (target[key] = validate.canonical(this, value) ?? validate.number(this, value) ?? Number(value))
                     }));
                 
                 case "boolean":
@@ -301,7 +336,7 @@ export class Attribute {
                     })));
                 
                 default:
-                    // TODO: decimal, integer, and reference handlers
+                    // TODO: binary and reference handlers
                     return source;
             }
         }
