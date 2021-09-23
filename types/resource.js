@@ -1,4 +1,5 @@
 import {SCIMError} from "./error.js";
+import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
@@ -60,7 +61,7 @@ export class Resource {
      */
     static extend(extension, required) {
         if (!this.extensions.find(e => e.schema === extension)) {
-            this.extensions.push({schema: extension, required: required});
+            if (extension instanceof Schema) this.extensions.push({schema: extension, required: required});
             this.schema.extend(extension, required);
         }
         
