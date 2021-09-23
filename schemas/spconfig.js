@@ -12,7 +12,7 @@ export class ServiceProviderConfig extends Schema {
     
     /** @implements {Schema~#definition} */
     static #definition = new SchemaDefinition(
-        "Service Provider Configuration", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+        "ServiceProviderConfig", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
         "Schema for representing the service provider's configuration", [
             new Attribute("reference", "documentationUri", {mutable: false, referenceTypes: ["external"], description: "An HTTP-addressable URL pointing to the service provider's human-consumable help documentation."}),
             new Attribute("complex", "patch", {required: true, mutable: false, description: "A complex type that specifies PATCH configuration options."}, [
