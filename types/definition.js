@@ -180,7 +180,7 @@ export class SchemaDefinition {
             source = {
                 ...data, schemas: schemas, meta: {
                     ...(data?.meta ?? {}), resourceType: this.name,
-                    ...(typeof basepath === "string" ? {location: `${basepath}/${data.id}`} : {})
+                    ...(typeof basepath === "string" ? {location: `${basepath}${!!data.id ? `/${data.id}` : ""}`} : {})
                 }
             };
         
