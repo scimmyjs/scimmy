@@ -3,6 +3,7 @@ import {User} from "./resources/user.js";
 import {Group} from "./resources/group.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
+import Schemas from "./schemas.js";
 
 /**
  * SCIM Resources Container Class
@@ -51,11 +52,15 @@ export default class Resources {
                 Resources.#declared[name].degress(async (...r) => await config.degress(...r))
             
             // Register any supplied schema extensions
-            if (Array.isArray(config.extensions))
-                for (let {schema, required} of config.extensions) {
-                    Resources.#declared[name].extend(schema, required);
+            if (Array.isArray(config.extensions)) {
+                for (let {schema, attributes, required} of config.extensions) {
+                    Resources.#declared[name].extend(schema ?? attributes, required);
                 }
+            }
         }
+        
+        // Declare the resource type implementation's schema!
+        Schemas.declare(resource.schema.definition);
         
         // If config was supplied, return Resources, otherwise return the registered resource
         return (typeof config === "object" ? Resources : resource);
