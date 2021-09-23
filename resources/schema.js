@@ -46,13 +46,12 @@ export class Schema extends Resource {
     /** @implements {Resource#read} */
     async read() {
         if (!this.id) {
-            return new ListResponse(Object.entries(Schemas).map(([,S]) => S.definition.describe(Schema.basepath())));
+            return new ListResponse(Object.entries(Schemas.declared())
+                .map(([, S]) => S.describe(Schema.basepath())));
         } else {
             try {
-                return Object.entries(Schemas).map(([,S]) => S.definition)
-                    .find((s) => [s.id, s.name].includes(this.id))
-                    .describe(Schema.basepath());
-            } catch {
+                return Schemas.declared(this.id).describe(Schema.basepath());
+            } catch (ex) {
                 throw new SCIMError(404, null, `Schema ${this.id} not found`);
             }
         }
