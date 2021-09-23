@@ -248,8 +248,30 @@ export class Attribute {
     }
     
     /**
+     * Remove a subAttribute from a complex attribute definition
+     * @param {String|Attribute} subAttributes - the child attributes to remove from the complex attribute definition
+     * @return {Attribute} this attribute instance for chaining
+     */
+    truncate(subAttributes) {
+        if (this.type === "complex") {
+            for (let subAttrib of (Array.isArray(subAttributes) ? subAttributes : [subAttributes])) {
+                if (this.subAttributes.includes(subAttrib)) {
+                    // Remove found subAttribute from definition
+                    let index = this.subAttributes.indexOf(subAttrib);
+                    if (index >= 0) this.subAttributes.splice(index, 1);
+                } else if (typeof subAttrib === "string") {
+                    // Attempt to find the subAttribute by name and try truncate again
+                    this.truncate(this.subAttributes.find(a => a.name === subAttrib));
+                }
+            }
+        }
+        
+        return this;
+    }
+    
+    /**
      * Parse this Attribute instance into a valid SCIM attribute definition object
-     * @returns {AttributeDefinition} an object representing a valid SCIM attribute definition
+     * @return {AttributeDefinition} an object representing a valid SCIM attribute definition
      */
     toJSON() {
         /**
@@ -290,7 +312,7 @@ export class Attribute {
      * @param {*|*[]} source - value to coerce and confirm conformity with attribute's characteristics
      * @param {String} [direction] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {Boolean} [isComplexMultiValue=false] - indicates whether a coercion is for a single complex value in a collection of complex values
-     * @returns {String|String[]|Number|Boolean|Object|Object[]} the coerced value, conforming to attribute's characteristics
+     * @return {String|String[]|Number|Boolean|Object|Object[]} the coerced value, conforming to attribute's characteristics
      */
     coerce(source, direction = "both", isComplexMultiValue = false) {
         // Make sure the direction matches the attribute direction

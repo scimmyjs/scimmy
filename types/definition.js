@@ -38,7 +38,7 @@ export class SchemaDefinition {
     /**
      * Get the SCIM schema definition for consumption by clients
      * @param {String} [basepath=""] - the base path for the schema's meta.location property
-     * @returns {Object} the schema definition for consumption by clients
+     * @return {Object} the schema definition for consumption by clients
      */
     describe(basepath = "") {
         return {
@@ -102,6 +102,7 @@ export class SchemaDefinition {
      * Extend a schema definition instance by mixing in other schemas or attributes
      * @param {Array[Schema|Attribute>]} extensions[] - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
+     * @return {SchemaDefinition} this schema definition instance for chaining
      */
     extend(extensions = [], required) {
         // Go through all extensions to register
@@ -125,6 +126,33 @@ export class SchemaDefinition {
             // If something other than a schema definition or attribute is supplied, bail out!
             else throw new TypeError("Expected 'definition' to be a collection of SchemaDefinition or Attribute instances");
         }
+        
+        return this;
+    }
+    
+    /**
+     * Remove an attribute or subAttribute from a schema or attribute definition
+     * @param {String|String[]|Attribute|Attribute[]} attributes - the child attributes to remove from the schema or attribute definition
+     * @return {SchemaDefinition} this schema definition instance for chaining
+     */
+    truncate(attributes = []) {
+        for (let attrib of (Array.isArray(attributes) ? attributes : [attributes])) {
+            if (this.attributes.includes(attrib)) {
+                // Remove a found attribute from the schema definition
+                let index = this.attributes.indexOf(attrib);
+                if (index >= 0) this.attributes.splice(index, 1);
+            } else if (typeof attrib === "string") {
+                // Look for the target attribute to remove, which throws a TypeError if not found
+                let target = this.attribute(attrib);
+                
+                // Either try truncate again with the target attribute
+                if (!attrib.includes(".")) this.truncate(target);
+                // Or find the containing attribute and truncate it from there
+                else this.attribute(attrib.split(".").slice(0, -1).join(".")).truncate(target);
+            }
+        }
+        
+        return this;
     }
     
     /**
@@ -133,7 +161,7 @@ export class SchemaDefinition {
      * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {String} [basepath] - the URI representing the resource type's location
      * @param {Filter} [filters] - the attribute filters to apply to the coerced value
-     * @returns {Object} the coerced value, conforming to all schema attributes' characteristics
+     * @return {Object} the coerced value, conforming to all schema attributes' characteristics
      */
     coerce(data, direction = "both", basepath, filters) {
         // Make sure there is data to coerce...
@@ -183,7 +211,7 @@ export class SchemaDefinition {
      * @param {Object|Object[]} [data] - the data to filter attributes from
      * @param {Object} [filter] - the filter to apply to the coerced value
      * @param {Attribute[]} [attributes] - set of attributes to match against
-     * @returns {Object} the coerced value with desired or undesired attributes filtered out
+     * @return {Object} the coerced value with desired or undesired attributes filtered out
      */
     static #filter(data = {}, filter, attributes) {
         // If there's no filter, just return the data

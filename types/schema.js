@@ -33,6 +33,14 @@ export class Schema {
     }
     
     /**
+     * Remove an attribute or subAttribute from the schema definition
+     * @param {String|String[]|Attribute|Attribute[]} attributes - the child attributes to remove from the schema definition
+     */
+    static truncate(attributes) {
+        this.definition.truncate(attributes);
+    }
+    
+    /**
      * Construct a resource instance after verifying schema compatibility
      * @param {Object} data - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
