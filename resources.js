@@ -3,6 +3,7 @@ import {User} from "./resources/user.js";
 import {Group} from "./resources/group.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
+import {ServiceProviderConfig} from "./resources/spconfig.js";
 import Schemas from "./schemas.js";
 
 /**
@@ -15,6 +16,7 @@ export default class Resources {
     // Expose built-in resources without "declaring" them
     static Schema = Schema;
     static ResourceType = ResourceType;
+    static ServiceProviderConfig = ServiceProviderConfig;
     static User = User;
     static Group = Group;
     
