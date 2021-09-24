@@ -90,7 +90,24 @@ export class Schema {
             }
         });
         
-        // Prevent unknown attributes from being added
-        Object.preventExtensions(this);
+        // Predefine getters and setters for all schema extensions
+        // TODO: namespaced attributes in the extension
+        for (let extension of extensions) Object.defineProperty(this, extension.id, {
+            enumerable: true,
+            // Get and set the value from the internally scoped object
+            get: () => (resource[extension.id]),
+            set: (value) => {
+                try {
+                    // Validate the supplied value through schema extension coercion
+                    return (resource[extension.id] = extension.coerce(value, direction));
+                } catch (ex) {
+                    // Rethrow attribute coercion exceptions as SCIM errors
+                    throw new SCIMError(400, "invalidValue", ex.message);
+                }
+            }
+        });
+        
+        // Prevent attributes from being added or removed
+        Object.freeze(this);
     }
 }
