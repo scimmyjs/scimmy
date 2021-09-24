@@ -194,12 +194,50 @@ export class SchemaDefinition {
                 // If it's defined, add it to the target
                 if (value !== undefined) target[name] = value;
             } else if (attribute instanceof SchemaDefinition) {
-                // TODO: namespaced schema extension attributes in source data
-                let {id: name, required} = attribute;
+                let {id: name, required} = attribute,
+                    // Get any values from the source that begin with the extension ID
+                    namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name}:`))
+                        // Get the actual attribute name and value
+                        .map(k => [k.replace(`${name}:`, ""), source[k]])
+                        .reduce((res = {}, [name, value]) => {
+                            // Get attribute path parts and actual value
+                            let parts = name.split("."),
+                                parent = res,
+                                target = {[parts.pop()]: value};
+                            
+                            // Traverse as deep as necessary
+                            while (parts.length > 0) {
+                                let path = parts.shift();
+                                parent = (parent[path] = parent[path] ?? {});
+                            }
+                            
+                            // Assign and return
+                            Object.assign(parent, target);
+                            return res;
+                        }, undefined),
+                    // Mix the namespaced attribute values in with the extension value
+                    mixedSource = [source[name] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
+                        for (let key of Object.keys(s)) {
+                            // Merge all properties from s into t, joining arrays and objects
+                            if (!t.hasOwnProperty(key) || s[key] !== Object(s[key])) t[key] = s[key];
+                            else if (Array.isArray(t[key]) && Array.isArray(s[key])) t[key].push(...s[key]);
+                            else merge(t[key], s[key]);
+                        }
+                        
+                        return t;
+                    }, {});
                 
                 // Attempt to coerce the schema extension
-                if (!!required && !source[name]) throw new TypeError(`Missing values for required schema extension '${name}'`);
-                else target[name] = attribute.coerce(source[name], direction, basepath, filter);
+                if (!!required && !Object.keys(mixedSource).length) {
+                    throw new TypeError(`Missing values for required schema extension '${name}'`);
+                } else try {
+                    // Coerce the mixed value
+                    target[name] = attribute.coerce(mixedSource, direction, basepath, filter);
+                } catch (ex) {
+                    // Rethrow exception with added context
+                    ex.message += ` in schema extension '${name}'`;
+                    throw ex;
+                }
             }
         }
         
