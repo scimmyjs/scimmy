@@ -71,7 +71,7 @@ const validate = {
      */
     number: (attrib, value) => {
         let {type, name} = attrib,
-            isNum = !!String(value).match(/^\d+?(\.\d+)?$/),
+            isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/),
             isInt = isNum && !String(value).includes(".");
         
         if (typeof value === "object" && value !== null) {
