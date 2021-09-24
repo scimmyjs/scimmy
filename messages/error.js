@@ -17,12 +17,14 @@ export class Error {
     
     /**
      * Instantiate a new SCIM Error Message with relevant details
-     * @param {Number} status - HTTP status code to be sent with the error
-     * @param {String} scimType - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
-     * @param {String} detail - a human-readable description of what caused the error to occur
+     * @param {Object} ex - the initiating exception to parse into a SCIM error message
+     * @param {Number} ex.status - HTTP status code to be sent with the error
+     * @param {String} ex.scimType - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
+     * @param {String} ex.detail - a human-readable description of what caused the error to occur
      */
-    constructor(status, scimType, detail) {
-        this.schemas = [Error.#id];
+    constructor(ex) {
+        // Dereference parts of the exception
+        let {status = 500, scimType, message: detail} = ex;
         
         // Validate the supplied parameters
         if (!validStatusCodes.includes(Number(status)))
@@ -33,6 +35,7 @@ export class Error {
             throw new TypeError(`HTTP status code must be '400' when detail error keyword supplied to SCIM Error Message constructor`);
         
         // No exceptions thrown, assign the parameters to the instance
+        this.schemas = [Error.#id];
         this.status = String(status);
         if (!!scimType) this.scimType = scimType;
         this.detail = detail;
