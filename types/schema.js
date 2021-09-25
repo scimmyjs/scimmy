@@ -73,7 +73,6 @@ export class Schema {
             // Because why bother with case-sensitivity in a JSON-based standard?
             // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
             [attribute.name.toLowerCase()]: {
-                enumerable: false,
                 get: () => (this[attribute.name]),
                 set: (value) => (this[attribute.name] = value)
             },
@@ -102,20 +101,60 @@ export class Schema {
         });
         
         // Predefine getters and setters for all schema extensions
-        // TODO: namespaced attributes in the extension
-        for (let extension of extensions) Object.defineProperty(this, extension.id, {
-            enumerable: true,
-            // Get and set the value from the internally scoped object
-            get: () => (resource[extension.id]),
-            set: (value) => {
-                try {
-                    // Validate the supplied value through schema extension coercion
-                    return (resource[extension.id] = extension.coerce(value, direction));
-                } catch (ex) {
-                    // Rethrow attribute coercion exceptions as SCIM errors
-                    throw new SCIMError(400, "invalidValue", ex.message);
+        for (let extension of extensions) Object.defineProperties(this, {
+            // Same as above, who needs case sensitivity?
+            [extension.id.toLowerCase()]: {
+                get: () => (this[extension.id]),
+                set: (value) => (this[extension.id] = value)
+            },
+            // Set the handles for the actual extension ID
+            [extension.id]: {
+                enumerable: true,
+                // Get and set the value from the internally scoped object
+                get: () => {
+                    // Do some cleanup if the extension actually has a value
+                    if (resource[extension.id] !== undefined) {
+                        let target = resource[extension.id];
+                        
+                        for (let key of Object.keys(target)) {
+                            // Go through and delete any undefined properties or complex attributes without actual values
+                            if (target[key] === undefined || (Object(target[key]) === target[key]
+                                && !Object.keys(target[key]).some(k => target[key][k] !== undefined))) {
+                                delete target[key];
+                            }
+                        }
+                        
+                        // If no attributes with values remaining, delete the extension namespace from the instance
+                        if (!Object.keys(resource[extension.id]).some(k => resource[extension.id][k] !== undefined))
+                            delete resource[extension.id];
+                    }
+        
+                    return resource[extension.id];
+                },
+                set: (value) => {
+                    try {
+                        // Validate the supplied value through schema extension coercion
+                        return (resource[extension.id] = extension.coerce(value, direction)) && resource[extension.id];
+                    } catch (ex) {
+                        // Rethrow attribute coercion exceptions as SCIM errors
+                        throw new SCIMError(400, "invalidValue", ex.message);
+                    }
                 }
-            }
+            },
+            // Predefine namespaced getters and setters for schema extension attributes
+            ...extension.attributes.reduce((definitions, attribute) => Object.assign(definitions, {
+                // Lower-case getter/setter aliases to work around case sensitivity, as above
+                [`${extension.id.toLowerCase()}:${attribute.name.toLowerCase()}`]: {
+                    get: () => (this[`${extension.id}:${attribute.name}`]),
+                    set: (value) => (this[`${extension.id}:${attribute.name}`] = value)
+                },
+                // Proper-case namespaced extension attributes
+                [`${extension.id}:${attribute.name}`]: {
+                    get: () => (this[extension.id]?.[attribute.name]),
+                    // Trigger setter for the actual schema extension property
+                    set: (value) => (this[extension.id] = Object.assign(this[extension.id] ?? {}, {[attribute.name]: value}))
+                }
+            }), {})
         });
         
         // Prevent attributes from being added or removed
