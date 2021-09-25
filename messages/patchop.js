@@ -4,7 +4,7 @@ import {Error as SCIMError, Schema, SchemaDefinition, Filter} from "../types.js"
 // List of valid SCIM patch operations
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
-const pathSeparator = /((?!(?!\w)\d)|(?!\[.*?))\.((?!.*?\])|(?!\d(?!\w)))/g;
+const pathSeparator = /(?!((?<!\w)\d)|(\[.*?))\.(?!(\d(?!\w))|(.*?\]))/g;
 // Extract attributes and filter strings from path parts
 const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
 
@@ -148,13 +148,13 @@ export class PatchOp {
             
             // Traverse deeper into each existing target
             for (let target of targets.splice(0)) {
-                try {
+                if (target !== undefined) try {
                     if (filter !== undefined) {
                         // If a filter is specified, apply it to the target and add results back to targets
                         targets.push(...(new Filter(filter).match(target[key])));
                     } else {
                         // Add the traversed value to targets, or back out if already arrived
-                        targets.push(paths.length > 0 ? target[key] : target);
+                        targets.push(paths.length === 0 ? target : target[key] ?? (op === "add" ? ((target[key] = target[key] ?? {}) && target[key]) : undefined));
                     }
                 } catch {
                     // Nothing to do here, carry on
@@ -165,7 +165,7 @@ export class PatchOp {
         // No targets, bail out!
         if (targets.length === 0)
             throw new SCIMError(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
-    
+        
         return {
             complex: (attribute instanceof SchemaDefinition ? true : attribute.type === "complex"),
             multiValued: multiValued,
