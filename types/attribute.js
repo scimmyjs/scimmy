@@ -419,7 +419,6 @@ export class Attribute {
                                 // Because why bother with case-sensitivity in a JSON-based standard?
                                 // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
                                 [name.toLowerCase()]: {
-                                    enumerable: false,
                                     get: () => (target[name]),
                                     set: (value) => (target[name] = value)
                                 },
