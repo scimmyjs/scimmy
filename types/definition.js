@@ -203,7 +203,7 @@ export class SchemaDefinition {
                         .map(k => [k.replace(`${name.toLowerCase()}:`, ""), source[k]])
                         .reduce((res = {}, [name, value]) => {
                             // Get attribute path parts and actual value
-                            let parts = name.split("."),
+                            let parts = name.toLowerCase().split("."),
                                 parent = res,
                                 target = {[parts.pop()]: value};
                             
@@ -218,16 +218,16 @@ export class SchemaDefinition {
                             return res;
                         }, undefined),
                     // Mix the namespaced attribute values in with the extension value
-                    mixedSource = [source[name] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
+                    mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
                         // Cast all key names to lower case to eliminate case sensitivity....
                         t = (Object.keys(t).reduce((res, key) => (((res[key.toLowerCase()] = t[key]) ?? true) && res), {}));
                         
                         // Merge all properties from s into t, joining arrays and objects
                         for (let skey of Object.keys(s)) {
                             let tkey = skey.toLowerCase();
-                            if (!t.hasOwnProperty(tkey) || s[skey] !== Object(s[skey])) t[tkey] = s[skey];
-                            else if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
-                            else merge(t[tkey], s[skey]);
+                            if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
+                            else if (s[skey] !== Object(s[skey])) t[tkey] = s[skey];
+                            else t[tkey] = merge(t[tkey] ?? {}, s[skey]);
                         }
                         
                         return t;
