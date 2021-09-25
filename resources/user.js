@@ -73,7 +73,7 @@ export class User extends Resource {
             return new ListResponse((await User.#egress(this))
                 .map(u => new UserSchema(u, "out", User.basepath(), this.attributes))
                 // TODO: account for start index and count when filtering here
-                .filter(u => Object.keys(u).length > 1));
+                .filter(u => (Object.keys(u).filter(k => u[k] !== undefined).length > 1)));
         } else {
             try {
                 return new UserSchema((await User.#egress(this)).shift(), "out", User.basepath(), this.attributes);
