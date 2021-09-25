@@ -424,6 +424,7 @@ export class Attribute {
                                     set: (value) => (target[name] = value)
                                 },
                                 // Now set the handles for the actual name
+                                // Overrides above if name is already all lower case
                                 [name]: {
                                     enumerable: true,
                                     // Get and set the value from the internally scoped object

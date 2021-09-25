@@ -78,6 +78,7 @@ export class Schema {
                 set: (value) => (this[attribute.name] = value)
             },
             // Now set the handles for the actual name
+            // Overrides above if attribute.name is already all lower case
             [attribute.name]: {
                 enumerable: true,
                 // Get and set the value from the internally scoped object
