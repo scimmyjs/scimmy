@@ -69,23 +69,33 @@ export class Schema {
         }
         
         // Predefine getters and setters for all possible attributes
-        for (let attribute of attributes) Object.defineProperty(this, attribute.name, {
-            enumerable: true,
-            // Get and set the value from the internally scoped object
-            get: () => (resource[attribute.name]),
-            set: (value) => {
-                let {name, config: {mutable}} = attribute;
-                
-                // Check for mutability of attribute before setting the value
-                if (mutable !== true && this[name] !== undefined && this[name] !== value)
-                    throw new SCIMError(400, "mutability", `Attribute '${name}' already defined and is not mutable`);
-                
-                try {
-                    // Validate the supplied value through attribute coercion
-                    return (resource[name] = attribute.coerce(value, direction));
-                } catch (ex) {
-                    // Rethrow attribute coercion exceptions as SCIM errors
-                    throw new SCIMError(400, "invalidValue", ex.message);
+        for (let attribute of attributes) Object.defineProperties(this, {
+            // Because why bother with case-sensitivity in a JSON-based standard?
+            // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
+            [attribute.name.toLowerCase()]: {
+                enumerable: false,
+                get: () => (this[attribute.name]),
+                set: (value) => (this[attribute.name] = value)
+            },
+            // Now set the handles for the actual name
+            [attribute.name]: {
+                enumerable: true,
+                // Get and set the value from the internally scoped object
+                get: () => (resource[attribute.name]),
+                set: (value) => {
+                    let {name, config: {mutable}} = attribute;
+                    
+                    // Check for mutability of attribute before setting the value
+                    if (mutable !== true && this[name] !== undefined && this[name] !== value)
+                        throw new SCIMError(400, "mutability", `Attribute '${name}' already defined and is not mutable`);
+                    
+                    try {
+                        // Validate the supplied value through attribute coercion
+                        return (resource[name] = attribute.coerce(value, direction));
+                    } catch (ex) {
+                        // Rethrow attribute coercion exceptions as SCIM errors
+                        throw new SCIMError(400, "invalidValue", ex.message);
+                    }
                 }
             }
         });

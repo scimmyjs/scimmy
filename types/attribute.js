@@ -341,8 +341,9 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.string(this, value) ?? String(value))
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value :
+                                validate.canonical(this, value) ?? validate.string(this, value) ?? String(value)))))
                     }));
                 
                 case "dateTime":
@@ -352,8 +353,9 @@ export class Attribute {
                     // Convert date values to ISO strings
                     return (!multiValued ? new Date(source).toISOString() : new Proxy(source.map(v => new Date(v).toISOString()), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.date(this, value) ?? new Date(value).toISOString())
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value :
+                                validate.canonical(this, value) ?? validate.date(this, value) ?? new Date(value).toISOString()))))
                     }));
                 
                 case "decimal":
@@ -364,8 +366,9 @@ export class Attribute {
                     // Cast supplied values into numbers
                     return (!multiValued ? Number(source) : new Proxy(source.map(v => Number(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.number(this, value) ?? Number(value))
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value :
+                                validate.canonical(this, value) ?? validate.number(this, value) ?? Number(value)))))
                     }));
                 
                 case "reference":
@@ -375,8 +378,9 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.reference(this, value) ?? String(value))
+                        set: (target, key, value) =>(!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value :
+                                validate.canonical(this, value) ?? validate.reference(this, value) ?? String(value)))))
                     }));
                 
                 case "binary":
@@ -386,8 +390,9 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (target[key] = validate.canonical(this, value) ?? validate.binary(this, value) ?? String(value))
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value :
+                                validate.canonical(this, value) ?? validate.binary(this, value) ?? String(value)))))
                     }));
                 
                 case "boolean":
@@ -410,18 +415,28 @@ export class Attribute {
                             let {name} = subAttribute;
                             
                             // Predefine getters and setters for all possible sub-attributes
-                            Object.defineProperty(target, name, {
-                                enumerable: true,
-                                // Get and set the value from the internally scoped object
-                                get: () => (resource[name]),
-                                // Validate the supplied value through attribute coercion
-                                set: (value) => {
-                                    try {
-                                        return (resource[name] = subAttribute.coerce(value, direction))
-                                    } catch (ex) {
-                                        // Add additional context
-                                        ex.message += ` from complex attribute '${this.name}'`;
-                                        throw ex;
+                            Object.defineProperties(target, {
+                                // Because why bother with case-sensitivity in a JSON-based standard?
+                                // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
+                                [name.toLowerCase()]: {
+                                    enumerable: false,
+                                    get: () => (target[name]),
+                                    set: (value) => (target[name] = value)
+                                },
+                                // Now set the handles for the actual name
+                                [name]: {
+                                    enumerable: true,
+                                    // Get and set the value from the internally scoped object
+                                    get: () => (resource[name]),
+                                    // Validate the supplied value through attribute coercion
+                                    set: (value) => {
+                                        try {
+                                            return (resource[name] = subAttribute.coerce(value, direction))
+                                        } catch (ex) {
+                                            // Add additional context
+                                            ex.message += ` from complex attribute '${this.name}'`;
+                                            throw ex;
+                                        }
                                     }
                                 }
                             });
@@ -432,7 +447,7 @@ export class Attribute {
                         
                         // Then add specified values to the target, invoking sub-attribute coercion
                         for (let [key, value] of Object.entries(source)) try {
-                            target[`${key[0].toLowerCase()}${key.slice(1)}`] = value;
+                            target[key.toLowerCase()] = value;
                         } catch (ex) {
                             // Attempted to add an undeclared attribute to the value
                             if (ex instanceof TypeError && ex.message.endsWith("not extensible")) {
@@ -454,8 +469,8 @@ export class Attribute {
                     // Return the collection, or the coerced complex value
                     return (isComplexMultiValue ? target : (!multiValued ? target.pop() : new Proxy(target, {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>
-                            (!!(target[key] = (Number.isInteger(Number(key)) ? this.coerce(value, direction, true) : value)))
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                            (target[key] = (key === "length" ? value : this.coerce(value, direction, true)))))
                     })));
                 
                 default:

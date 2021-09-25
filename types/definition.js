@@ -93,7 +93,7 @@ export class SchemaDefinition {
                 // Add the found attribute to the spent path
                 spent.push(target);
             }
-    
+            
             return attribute;
         }
     }
@@ -178,7 +178,9 @@ export class SchemaDefinition {
             ])],
             // Add schema IDs, and schema's name as resource type to meta attribute
             source = {
-                ...data, schemas: schemas, meta: {
+                // Cast all key names to lower case to eliminate case sensitivity....
+                ...(Object.keys(data).reduce((res, key) => (((res[key.toLowerCase()] = data[key]) ?? true) && res), {})),
+                schemas: schemas, meta: {
                     ...(data?.meta ?? {}), resourceType: this.name,
                     ...(typeof basepath === "string" ? {location: `${basepath}${!!data.id ? `/${data.id}` : ""}`} : {})
                 }
@@ -189,16 +191,16 @@ export class SchemaDefinition {
             if (attribute instanceof Attribute) {
                 let {name} = attribute,
                     // Evaluate the coerced value
-                    value = attribute.coerce(source[name] ?? source[`${name[0].toUpperCase()}${name.slice(1)}`], direction);
+                    value = attribute.coerce(source[name.toLowerCase()], direction);
                 
                 // If it's defined, add it to the target
                 if (value !== undefined) target[name] = value;
             } else if (attribute instanceof SchemaDefinition) {
                 let {id: name, required} = attribute,
                     // Get any values from the source that begin with the extension ID
-                    namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name}:`))
+                    namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name.toLowerCase()}:`))
                         // Get the actual attribute name and value
-                        .map(k => [k.replace(`${name}:`, ""), source[k]])
+                        .map(k => [k.replace(`${name.toLowerCase()}:`, ""), source[k]])
                         .reduce((res = {}, [name, value]) => {
                             // Get attribute path parts and actual value
                             let parts = name.split("."),
@@ -217,11 +219,15 @@ export class SchemaDefinition {
                         }, undefined),
                     // Mix the namespaced attribute values in with the extension value
                     mixedSource = [source[name] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
-                        for (let key of Object.keys(s)) {
-                            // Merge all properties from s into t, joining arrays and objects
-                            if (!t.hasOwnProperty(key) || s[key] !== Object(s[key])) t[key] = s[key];
-                            else if (Array.isArray(t[key]) && Array.isArray(s[key])) t[key].push(...s[key]);
-                            else merge(t[key], s[key]);
+                        // Cast all key names to lower case to eliminate case sensitivity....
+                        t = (Object.keys(t).reduce((res, key) => (((res[key.toLowerCase()] = t[key]) ?? true) && res), {}));
+                        
+                        // Merge all properties from s into t, joining arrays and objects
+                        for (let skey of Object.keys(s)) {
+                            let tkey = skey.toLowerCase();
+                            if (!t.hasOwnProperty(tkey) || s[skey] !== Object(s[skey])) t[tkey] = s[skey];
+                            else if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
+                            else merge(t[tkey], s[skey]);
                         }
                         
                         return t;
@@ -230,13 +236,15 @@ export class SchemaDefinition {
                 // Attempt to coerce the schema extension
                 if (!!required && !Object.keys(mixedSource).length) {
                     throw new TypeError(`Missing values for required schema extension '${name}'`);
-                } else try {
-                    // Coerce the mixed value
-                    target[name] = attribute.coerce(mixedSource, direction, basepath, filter);
-                } catch (ex) {
-                    // Rethrow exception with added context
-                    ex.message += ` in schema extension '${name}'`;
-                    throw ex;
+                } else if (required || Object.keys(mixedSource).length) {
+                    try {
+                        // Coerce the mixed value
+                        target[name] = attribute.coerce(mixedSource, direction, basepath, filter);
+                    } catch (ex) {
+                        // Rethrow exception with added context
+                        ex.message += ` in schema extension '${name}'`;
+                        throw ex;
+                    }
                 }
             }
         }
@@ -260,11 +268,12 @@ export class SchemaDefinition {
         else {
             // Check for any negative filters
             for (let key in {...filter}) {
-                let {config: {returned} = {}} = attributes.find(a => a.name === key) ?? {};
+                // Find the attribute by lower case name
+                let {name, config: {returned} = {}} = attributes.find(a => a.name.toLowerCase() === key.toLowerCase()) ?? {};
                 
                 if (returned !== "always" && Array.isArray(filter[key]) && filter[key][0] === "np") {
                     // Remove the property from the result, and remove the spent filter
-                    delete data[key];
+                    delete data[name];
                     delete filter[key];
                 }
             }
@@ -277,6 +286,7 @@ export class SchemaDefinition {
                 
                 // Go through every value in the data and filter attributes
                 for (let key in data) {
+                    // TODO: namespaced attributes and extensions
                     // Get the matching attribute definition and some relevant config values
                     let attribute = attributes.find(a => a.name === key) ?? {},
                         {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
