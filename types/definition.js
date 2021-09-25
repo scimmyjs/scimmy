@@ -57,19 +57,19 @@ export class SchemaDefinition {
     attribute(name) {
         if (name.startsWith("urn:")) {
             // Handle namespaced attributes by looking for a matching extension
-            let extension = (name.startsWith(this.id) ? this : this.attributes
-                    .find(a => a instanceof SchemaDefinition && name.startsWith(a.id))),
+            let extension = (name.toLowerCase().startsWith(this.id.toLowerCase()) ? this : this.attributes
+                    .find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))),
                 // Get the actual attribute name minus extension ID
-                attribute = name.replace(extension.id, "");
+                attribute = name.toLowerCase().replace(extension.id.toLowerCase(), "").slice(1);
             
             // If the actual name is empty, return the extension, otherwise search the extension
             return (!attribute.length ? extension : extension.attribute(attribute));
         } else {
             // Break name into path parts in case of search for sub-attributes
-            let path = name.split("."),
+            let path = name.toLowerCase().split("."),
                 // Find the first attribute in the path
                 target = path.shift(),
-                attribute = this.attributes.find(a => a instanceof Attribute && a.name === target),
+                attribute = this.attributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target),
                 spent = [target];
             
             // If nothing was found, the attribute isn't declared by the schema definition
@@ -84,7 +84,7 @@ export class SchemaDefinition {
                 
                 // Find the next attribute in the path
                 target = path.shift();
-                attribute = attribute.subAttributes.find(a => a instanceof Attribute && a.name === target);
+                attribute = attribute.subAttributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target);
                 
                 // If nothing found, the attribute doesn't declare the target as a sub-attribute
                 if (attribute === undefined)
