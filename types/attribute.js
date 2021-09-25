@@ -341,7 +341,7 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value :
                                 validate.canonical(this, value) ?? validate.string(this, value) ?? String(value)))))
                     }));
@@ -353,7 +353,7 @@ export class Attribute {
                     // Convert date values to ISO strings
                     return (!multiValued ? new Date(source).toISOString() : new Proxy(source.map(v => new Date(v).toISOString()), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value :
                                 validate.canonical(this, value) ?? validate.date(this, value) ?? new Date(value).toISOString()))))
                     }));
@@ -366,7 +366,7 @@ export class Attribute {
                     // Cast supplied values into numbers
                     return (!multiValued ? Number(source) : new Proxy(source.map(v => Number(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value :
                                 validate.canonical(this, value) ?? validate.number(this, value) ?? Number(value)))))
                     }));
@@ -378,7 +378,7 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) =>(!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) =>(!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value :
                                 validate.canonical(this, value) ?? validate.reference(this, value) ?? String(value)))))
                     }));
@@ -390,7 +390,7 @@ export class Attribute {
                     // Cast supplied values into strings
                     return (!multiValued ? String(source) : new Proxy(source.map(v => String(v)), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value :
                                 validate.canonical(this, value) ?? validate.binary(this, value) ?? String(value)))))
                     }));
@@ -470,7 +470,7 @@ export class Attribute {
                     // Return the collection, or the coerced complex value
                     return (isComplexMultiValue ? target : (!multiValued ? target.pop() : new Proxy(target, {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) ? false :
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
                             (target[key] = (key === "length" ? value : this.coerce(value, direction, true)))))
                     })));
                 
