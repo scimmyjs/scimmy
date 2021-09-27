@@ -179,10 +179,17 @@ export class Resource {
         }
         
         // Handle sort and pagination parameters
-        for (let key of ["sortBy", "sortOrder", "startIndex", "count"]) {
-            if (params[key] !== undefined) {
-                this.meta = Object.assign(this.meta ?? {}, {[key]: params[key]});
-            }
+        if (["sortBy", "sortOrder", "startIndex", "count"].some(k => k in params)) {
+            let {sortBy, sortOrder, startIndex: sStartIndex, count: sCount} = params,
+                startIndex = Number(sStartIndex ?? undefined),
+                count = Number(sCount ?? undefined);
+            
+            this.constraints = {
+                ...(sortBy !== undefined ? {sortBy: sortBy} : {}),
+                ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder: sortOrder} : {}),
+                ...(!Number.isNaN(startIndex) && Number.isInteger(startIndex) ? {startIndex: startIndex} : {}),
+                ...(!Number.isNaN(count) && Number.isInteger(count) ? {count: count} : {})
+            };
         }
     }
     
