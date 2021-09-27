@@ -179,7 +179,7 @@ export class SchemaDefinition {
             // Add schema IDs, and schema's name as resource type to meta attribute
             source = {
                 // Cast all key names to lower case to eliminate case sensitivity....
-                ...(Object.keys(data).reduce((res, key) => (((res[key.toLowerCase()] = data[key]) ?? true) && res), {})),
+                ...(Object.keys(data).reduce((res, key) => (((res[key.toLowerCase()] = data[key]) || true) && res), {})),
                 schemas: schemas, meta: {
                     ...(data?.meta ?? {}), resourceType: this.name,
                     ...(typeof basepath === "string" ? {location: `${basepath}${!!data.id ? `/${data.id}` : ""}`} : {})
@@ -220,7 +220,7 @@ export class SchemaDefinition {
                     // Mix the namespaced attribute values in with the extension value
                     mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
                         // Cast all key names to lower case to eliminate case sensitivity....
-                        t = (Object.keys(t).reduce((res, key) => (((res[key.toLowerCase()] = t[key]) ?? true) && res), {}));
+                        t = (Object.keys(t).reduce((res, key) => (((res[key.toLowerCase()] = t[key]) || true) && res), {}));
                         
                         // Merge all properties from s into t, joining arrays and objects
                         for (let skey of Object.keys(s)) {
