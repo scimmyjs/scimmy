@@ -71,9 +71,7 @@ export class Group extends Resource {
     async read() {
         if (!this.id) {
             return new ListResponse((await Group.#egress(this))
-                .map(u => new GroupSchema(u, "out", Group.basepath(), this.attributes))
-                // TODO: account for start index and count when filtering here
-                .filter(u => (Object.keys(u).filter(k => u[k] !== undefined).length > 1)));
+                .map(u => new GroupSchema(u, "out", Group.basepath(), this.attributes)), this.constraints);
         } else {
             try {
                 return new GroupSchema((await Group.#egress(this)).shift(), "out", Group.basepath(), this.attributes);
