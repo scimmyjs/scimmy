@@ -1,6 +1,6 @@
-import * as Types from "./types.js";
-import * as Messages from "./messages.js";
-import Resources from "./resources.js";
-import Schemas from "./schemas.js";
-import Config from "./config.js";
+import * as Types from "./lib/types.js";
+import * as Messages from "./lib/messages.js";
+import Resources from "./lib/resources.js";
+import Schemas from "./lib/schemas.js";
+import Config from "./lib/config.js";
 export {Types, Messages, Schemas, Resources, Config};
