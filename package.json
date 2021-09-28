@@ -1,0 +1,24 @@
+{
+  "name": "scimmy",
+  "version": "1.0.0",
+  "description": "SCIM m(ade eas)y",
+  "author": "sleelin",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/scim.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "SCIM",
+    "provisioning"
+  ],
+  "homepage": "https://github.com/sleelin/scimmy#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sleelin/scimmy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sleelin/scimmy/issues"
+  }
+}
