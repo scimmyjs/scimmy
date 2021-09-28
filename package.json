@@ -7,8 +7,13 @@
   "type": "module",
   "main": "dist/scim.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "node packager.js -t clean",
+    "build": "node packager.js -t build",
+    "prepack": "node packager.js -t prepack"
   },
+  "files": [
+    "dist/**"
+  ],
   "keywords": [
     "SCIM",
     "provisioning"
@@ -20,5 +25,10 @@
   },
   "bugs": {
     "url": "https://github.com/sleelin/scimmy/issues"
+  },
+  "devDependencies": {
+    "chalk": "^4.1.2",
+    "minimist": "^1.2.5",
+    "rollup": "^2.57.0"
   }
 }
