@@ -1,24 +1,25 @@
-import {Schema, SchemaDefinition, Attribute} from "../types.js";
+import Types from "../types.js";
 
 /**
  * SCIM ResourceType Schema
- * @implements {Schema}
+ * @class SCIMMY.Schemas.ResourceType
+ * @extends {SCIMMY.Types.Schema}
  */
-export class ResourceType extends Schema {
-    /** @implements {Schema~definition} */
+export class ResourceType extends Types.Schema {
+    /** @implements {SCIMMY.Types.Schema~definition} */
     static get definition() {
         return ResourceType.#definition;
     }
     
-    /** @implements {Schema~#definition} */
-    static #definition = new SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
-        new Attribute("string", "name", {direction: "out", required: true, mutable: false}),
-        new Attribute("string", "description", {direction: "out", mutable: false}),
-        new Attribute("reference", "endpoint", {direction: "out", required: true, mutable: false, referenceTypes: ["uri"]}),
-        new Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
-        new Attribute("complex", "schemaExtensions", {direction: "out", mutable: false, multiValued: true}, [
-            new Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
-            new Attribute("boolean", "required", {direction: "out", required: true, mutable: false})
+    /** @implements {SCIMMY.Types.Schema~#definition} */
+    static #definition = new Types.SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
+        new Types.Attribute("string", "name", {direction: "out", required: true, mutable: false}),
+        new Types.Attribute("string", "description", {direction: "out", mutable: false}),
+        new Types.Attribute("reference", "endpoint", {direction: "out", required: true, mutable: false, referenceTypes: ["uri"]}),
+        new Types.Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
+        new Types.Attribute("complex", "schemaExtensions", {direction: "out", mutable: false, multiValued: true}, [
+            new Types.Attribute("reference", "schema", {direction: "out", required: true, mutable: false, caseExact: true, referenceTypes: ["uri"]}),
+            new Types.Attribute("boolean", "required", {direction: "out", required: true, mutable: false})
         ])
     ]);
     

@@ -1,16 +1,18 @@
-import {Resource} from "./types/resource.js";
 import {User} from "./resources/user.js";
 import {Group} from "./resources/group.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
 import {ServiceProviderConfig} from "./resources/spconfig.js";
+import Types from "./types.js";
 import Schemas from "./schemas.js";
 
 /**
  * SCIM Resources Container Class
+ * @class SCIMMY.Resources
  */
 export default class Resources {
     // Store declared resources for later retrieval
+    /** @private */
     static #declared = {};
     
     // Expose built-in resources without "declaring" them
@@ -22,9 +24,9 @@ export default class Resources {
     
     /**
      * Register a resource implementation for exposure as a ResourceType
-     * @param {Resource} resource - the resource to register
+     * @param {SCIMMY.Types.Resource} resource - the resource to register
      * @param {String|Object} [config] - the configuration to feed to the resource being registered
-     * @returns {Resource|Resources} the Resources class or registered resource class for chaining
+     * @returns {SCIMMY.Types.Resource|SCIMMY.Resources} the Resources class or registered resource class for chaining
      */
     static declare(resource, config) {
         // Source name from resource if config is an object
@@ -32,7 +34,7 @@ export default class Resources {
         if (typeof config === "object") name = config.name ?? name;
         
         // Make sure the registering resource is valid
-        if (!resource || !(resource.prototype instanceof Resource))
+        if (!resource || !(resource.prototype instanceof Types.Resource))
             throw new TypeError("Registering resource must be of type 'Resource'");
         
         // Prevent registering a resource implementation that already exists
@@ -70,10 +72,10 @@ export default class Resources {
     
     /**
      * Get registration status of specific resource implementation, or get all registered resource implementations
-     * @param {Resource|String} [resource] - the resource implementation or name to query registration status for
-     * @returns {Object|Resource|Boolean}
+     * @param {SCIMMY.Types.Resource|String} [resource] - the resource implementation or name to query registration status for
+     * @returns {Object|SCIMMY.Types.Resource|Boolean}
      *   - {Object} containing object with registered resource implementations for exposure as ResourceTypes
-     *   - {Resource} the registered resource implementation with matching name
+     *   - {SCIMMY.Types.Resource} the registered resource implementation with matching name
      *   - {Boolean} the registration status of the specified resource implementation
      */
     static declared(resource) {
@@ -82,7 +84,7 @@ export default class Resources {
         // If resource is a string, find and return the matching resource type
         else if (typeof resource === "string") return Resources.#declared[resource];
         // If the resource is an instance of Resource, see if it is already registered
-        else if (resource.prototype instanceof Resource) return Resources.#declared[resource.name] === resource;
+        else if (resource.prototype instanceof Types.Resource) return Resources.#declared[resource.name] === resource;
         // Otherwise, the resource isn't registered...
         else return false;
     }

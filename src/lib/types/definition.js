@@ -3,6 +3,7 @@ import {Filter} from "./filter.js";
 
 /**
  * SCIM Schema Definition
+ * @class SCIMMY.Types.SchemaDefinition
  */
 export class SchemaDefinition {
     /**
@@ -10,7 +11,7 @@ export class SchemaDefinition {
      * @param {String} name - friendly name of the SCIM schema
      * @param {String} id - URN namespace of the SCIM schema
      * @param {String} [description=""] - a human-readable description of the schema
-     * @param {Attribute[]} [attributes=[]] - attributes that make up the schema
+     * @param {SCIMMY.Types.Attribute[]} [attributes=[]] - attributes that make up the schema
      */
     constructor(name = "", id = "", description = "", attributes = []) {
         // Store the schema name, ID, and description
@@ -38,7 +39,7 @@ export class SchemaDefinition {
     /**
      * Get the SCIM schema definition for consumption by clients
      * @param {String} [basepath=""] - the base path for the schema's meta.location property
-     * @return {Object} the schema definition for consumption by clients
+     * @returns {Object} the schema definition for consumption by clients
      */
     describe(basepath = "") {
         return {
@@ -52,7 +53,7 @@ export class SchemaDefinition {
     /**
      * Find an attribute or extension instance belonging to the schema definition by its name
      * @param {String} name - the name of the attribute to look for (namespaced or direct)
-     * @return {Attribute|SchemaDefinition} the Attribute or SchemaDefinition instance with matching name
+     * @returns {SCIMMY.Types.Attribute|SCIMMY.Types.SchemaDefinition} the Attribute or SchemaDefinition instance with matching name
      */
     attribute(name) {
         if (name.startsWith("urn:")) {
@@ -100,9 +101,9 @@ export class SchemaDefinition {
     
     /**
      * Extend a schema definition instance by mixing in other schemas or attributes
-     * @param {Array[Schema|Attribute>]} extensions[] - the schema extensions or collection of attributes to register
+     * @param {Array[SCIMMY.Types.Schema|SCIMMY.Types.Attribute>]} extensions[] - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
-     * @return {SchemaDefinition} this schema definition instance for chaining
+     * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
     extend(extensions = [], required) {
         // Go through all extensions to register
@@ -132,8 +133,8 @@ export class SchemaDefinition {
     
     /**
      * Remove an attribute or subAttribute from a schema or attribute definition
-     * @param {String|String[]|Attribute|Attribute[]} attributes - the child attributes to remove from the schema or attribute definition
-     * @return {SchemaDefinition} this schema definition instance for chaining
+     * @param {String|String[]|SCIMMY.Types.Attribute|SCIMMY.Types.Attribute[]} attributes - the child attributes to remove from the schema or attribute definition
+     * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
     truncate(attributes = []) {
         for (let attrib of (Array.isArray(attributes) ? attributes : [attributes])) {
@@ -160,8 +161,8 @@ export class SchemaDefinition {
      * @param {Object} data - value to coerce and confirm conformity of properties to schema attributes' characteristics
      * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {String} [basepath] - the URI representing the resource type's location
-     * @param {Filter} [filters] - the attribute filters to apply to the coerced value
-     * @return {Object} the coerced value, conforming to all schema attributes' characteristics
+     * @param {SCIMMY.Types.Filter} [filters] - the attribute filters to apply to the coerced value
+     * @returns {Object} the coerced value, conforming to all schema attributes' characteristics
      */
     coerce(data, direction = "both", basepath, filters) {
         // Make sure there is data to coerce...
@@ -256,8 +257,9 @@ export class SchemaDefinition {
      * Filter out desired or undesired attributes from a coerced schema value
      * @param {Object|Object[]} [data] - the data to filter attributes from
      * @param {Object} [filter] - the filter to apply to the coerced value
-     * @param {Attribute[]} [attributes] - set of attributes to match against
-     * @return {Object} the coerced value with desired or undesired attributes filtered out
+     * @param {SCIMMY.Types.Attribute[]} [attributes] - set of attributes to match against
+     * @returns {Object} the coerced value with desired or undesired attributes filtered out
+     * @private
      */
     static #filter(data = {}, filter, attributes) {
         // If there's no filter, just return the data

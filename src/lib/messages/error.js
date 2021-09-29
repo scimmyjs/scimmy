@@ -10,11 +10,13 @@ const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: 
 
 /**
  * SCIM Error Message Type
+ * @class SCIMMY.Messages.Error
  */
 export class Error {
     /**
      * SCIM Error Message Schema ID
      * @type {String}
+     * @private
      */
     static #id = "urn:ietf:params:scim:api:messages:2.0:Error";
     

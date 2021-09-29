@@ -4,6 +4,7 @@ import {Filter} from "./filter.js";
 
 /**
  * SCIM Resource
+ * @class SCIMMY.Types.Resource
  * @interface
  */
 export class Resource {
@@ -19,6 +20,7 @@ export class Resource {
     /**
      * Base path for resource's location
      * @type {String}
+     * @private
      * @abstract
      */
     static #basepath;
@@ -33,7 +35,7 @@ export class Resource {
     
     /**
      * Retrieves a resource's core schema
-     * @returns {Schema}
+     * @returns {SCIMMY.Types.Schema}
      * @abstract
      */
     static get schema() {
@@ -43,6 +45,7 @@ export class Resource {
     /**
      * List of extensions to a resource's core schema
      * @type {Object[]}
+     * @private
      * @abstract
      */
     static #extensions;
@@ -56,7 +59,7 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
-     * @param {Schema} extension - the schema extension to register
+     * @param {SCIMMY.Types.Schema|SCIMMY.Types.Attribute[]} extension - the schema extension to register
      * @param {Boolean} required - whether or not the extension is required
      */
     static extend(extension, required) {
@@ -71,13 +74,14 @@ export class Resource {
     /**
      * Handler for ingress/egress/degress of a resource
      * @callback Resource~gressHandler
-     * @param {Resource} resource - the resource performing the ingress/egress/degress
-     * @param {Schema} [instance] - an instance of the resource type that conforms to the resource's schema
+     * @param {SCIMMY.Types.Resource} resource - the resource performing the ingress/egress/degress
+     * @param {SCIMMY.Types.Schema} [instance] - an instance of the resource type that conforms to the resource's schema
      */
     
     /**
      * Ingress handler method storage property
      * @type {Resource~gressHandler}
+     * @private
      * @abstract
      */
     static #ingress;
@@ -93,6 +97,7 @@ export class Resource {
     /**
      * Egress handler method storage property
      * @type {Resource~gressHandler}
+     * @private
      * @abstract
      */
     static #egress;
@@ -108,6 +113,7 @@ export class Resource {
     /**
      * Degress handler method storage property
      * @type {Resource~gressHandler}
+     * @private
      * @abstract
      */
     static #degress;
@@ -140,7 +146,7 @@ export class Resource {
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
-     * @param {*[]} [rest] - all other arguments supplied to the resource constructor
+     * @param {*[]} rest - all other arguments supplied to the resource constructor
      */
     constructor(config = {}, ...rest) {
         let params = config;
@@ -196,6 +202,7 @@ export class Resource {
     /**
      * Calls resource's egress method for data retrieval
      * Wraps the results in valid SCIM list response or single resource syntax
+     * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
      * @abstract
      */
     read() {
@@ -204,6 +211,7 @@ export class Resource {
     
     /**
      * Calls resource's ingress method for consumption after unwrapping the SCIM resource
+     * @returns {SCIMMY.Types.Schema}
      * @abstract
      */
     write() {
@@ -213,6 +221,7 @@ export class Resource {
     /**
      * Retrieves resources via egress method, and applies specified patch operations
      * Emits patched resources for consumption with resource's ingress method
+     * @returns {SCIMMY.Messages.PatchOp}
      * @abstract
      */
     patch() {

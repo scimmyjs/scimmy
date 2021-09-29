@@ -1,26 +1,27 @@
-import {Schema, SchemaDefinition, Attribute} from "../types.js";
+import Types from "../types.js";
 
 /**
  * SCIM EnterpriseUser Schema
- * @implements {Schema}
+ * @class SCIMMY.Schemas.EnterpriseUser
+ * @extends {SCIMMY.Types.Schema}
  */
-export class EnterpriseUser extends Schema {
-    /** @implements {Schema~definition} */
+export class EnterpriseUser extends Types.Schema {
+    /** @implements {SCIMMY.Types.Schema~definition} */
     static get definition() {
         return EnterpriseUser.#definition;
     }
     
-    /** @implements {Schema~#definition} */
-    static #definition = new SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
-        new Attribute("string", "employeeNumber"),
-        new Attribute("string", "costCenter"),
-        new Attribute("string", "organization"),
-        new Attribute("string", "division"),
-        new Attribute("string", "department"),
-        new Attribute("complex", "manager", {uniqueness: false}, [
-            new Attribute("string", "value", {required: true}),
-            new Attribute("reference", "$ref", {referenceTypes: ["User"]}),
-            new Attribute("string", "displayName", {mutable: false})
+    /** @implements {SCIMMY.Types.Schema~#definition} */
+    static #definition = new Types.SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
+        new Types.Attribute("string", "employeeNumber"),
+        new Types.Attribute("string", "costCenter"),
+        new Types.Attribute("string", "organization"),
+        new Types.Attribute("string", "division"),
+        new Types.Attribute("string", "department"),
+        new Types.Attribute("complex", "manager", {uniqueness: false}, [
+            new Types.Attribute("string", "value", {required: true}),
+            new Types.Attribute("reference", "$ref", {referenceTypes: ["User"]}),
+            new Types.Attribute("string", "displayName", {mutable: false})
         ])
     ]);
     
@@ -29,7 +30,7 @@ export class EnterpriseUser extends Schema {
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location
-     * @param {Filter} [filters] - attribute filters to apply to the coerced value
+     * @param {SCIMMY.Types.Filter} [filters] - attribute filters to apply to the coerced value
      */
     constructor(resource, direction = "both", basepath, filters) {
         super(resource, direction);

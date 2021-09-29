@@ -1,13 +1,13 @@
-import {SchemaDefinition} from "./types.js";
+import Types from "./types.js";
 import {User} from "./schemas/user.js";
 import {Group} from "./schemas/group.js";
 import {EnterpriseUser} from "./schemas/enterpriseuser.js";
 import {ResourceType} from "./schemas/resourcetype.js";
 import {ServiceProviderConfig} from "./schemas/spconfig.js";
-export {User, Group, EnterpriseUser, ResourceType, ServiceProviderConfig};
 
 /**
  * SCIM Schemas Container Class
+ * @class SCIMMY.Schemas
  */
 export default class Schemas {
     // Store declared schema definitions for later retrieval
@@ -22,9 +22,9 @@ export default class Schemas {
     
     /**
      * Register a SchemaDefinition implementation for exposure via Schemas HTTP endpoint
-     * @param {SchemaDefinition} definition - the schema definition to register
+     * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition to register
      * @param {String|Object} [config] - the configuration to feed to the schema being declared
-     * @returns {SchemaDefinition|Schemas} the Schemas class or declared schema class for chaining
+     * @returns {SCIMMY.Types.SchemaDefinition|Schemas} the Schemas class or declared schema class for chaining
      */
     static declare(definition, config) {
         // Source name from schema definition if config is an object
@@ -32,7 +32,7 @@ export default class Schemas {
         if (typeof config === "object") name = config.name ?? name;
         
         // Make sure the registering schema is valid
-        if (!definition || !(definition instanceof SchemaDefinition))
+        if (!definition || !(definition instanceof Types.SchemaDefinition))
             throw new TypeError("Registering schema definition must be of type 'SchemaDefinition'");
         
         // Prevent registering a schema definition that already exists
@@ -47,10 +47,10 @@ export default class Schemas {
     
     /**
      * Get registration status of specific schema implementation, or get all registered schema definitions
-     * @param {SchemaDefinition|String} [definition] - the schema implementation or name to query registration status for
-     * @returns {Object|SchemaDefinition|Boolean}
+     * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema implementation or name to query registration status for
+     * @returns {Object|SCIMMY.Types.SchemaDefinition|Boolean}
      *   - {Object} containing object with declared schema definitions for exposure via Schemas HTTP endpoint
-     *   - {SchemaDefinition} the registered schema definition with matching name or ID
+     *   - {SCIMMY.Types.SchemaDefinition} the registered schema definition with matching name or ID
      *   - {Boolean} the registration status of the specified schema implementation
      */
     static declared(definition) {
@@ -60,7 +60,7 @@ export default class Schemas {
             let definitions = Object.entries(Schemas.#definitions).map(([,d]) => d);
             
             // Get any undeclared schema definition extensions
-            for (let e of [...new Set(definitions.map(d => d.attributes.filter(a => a instanceof SchemaDefinition))
+            for (let e of [...new Set(definitions.map(d => d.attributes.filter(a => a instanceof Types.SchemaDefinition))
                 .flat(Infinity).map(e => Object.getPrototypeOf(e)))].filter(e => !Schemas.declared(e))) {
                 // ...and declare them
                 Schemas.declare(e);
@@ -79,7 +79,7 @@ export default class Schemas {
                 .map(([, d]) => d).find((d) => [d?.id, d?.name].includes(definition));
         }
         // If the definition is an instance of SchemaDefinition, see if it is already declared
-        else if (definition instanceof SchemaDefinition) return Schemas.#definitions[definition.constructor.name] === definition;
+        else if (definition instanceof Types.SchemaDefinition) return Schemas.#definitions[definition.constructor.name] === definition;
         // Otherwise, the schema definition isn't declared...
         else return false;
     }

@@ -29,7 +29,7 @@ const uniqueness = ["none", "server", "global"];
 const validate = {
     /**
      * If the attribute has canonical values, make sure value is one of them
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     canonical: (attrib, value) => {
@@ -39,7 +39,7 @@ const validate = {
     
     /**
      * If the attribute type is string, make sure value can safely be cast to string
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     string: (attrib, value) => {
@@ -52,7 +52,7 @@ const validate = {
     
     /**
      * Check if value is a valid date
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     date: (attrib, value) => {
@@ -66,7 +66,7 @@ const validate = {
     
     /**
      * If the attribute type is decimal or integer, make sure value can safely be cast to number
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     number: (attrib, value) => {
@@ -93,7 +93,7 @@ const validate = {
     
     /**
      * If the attribute type is binary, make sure value can safely be cast to buffer
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     binary: (attrib, value) => {
@@ -120,7 +120,7 @@ const validate = {
     
     /**
      * If the attribute type is reference, make sure value is a reference
-     * @param {Attribute} attrib - the attribute performing the validation
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     reference: (attrib, value) => {
@@ -171,6 +171,7 @@ const validate = {
 
 /**
  * SCIM Attribute
+ * @class SCIMMY.Types.Attribute
  */
 export class Attribute {
     /**
@@ -188,7 +189,7 @@ export class Attribute {
      * @param {Boolean|String[]} [config.referenceTypes=false] - list of referenced types if attribute type is reference
      * @param {String|Boolean} [config.uniqueness="none"] - the attribute's uniqueness characteristic
      * @param {String} [config.direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
-     * @param {Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
+     * @param {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
         let errorSuffix = `in attribute definition '${name}'`,
@@ -249,8 +250,8 @@ export class Attribute {
     
     /**
      * Remove a subAttribute from a complex attribute definition
-     * @param {String|Attribute} subAttributes - the child attributes to remove from the complex attribute definition
-     * @return {Attribute} this attribute instance for chaining
+     * @param {String|SCIMMY.Types.Attribute} subAttributes - the child attributes to remove from the complex attribute definition
+     * @returns {SCIMMY.Types.Attribute} this attribute instance for chaining
      */
     truncate(subAttributes) {
         if (this.type === "complex") {
@@ -271,11 +272,11 @@ export class Attribute {
     
     /**
      * Parse this Attribute instance into a valid SCIM attribute definition object
-     * @return {AttributeDefinition} an object representing a valid SCIM attribute definition
+     * @returns {SCIMMY.Types.Attribute~AttributeDefinition} an object representing a valid SCIM attribute definition
      */
     toJSON() {
         /**
-         * @typedef {Object} AttributeDefinition
+         * @typedef {Object} SCIMMY.Types.Attribute~AttributeDefinition
          * @property {String} name - the attribute's name
          * @property {String} type - the attribute's data type
          * @property {String[]} [referenceTypes] - specifies a SCIM resourceType that a reference attribute may refer to
@@ -312,7 +313,7 @@ export class Attribute {
      * @param {*|*[]} source - value to coerce and confirm conformity with attribute's characteristics
      * @param {String} [direction] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {Boolean} [isComplexMultiValue=false] - indicates whether a coercion is for a single complex value in a collection of complex values
-     * @return {String|String[]|Number|Boolean|Object|Object[]} the coerced value, conforming to attribute's characteristics
+     * @returns {String|String[]|Number|Boolean|Object|Object[]} the coerced value, conforming to attribute's characteristics
      */
     coerce(source, direction = "both", isComplexMultiValue = false) {
         // Make sure the direction matches the attribute direction

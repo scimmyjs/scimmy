@@ -1,20 +1,24 @@
-import {Resource, Error as SCIMError} from "../types.js";
-import {ListResponse, PatchOp} from "../messages.js";
-import {Group as GroupSchema} from "../schemas.js";
+import Types from "../types.js";
+import Messages from "../messages.js";
+import Schemas from "../schemas.js";
 
 /**
  * SCIM Group Resource
- * @extends {Resource}
+ * @class SCIMMY.Resources.Group
+ * @extends {SCIMMY.Types.Resource}
  */
-export class Group extends Resource {
-    /** @implements {Resource~endpoint} */
+export class Group extends Types.Resource {
+    /** @implements {SCIMMY.Types.Resource.endpoint} */
     static get endpoint() {
         return "/Groups";
     }
     
-    /** @implements {Resource~#basepath} */
+    /**
+     * @implements {SCIMMY.Types.Resource.#basepath}
+     * @private
+     */
     static #basepath;
-    /** @implements {Resource~basepath} */
+    /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return Group.#basepath;
         else if (Group.#basepath === undefined)
@@ -23,37 +27,49 @@ export class Group extends Resource {
         return Group;
     }
     
-    /** @implements {Resource~schema} */
+    /** @implements {SCIMMY.Types.Resource.schema} */
     static get schema() {
-        return GroupSchema;
+        return Schemas.Group;
     }
     
-    /** @implements {Resource~#extensions} */
+    /**
+     * @implements {SCIMMY.Types.Resource.#extensions}
+     * @private
+     */
     static #extensions = [];
-    /** @implements {Resource~extensions} */
+    /** @implements {SCIMMY.Types.Resource.extensions} */
     static get extensions() {
         return Group.#extensions;
     }
     
-    /** @implements {Resource~#ingress} */
+    /**
+     * @implements {SCIMMY.Types.Resource.#ingress}
+     * @private
+     */
     static #ingress = () => {};
-    /** @implements {Resource~ingress} */
+    /** @implements {SCIMMY.Types.Resource.ingress} */
     static ingress(handler) {
         Group.#ingress = handler;
         return Group;
     }
     
-    /** @implements {Resource~#egress} */
+    /**
+     * @implements {SCIMMY.Types.Resource.#egress}
+     * @private
+     */
     static #egress = () => {};
-    /** @implements {Resource~egress} */
+    /** @implements {SCIMMY.Types.Resource.egress} */
     static egress(handler) {
         Group.#egress = handler;
         return Group;
     }
     
-    /** @implements {Resource~#degress} */
+    /**
+     * @implements {SCIMMY.Types.Resource.#degress}
+     * @private
+     */
     static #degress = () => {};
-    /** @implements {Resource~degress} */
+    /** @implements {SCIMMY.Types.Resource.degress} */
     static degress(handler) {
         Group.#degress = handler;
         return Group;
@@ -61,59 +77,59 @@ export class Group extends Resource {
     
     /**
      * Instantiate a new SCIM Group resource and parse any supplied parameters
-     * @implements {Resource#constructor}
+     * @implements {SCIMMY.Types.Resource#constructor}
      */
     constructor(params, ...rest) {
         super(params, ...rest);
     }
     
-    /** @implements {Resource#read} */
+    /** @implements {SCIMMY.Types.Resource#read} */
     async read() {
         if (!this.id) {
-            return new ListResponse((await Group.#egress(this))
-                .map(u => new GroupSchema(u, "out", Group.basepath(), this.attributes)), this.constraints);
+            return new Messages.ListResponse((await Group.#egress(this))
+                .map(u => new Schemas.Group(u, "out", Group.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new GroupSchema((await Group.#egress(this)).shift(), "out", Group.basepath(), this.attributes);
+                return new Schemas.Group((await Group.#egress(this)).shift(), "out", Group.basepath(), this.attributes);
             } catch (ex) {
-                if (ex instanceof SCIMError) throw ex;
-                else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
-                else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+                if (ex instanceof Types.Error) throw ex;
+                else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
+                else throw new Types.Error(404, null, `Resource ${this.id} not found`);
             }
         }
     }
     
-    /** @implements {Resource#write} */
+    /** @implements {SCIMMY.Types.Resource#write} */
     async write(instance) {
         try {
             // TODO: handle incoming read-only and immutable attribute tests
-            return new GroupSchema(
-                await Group.#ingress(this, new GroupSchema(instance, "in")),
+            return new Schemas.Group(
+                await Group.#ingress(this, new Schemas.Group(instance, "in")),
                 "out", Group.basepath(), this.attributes
             );
         } catch (ex) {
-            if (ex instanceof SCIMError) throw ex;
-            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
-            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+            if (ex instanceof Types.Error) throw ex;
+            else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
+            else throw new Types.Error(404, null, `Resource ${this.id} not found`);
         }
     }
     
-    /** @implements {Resource#patch} */
+    /** @implements {SCIMMY.Types.Resource#patch} */
     async patch(request) {
         try {
-            return await new PatchOp(request, new GroupSchema((await Group.#egress(this)).shift(), "out"))
+            return await new Messages.PatchOp(request, new Schemas.Group((await Group.#egress(this)).shift(), "out"))
                 .apply(async (instance) => await Group.#ingress(this, instance))
-                .then(instance => !instance ? undefined : new GroupSchema(instance, "out", Group.basepath(), this.attributes));
+                .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {
-            if (ex instanceof SCIMError) throw ex;
-            else if (ex instanceof TypeError) throw new SCIMError(400, "invalidValue", ex.message);
-            else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+            if (ex instanceof Types.Error) throw ex;
+            else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
+            else throw new Types.Error(404, null, `Resource ${this.id} not found`);
         }
     }
     
-    /** @implements {Resource#dispose} */
+    /** @implements {SCIMMY.Types.Resource#dispose} */
     async dispose() {
         if (!!this.id) await Group.#degress(this);
-        else throw new SCIMError(404, null, `Resource ${this.id} not found`);
+        else throw new Types.Error(404, null, `Resource ${this.id} not found`);
     }
 }

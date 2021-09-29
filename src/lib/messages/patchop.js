@@ -1,5 +1,5 @@
 import {isDeepStrictEqual} from "util";
-import {Error as SCIMError, Schema, SchemaDefinition, Filter} from "../types.js";
+import Types from "../types.js";
 
 // List of valid SCIM patch operations
 const validOps = ["add", "remove", "replace"];
@@ -10,47 +10,52 @@ const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
 
 /**
  * SCIM Patch Operation Message Type
+ * @class SCIMMY.Messages.PatchOp
  */
 export class PatchOp {
     /**
      * SCIM Patch Operation Message Schema ID
      * @type {String}
+     * @private
      */
     static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
     
     /**
      * SCIM SchemaDefinition instance for resource being patched
-     * @type {SchemaDefinition}
+     * @type {SCIMMY.Types.SchemaDefinition}
+     * @private
      */
     #schema;
     
     /**
      * Original SCIM Schema resource instance being patched
-     * @type {Schema|Schema[]}
+     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @private
      */
     #source;
     
     /**
      * Target SCIM Schema resource instance to apply patches to
-     * @type {Schema|Schema[]}
+     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @private
      */
     #target;
     
     /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} request - contents of the patch operation request being performed
-     * @param {Schema} resource - the schema instance the patch operation will be performed on
+     * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      */
     constructor(request = {}, resource) {
         let {schemas = [], Operations: operations = []} = request;
         
         // Make sure specified schema is valid
         if (schemas.length !== 1 || !schemas.includes(PatchOp.#id))
-            throw new SCIMError(400, "invalidSyntax", `PatchOp request body messages must exclusively specify schema as '${PatchOp.#id}'`);
+            throw new Types.Error(400, "invalidSyntax", `PatchOp request body messages must exclusively specify schema as '${PatchOp.#id}'`);
         
         // Make sure request body contains operations to perform
         if (!operations.length)
-            throw new SCIMError(400, "invalidValue", "PatchOp request body must contain 'Operations' attribute with at least one operation");
+            throw new Types.Error(400, "invalidValue", "PatchOp request body must contain 'Operations' attribute with at least one operation");
         
         // Make sure all specified operations are valid
         for (let operation of operations) {
@@ -59,23 +64,23 @@ export class PatchOp {
             
             // Make sure all operations have a valid action defined
             if (op === undefined)
-                throw new SCIMError(400, "invalidValue", `Missing required attribute 'op' from operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "invalidValue", `Missing required attribute 'op' from operation ${index} in PatchOp request body`);
             if (typeof op !== "string" || !validOps.includes(op.toLowerCase()))
-                throw new SCIMError(400, "invalidSyntax", `Invalid operation '${op}' for operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "invalidSyntax", `Invalid operation '${op}' for operation ${index} in PatchOp request body`);
             
             // Make sure value attribute is specified for "add" operations
             if ("add" === op.toLowerCase() && value === undefined)
-                throw new SCIMError(400, "invalidValue", `Missing required attribute 'value' for 'add' op of operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "invalidValue", `Missing required attribute 'value' for 'add' op of operation ${index} in PatchOp request body`);
             // Make sure path attribute is specified for "remove" operations
             if ("remove" === op.toLowerCase() && path === undefined)
-                throw new SCIMError(400, "noTarget", `Missing required attribute 'path' for 'remove' op of operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "noTarget", `Missing required attribute 'path' for 'remove' op of operation ${index} in PatchOp request body`);
             // Make sure path attribute is a string
             if (!!path && typeof path !== "string")
-                throw new SCIMError(400, "invalidPath", `Invalid path '${path}' for operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "invalidPath", `Invalid path '${path}' for operation ${index} in PatchOp request body`);
         }
         
         // Bail out if resource is specified, and it's not a Schema instance
-        if (!(resource instanceof Schema) && resource !== undefined)
+        if (!(resource instanceof Types.Schema) && resource !== undefined)
             throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
         
         // Store details about the resource being patched
@@ -91,7 +96,7 @@ export class PatchOp {
     /**
      * Apply patch operations to a resource as defined by the PatchOp instance
      * @param {Function} [finalise} - method to call when all operations are complete, to feed target back through model
-     * @return {Schema|Schema[]} an instance of the resource modified as per the included patch operations
+     * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
      */
     async apply(finalise) {
         // Go through all specified operations
@@ -117,7 +122,8 @@ export class PatchOp {
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute or value being patched
      * @param {String} op - the operation being performed, for use in error messages
-     * @return {{complex: boolean, property: string, multiValued: boolean, targets: [Schema[]|Object[]]}}
+     * @returns {{complex: boolean, property: string, multiValued: boolean, targets: [SCIMMY.Types.Schema[]|Object[]]}}
+     * @private
      */
     #resolve(index, path, op) {
         // Work out parts of the supplied path
@@ -131,7 +137,7 @@ export class PatchOp {
             multiValued = attribute?.config?.multiValued ?? false;
         } catch {
             // Rethrow exceptions as SCIM errors when attribute wasn't found
-            throw new SCIMError(400, "invalidPath", `Invalid path '${path}' for '${op}' op of operation ${index} in PatchOp request body`);
+            throw new Types.Error(400, "invalidPath", `Invalid path '${path}' for '${op}' op of operation ${index} in PatchOp request body`);
         }
         
         // Traverse the path
@@ -151,7 +157,7 @@ export class PatchOp {
                 if (target !== undefined) try {
                     if (filter !== undefined) {
                         // If a filter is specified, apply it to the target and add results back to targets
-                        targets.push(...(new Filter(filter).match(target[key])));
+                        targets.push(...(new Types.Filter(filter).match(target[key])));
                     } else {
                         // Add the traversed value to targets, or back out if already arrived
                         targets.push(paths.length === 0 ? target : target[key] ?? (op === "add" ? ((target[key] = target[key] ?? {}) && target[key]) : undefined));
@@ -164,10 +170,10 @@ export class PatchOp {
         
         // No targets, bail out!
         if (targets.length === 0)
-            throw new SCIMError(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
+            throw new Types.Error(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
         
         return {
-            complex: (attribute instanceof SchemaDefinition ? true : attribute.type === "complex"),
+            complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
             multiValued: multiValued,
             property: property,
             targets: targets
@@ -177,14 +183,14 @@ export class PatchOp {
     /**
      * Perform the "add" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
-     * @param {String} [path] - if supplied, specifies path to the attribute being added
+     * @param {String} path - if supplied, specifies path to the attribute being added
      * @param {*|*[]} value - value being added to the resource or attribute specified by path
      */
     add(index, path, value) {
         if (path === undefined) {
             // If path is unspecified, value must be a plain object
             if (typeof value !== "object" || Array.isArray(value))
-                throw new SCIMError(400, "invalidValue", `Attribute 'value' must be an object when 'path' is empty for 'add' op of operation ${index} in PatchOp request body`);
+                throw new Types.Error(400, "invalidValue", `Attribute 'value' must be an object when 'path' is empty for 'add' op of operation ${index} in PatchOp request body`);
             
             // Go through and add the data specified by value
             for (let [key, val] of Object.entries(value)) {
@@ -192,13 +198,13 @@ export class PatchOp {
                 else try {
                     this.#target[key] = val;
                 } catch (ex) {
-                    if (ex instanceof SCIMError) {
+                    if (ex instanceof Types.Error) {
                         // Add additional context to SCIM errors
                         ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
                         throw ex;
                     } else {
                         // Rethrow other exceptions as SCIM errors
-                        throw new SCIMError(400, "invalidValue", `Value '${val}' not valid for attribute '${key}' of 'add' operation ${index} in PatchOp request body`);
+                        throw new Types.Error(400, "invalidValue", `Value '${val}' not valid for attribute '${key}' of 'add' operation ${index} in PatchOp request body`);
                     }
                 }
             }
@@ -228,7 +234,7 @@ export class PatchOp {
                     else target[property] = value;
                 } catch (ex) {
                     // Rethrow exceptions as SCIM errors
-                    throw new SCIMError(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
                 }
             }
         }
@@ -256,7 +262,7 @@ export class PatchOp {
                         // Make sure filter values is an array for easy use of "includes" comparison when filtering
                         let values = (Array.isArray(value) ? value : [value]),
                             // If values are complex, build a filter to match with - otherwise just use values
-                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Filter(values
+                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Types.Filter(values
                                 .map(f => Object.entries(f)
                                     // Get rid of any empty values from the filter
                                     .filter(([, value]) => value !== undefined)
@@ -273,7 +279,7 @@ export class PatchOp {
                     }
                 } catch (ex) {
                     // Rethrow exceptions as SCIM errors
-                    throw new SCIMError(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
                 }
             }
         } else {
@@ -290,7 +296,7 @@ export class PatchOp {
     /**
      * Perform the "replace" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
-     * @param {String} [path] - if supplied, specifies path to the attribute being replaced
+     * @param {String} path - if supplied, specifies path to the attribute being replaced
      * @param {*|*[]} value - value being replaced on the resource or attribute specified by path
      */
     replace(index, path, value) {

@@ -1,4 +1,4 @@
-import {ServiceProviderConfig} from "./schemas.js";
+import Schemas from "./schemas.js";
 
 // Define handler traps for returned proxied configuration object
 const catchAll = () => {throw new TypeError("SCIM Configuration can only be changed via the 'set' method")};
@@ -6,9 +6,14 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
 
 /**
  * SCIM Service Provider Configuration Container Class
+ * @class SCIMMY.Config
  */
 export default class Config {
-    // Store the configuration
+    /**
+     * Store the configuration
+     * @type {{patch: {supported: boolean}, filter: {maxResults: number, supported: boolean}, authenticationSchemes: [], etag: {supported: boolean}, sort: {supported: boolean}, bulk: {maxPayloadSize: number, maxOperations: number, supported: boolean}, changePassword: {supported: boolean}}}
+     * @private
+     */
     static #config = {
         patch: Object.preventExtensions({supported: false}),
         bulk: Object.preventExtensions({supported: false, maxOperations: 1000, maxPayloadSize: 1048576}),
@@ -21,7 +26,7 @@ export default class Config {
     
     /**
      * Get SCIM service provider configuration
-     * @return {Object} the service provider configuration, proxied for protection
+     * @returns {Object} the service provider configuration, proxied for protection
      */
     static get() {
         // Wrap all the things in a proxy!
@@ -31,10 +36,11 @@ export default class Config {
     
     /**
      * Set SCIM service provider configuration
-     * @param {Object} [args[0]] - the new configuration to apply to the service provider config instance
-     * @param {String} [args[0]] - the name of the configuration property to set
-     * @param {Object|Boolean} [args[1]] - the new value of the configuration property to set
-     * @return {Object|Config} the updated configuration instance, or the config container class for chaining
+     * @param {Array<Object|String>} args - the configuration key name or value to apply
+     * @param {Object} args[0] - the new configuration to apply to the service provider config instance
+     * @param {String} args[0] - the name of the configuration property to set
+     * @param {Object|Boolean} args[1] - the new value of the configuration property to set
+     * @returns {Object|Config} the updated configuration instance, or the config container class for chaining
      */
     static set(...args) {
         // Dereference name and config from supplied parameters
@@ -60,7 +66,7 @@ export default class Config {
                 
                 if (Array.isArray(target)) {
                     // Target is multi-valued (authenticationSchemes), add coerced values to config
-                    target.push(...ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
+                    target.push(...Schemas.ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
                 } else {
                     // Strings are not valid shorthand config values
                     if (typeof value === "string")
@@ -86,7 +92,7 @@ export default class Config {
                     else if (value === Object(value)) {
                         try {
                             // Coerce the value and assign it to the config property
-                            Object.assign(target, ServiceProviderConfig.definition.attribute(key)
+                            Object.assign(target, Schemas.ServiceProviderConfig.definition.attribute(key)
                                 .coerce({...target, supported: true, ...value}));
                         } catch (ex) {
                             // Rethrow exceptions after giving them better context

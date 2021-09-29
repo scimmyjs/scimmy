@@ -9,7 +9,8 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 
 /**
  * SCIM Filter Type
- * @extends {Array}
+ * @class SCIMMY.Types.Filter
+ * @extends {Array<T>}
  */
 export class Filter extends Array {
     /**
@@ -25,7 +26,7 @@ export class Filter extends Array {
     /**
      * Compare and filter a given set of values against this filter instance
      * @param {Object[]} values - values to evaluate filters against
-     * @return {Object[]} subset of values that match any expressions of this filter instance
+     * @returns {Object[]} subset of values that match any expressions of this filter instance
      */
     match(values) {
         // Match against any of the filters in the set
@@ -50,6 +51,7 @@ export class Filter extends Array {
     
     /**
      * Parse a SCIM filter string into an array of objects representing the query filter
+     * @private
      * @param {String} [query=""] - the filter parameter of a request as per [RFC7644§3.4.2.2]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2}
      * @returns {Object[]} parsed object representation of the queried filter
      */
