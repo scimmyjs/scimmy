@@ -5,7 +5,8 @@ import chalk from "chalk";
 import minimist from "minimist";
 
 // Get relative path to packager.js location from process CWD
-const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const cwd = path.dirname(url.fileURLToPath(import.meta.url));
+const basepath = path.relative(process.cwd(), cwd);
 
 /**
  * Packager Class
@@ -122,6 +123,18 @@ export class Packager {
                 return bundles.map(file => `${chalk.grey(dest)}/${file.fileName}`);
             }
         }]);
+        
+        await step("Preparing TypeScript definitions", [{
+            pre: `Writing definitions to ${chalk.blue(dest)}/${chalk.magenta(Packager.#assets.entry.replace(".js", ".d.ts"))}: `,
+            post: "Generated type definitions for the following files:",
+            action: async () => {
+                let bundles = await Packager.typedefs(
+                    `${src}/${Packager.#assets.entry}`, `${dest}/${Packager.#assets.entry.replace(".js", ".d.ts")}`,
+                    {allowJs: true, declaration: true, emitDeclarationOnly: true});
+                
+                return bundles.map(file => file.replace(src, chalk.grey(src)));
+            }
+        }]);
     }
     
     /**
@@ -156,6 +169,33 @@ export class Packager {
             chunkFileNames: "[name].js",
             manualChunks: chunks
         });
+        
+        return output;
+    }
+    
+    /**
+     * Use TypeScript Compiler API to generate type definitions
+     * @param {String} src - the source directory to read assets from
+     * @param {String} dest - the destination file or directory to write compiled output to
+     * @param {Object} config - options to pass through to the TypeScript Compiler
+     * @returns {String[]} names of files with generated types
+     */
+    static async typedefs(src, dest, config) {
+        const {default: ts} = await import("typescript");
+        const program = ts.createProgram(Array.isArray(src) ? src : [src], {
+            ...config, ...(dest.endsWith(".d.ts") ? {outFile: dest} : {outDir: dest})
+        });
+        
+        let output = [];
+        
+        program.emit();
+        
+        for (let sourceFile of program.getSourceFiles()) {
+            if (!sourceFile.isDeclarationFile) {
+                let fileName = sourceFile.fileName.replace(`${cwd}${path.sep}`, "./");
+                output.push(fileName.startsWith("./") ? fileName : `./${fileName}`);
+            }
+        }
         
         return output;
     }
