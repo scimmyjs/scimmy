@@ -5,7 +5,7 @@
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
-  "main": "dist/scim.js",
+  "main": "dist/scimmy.js",
   "scripts": {
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",

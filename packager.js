@@ -26,14 +26,14 @@ export class Packager {
      * @type {{entry, chunks, externals}}
      */
     static #assets = {
-        entry: "scim.js",
+        entry: "scimmy.js",
         externals: ["util"],
         chunks: {
             "lib/config": [`${Packager.paths.src}/lib/config.js`],
+            "lib/types": [`${Packager.paths.src}/lib/types.js`],
+            "lib/schemas": [`${Packager.paths.src}/lib/schemas.js`],
             "lib/messages": [`${Packager.paths.src}/lib/messages.js`],
             "lib/resources": [`${Packager.paths.src}/lib/resources.js`],
-            "lib/schemas": [`${Packager.paths.src}/lib/schemas.js`],
-            "lib/types": [`${Packager.paths.src}/lib/types.js`]
         }
     };
     
@@ -167,7 +167,7 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
     switch (config.target) {
         case "clean":
             await Packager.action()("Cleaning Build Directory", [
-                {pre: "Cleaning build directory: ", action: async () => await Packager.clean(Packager.paths.build)}
+                {pre: "Cleaning build directory: ", action: async () => await Packager.clean(Packager.paths.dist)}
             ]);
             break;
         
