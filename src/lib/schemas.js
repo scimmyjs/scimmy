@@ -39,7 +39,7 @@ export default class Schemas {
         if (!!Schemas.#definitions[name] && Schemas.#definitions[name] !== definition)
             throw new TypeError(`Schema definition '${name}' already declared`);
         else if (!Schemas.#definitions[name])
-            Schemas[name] = Schemas.#definitions[name] = definition;
+            Schemas.#definitions[name] = definition;
         
         // If config was supplied, return Schemas, otherwise return the registered schema definition
         return (typeof config === "object" ? Schemas : definition);
