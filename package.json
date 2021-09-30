@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",
-    "prepack": "node packager.js -t prepack"
+    "prepare": "node packager.js -t prepack"
   },
   "files": [
     "dist/**"
