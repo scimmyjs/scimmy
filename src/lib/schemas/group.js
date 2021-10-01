@@ -3,7 +3,6 @@ import Types from "../types.js";
 /**
  * SCIM Group Schema
  * @class SCIMMY.Schemas.Group
- * @extends {SCIMMY.Types.Schema}
  */
 export class Group extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema~definition} */

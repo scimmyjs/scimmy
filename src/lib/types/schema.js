@@ -5,7 +5,6 @@ import {SCIMError} from "./error.js";
 /**
  * SCIM Schema
  * @class SCIMMY.Types.Schema
- * @interface
  */
 export class Schema {
     /**

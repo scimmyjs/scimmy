@@ -3,7 +3,6 @@ import Types from "../types.js";
 /**
  * SCIM User Schema
  * @class SCIMMY.Schemas.User
- * @extends {SCIMMY.Types.Schema}
  */
 export class User extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema~definition} */

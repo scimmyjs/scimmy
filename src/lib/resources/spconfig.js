@@ -5,7 +5,6 @@ import Config from "../config.js";
 /**
  * SCIM ServiceProviderConfig Resource
  * @class SCIMMY.Resources.ServiceProviderConfig
- * @extends {SCIMMY.Types.Resource}
  */
 export class ServiceProviderConfig extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */
@@ -29,6 +28,7 @@ export class ServiceProviderConfig extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource.extend}
+     * @returns {SCIMMY.Types.Resource}
      * @throws {TypeError} SCIM 'ServiceProviderConfig' resource does not support extension
      */
     static extend() {

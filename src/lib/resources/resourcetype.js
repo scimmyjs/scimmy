@@ -6,7 +6,6 @@ import Resources from "../resources.js";
 /**
  * SCIM ResourceType Resource
  * @class SCIMMY.Resources.ResourceType
- * @extends {SCIMMY.Types.Resource}
  */
 export class ResourceType extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */
@@ -30,6 +29,7 @@ export class ResourceType extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource.extend}
+     * @returns {SCIMMY.Types.Resource}
      * @throws {TypeError} SCIM 'ResourceType' resource does not support extension
      */
     static extend() {

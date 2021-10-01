@@ -5,7 +5,6 @@ import {Filter} from "./filter.js";
 /**
  * SCIM Resource
  * @class SCIMMY.Types.Resource
- * @interface
  */
 export class Resource {
     /**
@@ -51,6 +50,7 @@ export class Resource {
     static #extensions;
     /**
      * Get the list of registered schema extensions for a resource
+     * @returns {Object[]}
      * @abstract
      */
     static get extensions() {

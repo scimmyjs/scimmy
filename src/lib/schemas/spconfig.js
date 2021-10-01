@@ -3,7 +3,6 @@ import Types from "../types.js";
 /**
  * SCIM Service Provider Configuration Schema
  * @class SCIMMY.Schemas.ServiceProviderConfig
- * @extends {SCIMMY.Types.Schema}
  */
 export class ServiceProviderConfig extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema~definition} */

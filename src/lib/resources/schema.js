@@ -5,7 +5,6 @@ import Schemas from "../schemas.js";
 /**
  * SCIM Schema Resource
  * @class SCIMMY.Resources.Schema
- * @extends {SCIMMY.Types.Resource}
  */
 export class Schema extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */
@@ -29,6 +28,7 @@ export class Schema extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource.extend}
+     * @returns {SCIMMY.Types.Resource}
      * @throws {TypeError} SCIM 'Schema' resource does not support extension
      */
     static extend() {

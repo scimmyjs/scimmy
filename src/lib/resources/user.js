@@ -5,7 +5,6 @@ import Schemas from "../schemas.js";
 /**
  * SCIM User Resource
  * @class SCIMMY.Resources.User
- * @extends {SCIMMY.Types.Resource}
  */
 export class User extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */

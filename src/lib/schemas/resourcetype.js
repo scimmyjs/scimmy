@@ -3,7 +3,6 @@ import Types from "../types.js";
 /**
  * SCIM ResourceType Schema
  * @class SCIMMY.Schemas.ResourceType
- * @extends {SCIMMY.Types.Schema}
  */
 export class ResourceType extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema~definition} */
