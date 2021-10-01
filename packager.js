@@ -181,17 +181,21 @@ export class Packager {
      * @returns {String[]} names of files with generated types
      */
     static async typedefs(src, dest, config) {
+        // Prepare a TypeScript Compiler Program for compilation
         const {default: ts} = await import("typescript");
         const program = ts.createProgram(Array.isArray(src) ? src : [src], {
-            ...config, ...(dest.endsWith(".d.ts") ? {outFile: dest} : {outDir: dest})
+            // If destination is a TypeScript or JavaScript file, assume all sources are targeting a single file
+            ...config, ...(dest.endsWith(".ts") || dest.endsWith(".js") ? {outFile: dest} : {outDir: dest})
         });
         
-        let output = [];
-        
+        // Run the compiler instance
         program.emit();
         
+        // Go through and get the results of which source files were read by the compiler
+        let output = [];
         for (let sourceFile of program.getSourceFiles()) {
             if (!sourceFile.isDeclarationFile) {
+                // Make sure the source file wasn't a TypeScript Library, then add the relative path to results
                 let fileName = sourceFile.fileName.replace(`${cwd}${path.sep}`, "./");
                 output.push(fileName.startsWith("./") ? fileName : `./${fileName}`);
             }

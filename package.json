@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
+  "description": "SCIMMY - SCIM m(ade eas)y",
   "version": "1.0.0",
-  "description": "SCIM m(ade eas)y",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -20,7 +20,10 @@
   ],
   "keywords": [
     "SCIM",
-    "provisioning"
+    "provisioning",
+    "identity",
+    "rfc7643",
+    "rfc7644"
   ],
   "homepage": "https://github.com/sleelin/scimmy#readme",
   "repository": {
