@@ -129,7 +129,9 @@ const validate = {
             typeReferences = attrib.config.referenceTypes.filter(t => !["uri", "external"].includes(t)),
             message;
         
-        if (typeof value === "object" && value !== null) {
+        // If there's no value and the attribute isn't required, skip validation
+        if (value === undefined && !attrib?.config?.required) return;
+        else if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
             else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
