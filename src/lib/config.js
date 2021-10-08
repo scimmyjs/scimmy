@@ -11,10 +11,11 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
 export default class Config {
     /**
      * Store the configuration
-     * @type {{patch: {supported: boolean}, filter: {maxResults: number, supported: boolean}, authenticationSchemes: [], etag: {supported: boolean}, sort: {supported: boolean}, bulk: {maxPayloadSize: number, maxOperations: number, supported: boolean}, changePassword: {supported: boolean}}}
+     * @type {{documentationUri: {string}, patch: {supported: boolean}, filter: {maxResults: number, supported: boolean}, authenticationSchemes: [], etag: {supported: boolean}, sort: {supported: boolean}, bulk: {maxPayloadSize: number, maxOperations: number, supported: boolean}, changePassword: {supported: boolean}}}
      * @private
      */
     static #config = {
+        documentationUri: undefined,
         patch: Object.preventExtensions({supported: false}),
         bulk: Object.preventExtensions({supported: false, maxOperations: 1000, maxPayloadSize: 1048576}),
         filter: Object.preventExtensions({supported: false, maxResults: 200}),
@@ -31,7 +32,7 @@ export default class Config {
     static get() {
         // Wrap all the things in a proxy!
         return new Proxy(Object.entries(Config.#config)
-            .reduce((res, [key, value]) => ((res[key] = new Proxy(value, handleTraps)) && res), {}), handleTraps);
+            .reduce((res, [key, value]) => (((res[key] = (key === "documentationUri" ? value : new Proxy(value, handleTraps))) || true) && res), {}), handleTraps);
     }
     
     /**
@@ -48,7 +49,7 @@ export default class Config {
         
         // If property name supplied, call again with object
         if (typeof name === "string") {
-            Config.set({[name]: config});
+            Config.set({[name]: args[1]});
             
             return Config;
         }
@@ -64,9 +65,13 @@ export default class Config {
             for (let [key, value] of Object.entries(config)) {
                 let target = Config.#config[key];
                 
-                if (Array.isArray(target)) {
-                    // Target is multi-valued (authenticationSchemes), add coerced values to config
-                    target.push(...Schemas.ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
+                if (key === "documentationUri") {
+                    // Handle documentationUri string
+                    Config.#config.documentationUri = Schemas.ServiceProviderConfig.definition.attribute(key).coerce(value);
+                } else if (Array.isArray(target)) {
+                    // Target is multi-valued (authenticationSchemes), add coerced values to config, or reset if empty
+                    if (!value || (Array.isArray(value) && value.length === 0)) target.splice(0);
+                    else target.push(...Schemas.ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
                 } else {
                     // Strings are not valid shorthand config values
                     if (typeof value === "string")
