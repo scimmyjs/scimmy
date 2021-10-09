@@ -1,7 +1,6 @@
 /**
  * SCIM Error
  * @class SCIMMY.Types.Error
- * @extends {Error}
  */
 export class SCIMError extends Error {
     /**

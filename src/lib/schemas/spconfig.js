@@ -10,7 +10,10 @@ export class ServiceProviderConfig extends Types.Schema {
         return ServiceProviderConfig.#definition;
     }
     
-    /** @implements {SCIMMY.Types.Schema~#definition} */
+    /**
+     * @implements {SCIMMY.Types.Schema~#definition}
+     * @private
+     */
     static #definition = new Types.SchemaDefinition(
         "ServiceProviderConfig", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
         "Schema for representing the service provider's configuration", [

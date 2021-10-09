@@ -101,7 +101,7 @@ export class SchemaDefinition {
     
     /**
      * Extend a schema definition instance by mixing in other schemas or attributes
-     * @param {Array[SCIMMY.Types.Schema|SCIMMY.Types.Attribute>]} extensions[] - the schema extensions or collection of attributes to register
+     * @param {Array<SCIMMY.Types.Schema|SCIMMY.Types.Attribute>} extensions[] - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */

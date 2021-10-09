@@ -10,7 +10,10 @@ export class ResourceType extends Types.Schema {
         return ResourceType.#definition;
     }
     
-    /** @implements {SCIMMY.Types.Schema~#definition} */
+    /**
+     * @implements {SCIMMY.Types.Schema~#definition}
+     * @private
+     */
     static #definition = new Types.SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
         new Types.Attribute("string", "name", {direction: "out", required: true, mutable: false}),
         new Types.Attribute("string", "description", {direction: "out", mutable: false}),

@@ -10,7 +10,10 @@ export class Group extends Types.Schema {
         return Group.#definition;
     }
     
-    /** @implements {SCIMMY.Types.Schema~#definition} */
+    /**
+     * @implements {SCIMMY.Types.Schema~#definition}
+     * @private
+     */
     static #definition = new Types.SchemaDefinition("Group", "urn:ietf:params:scim:schemas:core:2.0:Group", "Group", [
         new Types.Attribute("string", "displayName", {required: true}),
         new Types.Attribute("complex", "members", {multiValued: true, uniqueness: false}, [

@@ -10,7 +10,10 @@ export class EnterpriseUser extends Types.Schema {
         return EnterpriseUser.#definition;
     }
     
-    /** @implements {SCIMMY.Types.Schema~#definition} */
+    /**
+     * @implements {SCIMMY.Types.Schema~#definition}
+     * @private
+     */
     static #definition = new Types.SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
         new Types.Attribute("string", "employeeNumber"),
         new Types.Attribute("string", "costCenter"),

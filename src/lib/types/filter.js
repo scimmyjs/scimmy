@@ -10,7 +10,6 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 /**
  * SCIM Filter Type
  * @class SCIMMY.Types.Filter
- * @extends {Array<T>}
  */
 export class Filter extends Array {
     /**

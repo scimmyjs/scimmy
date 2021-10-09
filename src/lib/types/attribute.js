@@ -1,30 +1,35 @@
 /**
  * Collection of valid attribute type characteristic's values
  * @type {string[]}
+ * @private
  */
 const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
 
 /**
  * Collection of valid attribute mutability characteristic's values
  * @type {string[]}
+ * @private
  */
 const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
 
 /**
  * Collection of valid attribute returned characteristic's values
  * @type {string[]}
+ * @private
  */
 const returned = ["always", "never", "default", "request"];
 
 /**
  * Collection of valid attribute uniqueness characteristic's values
  * @type {string[]}
+ * @private
  */
 const uniqueness = ["none", "server", "global"];
 
 /**
  * Attribute value validation method container
  * @type {{canonical: validate.canonical, string: validate.string, date: validate.date, number: validate.number, reference: validate.reference}}
+ * @private
  */
 const validate = {
     /**

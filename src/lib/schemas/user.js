@@ -10,7 +10,10 @@ export class User extends Types.Schema {
         return User.#definition;
     }
     
-    /** @implements {SCIMMY.Types.Schema~#definition} */
+    /**
+     * @implements {SCIMMY.Types.Schema~#definition}
+     * @private
+     */
     static #definition = new Types.SchemaDefinition("User", "urn:ietf:params:scim:schemas:core:2.0:User", "User Account", [
         new Types.Attribute("string", "userName", {required: true, uniqueness: "server"}),
         new Types.Attribute("complex", "name", {}, [

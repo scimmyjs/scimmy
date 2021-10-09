@@ -31,6 +31,7 @@ export class Error {
         // Dereference parts of the exception
         let {status = 500, scimType, message: detail} = ex;
         
+        // TODO: rethrow parsed error responses
         // Validate the supplied parameters
         if (!validStatusCodes.includes(Number(status)))
             throw new TypeError(`Incompatible HTTP status code '${status}' supplied to SCIM Error Message constructor`);
