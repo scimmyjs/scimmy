@@ -6,6 +6,7 @@ export class ListResponse {
     /**
      * SCIM List Response Message Schema ID
      * @type {String}
+     * @private
      */
     static #id = "urn:ietf:params:scim:api:messages:2.0:ListResponse";
     
