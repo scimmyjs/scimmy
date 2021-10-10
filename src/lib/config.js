@@ -6,12 +6,11 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
 
 /**
  * SCIM Service Provider Configuration Container Class
- * @class SCIMMY.Config
+ * @namespace SCIMMY.Config
  */
 export default class Config {
     /**
      * Store the configuration
-     * @type {{documentationUri: {string}, patch: {supported: boolean}, filter: {maxResults: number, supported: boolean}, authenticationSchemes: [], etag: {supported: boolean}, sort: {supported: boolean}, bulk: {maxPayloadSize: number, maxOperations: number, supported: boolean}, changePassword: {supported: boolean}}}
      * @private
      */
     static #config = {
@@ -27,6 +26,8 @@ export default class Config {
     
     /**
      * Get SCIM service provider configuration
+     * @static
+     * @memberOf SCIMMY.Config
      * @returns {Object} the service provider configuration, proxied for protection
      */
     static get() {
@@ -37,10 +38,12 @@ export default class Config {
     
     /**
      * Set SCIM service provider configuration
+     * @static
+     * @memberOf SCIMMY.Config
      * @param {Array<Object|String>} args - the configuration key name or value to apply
-     * @param {Object} args[0] - the new configuration to apply to the service provider config instance
-     * @param {String} args[0] - the name of the configuration property to set
-     * @param {Object|Boolean} args[1] - the new value of the configuration property to set
+     * @param {Object} args - the new configuration to apply to the service provider config instance
+     * @param {String} args - the name of the configuration property to set
+     * @param {Object|Boolean} args - the new value of the configuration property to set
      * @returns {Object|Config} the updated configuration instance, or the config container class for chaining
      */
     static set(...args) {

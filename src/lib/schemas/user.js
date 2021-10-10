@@ -2,18 +2,20 @@ import Types from "../types.js";
 
 /**
  * SCIM User Schema
- * @class SCIMMY.Schemas.User
+ * @alias SCIMMY.Schemas.User
  */
 export class User extends Types.Schema {
-    /** @implements {SCIMMY.Types.Schema~definition} */
+    /**
+     * @static
+     * @alias definition
+     * @memberOf SCIMMY.Schemas.User
+     * @implements {SCIMMY.Types.Schema.definition}
+     */
     static get definition() {
         return User.#definition;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Schema~#definition}
-     * @private
-     */
+    /** @private */
     static #definition = new Types.SchemaDefinition("User", "urn:ietf:params:scim:schemas:core:2.0:User", "User Account", [
         new Types.Attribute("string", "userName", {required: true, uniqueness: "server"}),
         new Types.Attribute("complex", "name", {}, [
@@ -95,6 +97,8 @@ export class User extends Types.Schema {
     
     /**
      * Instantiates a new user that conforms to the SCIM User schema definition
+     * @constructs SCIMMY.Schemas.User
+     * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location

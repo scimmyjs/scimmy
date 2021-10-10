@@ -1,6 +1,6 @@
 /**
  * SCIM List Response Message Type
- * @class SCIMMY.Messages.ListResponse
+ * @alias SCIMMY.Messages.ListResponse
  */
 export class ListResponse {
     /**
@@ -12,6 +12,7 @@ export class ListResponse {
     
     /**
      * Instantiate a new SCIM List Response Message with relevant details
+     * @constructs SCIMMY.Messages.ListResponse
      * @param {Object|SCIMMY.Types.Schema[]} request - contents of the ListResponse message, or items to include in the list response
      * @param {Object} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
      * @param {String} [params.sortBy] - the attribute to sort results by, if any

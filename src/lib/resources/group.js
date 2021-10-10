@@ -4,20 +4,27 @@ import Schemas from "../schemas.js";
 
 /**
  * SCIM Group Resource
- * @class SCIMMY.Resources.Group
+ * @alias SCIMMY.Resources.Group
  */
 export class Group extends Types.Resource {
-    /** @implements {SCIMMY.Types.Resource.endpoint} */
+    /**
+     * @static
+     * @alias endpoint
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.endpoint}
+     */
     static get endpoint() {
         return "/Groups";
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#basepath}
-     * @private
-     */
+    /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /**
+     * @static
+     * @alias basepath
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.basepath}
+     */
     static basepath(path) {
         if (path === undefined) return Group.#basepath;
         else if (Group.#basepath === undefined)
@@ -26,49 +33,62 @@ export class Group extends Types.Resource {
         return Group;
     }
     
-    /** @implements {SCIMMY.Types.Resource.schema} */
+    /**
+     * @static
+     * @alias schema
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.schema}
+     */
     static get schema() {
         return Schemas.Group;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#extensions}
-     * @private
-     */
+    /** @private */
     static #extensions = [];
-    /** @implements {SCIMMY.Types.Resource.extensions} */
+    /**
+     * @static
+     * @alias extensions
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.extensions}
+     */
     static get extensions() {
         return Group.#extensions;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#ingress}
-     * @private
-     */
+    /** @private */
     static #ingress = () => {};
-    /** @implements {SCIMMY.Types.Resource.ingress} */
+    /**
+     * @static
+     * @alias ingress
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.ingress}
+     */
     static ingress(handler) {
         Group.#ingress = handler;
         return Group;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#egress}
-     * @private
-     */
+    /** @private */
     static #egress = () => {};
-    /** @implements {SCIMMY.Types.Resource.egress} */
+    /**
+     * @static
+     * @alias egress
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.egress}
+     */
     static egress(handler) {
         Group.#egress = handler;
         return Group;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#degress}
-     * @private
-     */
+    /** @private */
     static #degress = () => {};
-    /** @implements {SCIMMY.Types.Resource.degress} */
+    /**
+     * @static
+     * @alias degress
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource.degress}
+     */
     static degress(handler) {
         Group.#degress = handler;
         return Group;
@@ -76,13 +96,19 @@ export class Group extends Types.Resource {
     
     /**
      * Instantiate a new SCIM Group resource and parse any supplied parameters
-     * @implements {SCIMMY.Types.Resource#constructor}
+     * @constructs SCIMMY.Resources.Group
+     * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
         super(params, ...rest);
     }
     
-    /** @implements {SCIMMY.Types.Resource#read} */
+    /**
+     * @alias read
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource#read}
+     * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.Group}
+     */
     async read() {
         if (!this.id) {
             return new Messages.ListResponse((await Group.#egress(this))
@@ -98,7 +124,12 @@ export class Group extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#write} */
+    /**
+     * @alias write
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource#write}
+     * @returns {SCIMMY.Schemas.Group}
+     */
     async write(instance) {
         try {
             // TODO: handle incoming read-only and immutable attribute tests
@@ -113,7 +144,12 @@ export class Group extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#patch} */
+    /**
+     * @alias patch
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource#patch}
+     * @returns {SCIMMY.Schemas.Group}
+     */
     async patch(request) {
         try {
             return await new Messages.PatchOp(request, new Schemas.Group((await Group.#egress(this)).shift(), "out"))
@@ -126,7 +162,11 @@ export class Group extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#dispose} */
+    /**
+     * @alias dispose
+     * @memberOf SCIMMY.Resources.Group
+     * @implements {SCIMMY.Types.Resource#dispose}
+     */
     async dispose() {
         if (!!this.id) await Group.#degress(this);
         else throw new Types.Error(404, null, `Resource ${this.id} not found`);

@@ -2,18 +2,20 @@ import Types from "../types.js";
 
 /**
  * SCIM ResourceType Schema
- * @class SCIMMY.Schemas.ResourceType
+ * @alias SCIMMY.Schemas.ResourceType
  */
 export class ResourceType extends Types.Schema {
-    /** @implements {SCIMMY.Types.Schema~definition} */
+    /**
+     * @static
+     * @alias definition
+     * @memberOf SCIMMY.Schemas.ResourceType
+     * @implements {SCIMMY.Types.Schema.definition}
+     */
     static get definition() {
         return ResourceType.#definition;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Schema~#definition}
-     * @private
-     */
+    /** @private */
     static #definition = new Types.SchemaDefinition("ResourceType", "urn:ietf:params:scim:schemas:core:2.0:ResourceType", "Resource Type", [
         new Types.Attribute("string", "name", {direction: "out", required: true, mutable: false}),
         new Types.Attribute("string", "description", {direction: "out", mutable: false}),
@@ -27,6 +29,8 @@ export class ResourceType extends Types.Schema {
     
     /**
      * Instantiates a new resource type that conforms to the SCIM ResourceType schema definition
+     * @constructs SCIMMY.Schemas.ResourceType
+     * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [basepath] - the base path for resolution of a resource's location
      */

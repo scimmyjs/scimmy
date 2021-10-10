@@ -7,7 +7,7 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
 
 /**
  * SCIM Schemas Container Class
- * @class SCIMMY.Schemas
+ * @namespace SCIMMY.Schemas
  */
 export default class Schemas {
     // Store declared schema definitions for later retrieval
@@ -22,6 +22,8 @@ export default class Schemas {
     
     /**
      * Register a SchemaDefinition implementation for exposure via Schemas HTTP endpoint
+     * @static
+     * @memberOf SCIMMY.Schemas
      * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition to register
      * @param {String|Object} [config] - the configuration to feed to the schema being declared
      * @returns {SCIMMY.Types.SchemaDefinition|Schemas} the Schemas class or declared schema class for chaining
@@ -47,6 +49,8 @@ export default class Schemas {
     
     /**
      * Get registration status of specific schema implementation, or get all registered schema definitions
+     * @static
+     * @memberOf SCIMMY.Schemas
      * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema implementation or name to query registration status for
      * @returns {Object|SCIMMY.Types.SchemaDefinition|Boolean}
      *   - {Object} containing object with declared schema definitions for exposure via Schemas HTTP endpoint

@@ -10,7 +10,7 @@ const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
 
 /**
  * SCIM Patch Operation Message Type
- * @class SCIMMY.Messages.PatchOp
+ * @alias SCIMMY.Messages.PatchOp
  */
 export class PatchOp {
     /**
@@ -43,6 +43,7 @@ export class PatchOp {
     
     /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
+     * @constructs SCIMMY.Messages.PatchOp
      * @param {Object} request - contents of the patch operation request being performed
      * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      */
@@ -95,7 +96,9 @@ export class PatchOp {
     
     /**
      * Apply patch operations to a resource as defined by the PatchOp instance
-     * @param {Function} [finalise} - method to call when all operations are complete, to feed target back through model
+     * @alias apply
+     * @memberOf SCIMMY.Messages.PatchOp
+     * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
      * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
      */
     async apply(finalise) {
@@ -122,7 +125,7 @@ export class PatchOp {
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute or value being patched
      * @param {String} op - the operation being performed, for use in error messages
-     * @returns {{complex: boolean, property: string, multiValued: boolean, targets: [SCIMMY.Types.Schema[]|Object[]]}}
+     * @returns {SCIMMY.Messages.PatchOp~PatchOpDetails}
      * @private
      */
     #resolve(index, path, op) {
@@ -172,6 +175,14 @@ export class PatchOp {
         if (targets.length === 0)
             throw new Types.Error(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
         
+        /**
+         * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpDetails
+         * @private
+         * @property {Boolean} complex - whether the target attribute value should be complex
+         * @property {Boolean} multiValued - whether the target attribute expects a collection of values
+         * @property {String} property - name of the targeted attribute to apply values to
+         * @property {Object[]} targets - the resources containing the attributes to apply values to
+         */
         return {
             complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
             multiValued: multiValued,
@@ -184,7 +195,8 @@ export class PatchOp {
      * Perform the "add" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - if supplied, specifies path to the attribute being added
-     * @param {*|*[]} value - value being added to the resource or attribute specified by path
+     * @param {any|any[]} value - value being added to the resource or attribute specified by path
+     * @private
      */
     add(index, path, value) {
         if (path === undefined) {
@@ -244,7 +256,8 @@ export class PatchOp {
      * Perform the "remove" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute being removed
-     * @param {*|*[]} value - value being removed from the resource or attribute specified by path
+     * @param {any|any[]} value - value being removed from the resource or attribute specified by path
+     * @private
      */
     remove(index, path, value) {
         // Validate and extract details about the operation
@@ -297,7 +310,7 @@ export class PatchOp {
      * Perform the "replace" operation on the resource
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - if supplied, specifies path to the attribute being replaced
-     * @param {*|*[]} value - value being replaced on the resource or attribute specified by path
+     * @param {any|any[]} value - value being replaced on the resource or attribute specified by path
      */
     replace(index, path, value) {
         try {

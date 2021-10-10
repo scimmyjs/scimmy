@@ -4,20 +4,27 @@ import Schemas from "../schemas.js";
 
 /**
  * SCIM Schema Resource
- * @class SCIMMY.Resources.Schema
+ * @alias SCIMMY.Resources.Schema
  */
 export class Schema extends Types.Resource {
-    /** @implements {SCIMMY.Types.Resource.endpoint} */
+    /**
+     * @static
+     * @alias endpoint
+     * @memberOf SCIMMY.Resources.Schema
+     * @implements {SCIMMY.Types.Resource.endpoint}
+     */
     static get endpoint() {
         return "/Schemas";
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#basepath}
-     * @private
-     */
+    /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /**
+     * @static
+     * @alias basepath
+     * @memberOf SCIMMY.Resources.Schema
+     * @implements {SCIMMY.Types.Resource.basepath}
+     */
     static basepath(path) {
         if (path === undefined) return Schema.#basepath;
         else if (Schema.#basepath === undefined)
@@ -27,8 +34,10 @@ export class Schema extends Types.Resource {
     }
     
     /**
+     * @static
+     * @alias extend
+     * @memberOf SCIMMY.Resources.Schema
      * @implements {SCIMMY.Types.Resource.extend}
-     * @returns {SCIMMY.Types.Resource}
      * @throws {TypeError} SCIM 'Schema' resource does not support extension
      */
     static extend() {
@@ -37,7 +46,8 @@ export class Schema extends Types.Resource {
     
     /**
      * Instantiate a new SCIM Schema resource and parse any supplied parameters
-     * @implements {SCIMMY.Types.Resource#constructor}
+     * @constructs SCIMMY.Resources.Schema
+     * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
         // Bail out if a resource is requested by filter
@@ -47,7 +57,12 @@ export class Schema extends Types.Resource {
         super(params, ...rest);
     }
     
-    /** @implements {SCIMMY.Types.Resource#read} */
+    /**
+     * @alias read
+     * @memberOf SCIMMY.Resources.Schema
+     * @implements {SCIMMY.Types.Resource#read}
+     * @returns {SCIMMY.Messages.ListResponse|Object}
+     */
     async read() {
         if (!this.id) {
             return new Messages.ListResponse(Object.entries(Schemas.declared())

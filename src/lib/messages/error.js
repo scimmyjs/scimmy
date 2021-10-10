@@ -10,7 +10,7 @@ const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: 
 
 /**
  * SCIM Error Message Type
- * @class SCIMMY.Messages.Error
+ * @alias SCIMMY.Messages.Error
  */
 export class Error {
     /**
@@ -22,6 +22,7 @@ export class Error {
     
     /**
      * Instantiate a new SCIM Error Message with relevant details
+     * @constructs SCIMMY.Messages.Error
      * @param {Object} ex - the initiating exception to parse into a SCIM error message
      * @param {Number} ex.status - HTTP status code to be sent with the error
      * @param {String} ex.scimType - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}

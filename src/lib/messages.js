@@ -4,7 +4,7 @@ import {PatchOp} from "./messages/patchop.js";
 
 /**
  * SCIMMY Messages Container Class
- * @class SCIMMY.Messages
+ * @namespace SCIMMY.Messages
  */
 export default class Messages {
     static Error = Error;

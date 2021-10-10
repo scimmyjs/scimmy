@@ -8,7 +8,7 @@ import Schemas from "./schemas.js";
 
 /**
  * SCIM Resources Container Class
- * @class SCIMMY.Resources
+ * @namespace SCIMMY.Resources
  */
 export default class Resources {
     // Store declared resources for later retrieval
@@ -24,6 +24,8 @@ export default class Resources {
     
     /**
      * Register a resource implementation for exposure as a ResourceType
+     * @static
+     * @memberOf SCIMMY.Resources
      * @param {SCIMMY.Types.Resource} resource - the resource to register
      * @param {String|Object} [config] - the configuration to feed to the resource being registered
      * @returns {SCIMMY.Types.Resource|SCIMMY.Resources} the Resources class or registered resource class for chaining
@@ -72,6 +74,8 @@ export default class Resources {
     
     /**
      * Get registration status of specific resource implementation, or get all registered resource implementations
+     * @static
+     * @memberOf SCIMMY.Resources
      * @param {SCIMMY.Types.Resource|String} [resource] - the resource implementation or name to query registration status for
      * @returns {Object|SCIMMY.Types.Resource|Boolean}
      *   - {Object} containing object with registered resource implementations for exposure as ResourceTypes

@@ -4,11 +4,14 @@ import {Filter} from "./filter.js";
 
 /**
  * SCIM Resource
- * @class SCIMMY.Types.Resource
+ * @alias SCIMMY.Types.Resource
  */
 export class Resource {
     /**
      * Retrieves a resource's endpoint relative to the service provider's base URL
+     * @static
+     * @alias endpoint
+     * @memberOf SCIMMY.Types.Resource
      * @returns {String}
      * @abstract
      */
@@ -25,6 +28,9 @@ export class Resource {
     static #basepath;
     /**
      * Sets or retrieves the base path for resolution of a resource's location
+     * @static
+     * @alias basepath
+     * @memberOf SCIMMY.Types.Resource
      * @param {String} path - the path to use as the base of a resource's location
      * @abstract
      */
@@ -34,6 +40,9 @@ export class Resource {
     
     /**
      * Retrieves a resource's core schema
+     * @static
+     * @alias schema
+     * @memberOf SCIMMY.Types.Resource
      * @returns {SCIMMY.Types.Schema}
      * @abstract
      */
@@ -50,6 +59,9 @@ export class Resource {
     static #extensions;
     /**
      * Get the list of registered schema extensions for a resource
+     * @static
+     * @alias extensions
+     * @memberOf SCIMMY.Types.Resource
      * @returns {Object[]}
      * @abstract
      */
@@ -59,8 +71,12 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
+     * @static
+     * @alias extend
+     * @memberOf SCIMMY.Types.Resource
      * @param {SCIMMY.Types.Schema|SCIMMY.Types.Attribute[]} extension - the schema extension to register
      * @param {Boolean} required - whether or not the extension is required
+     * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
         if (!this.extensions.find(e => e.schema === extension)) {
@@ -87,6 +103,9 @@ export class Resource {
     static #ingress;
     /**
      * Sets the method to be called to consume a resource on create
+     * @static
+     * @alias ingress
+     * @memberOf SCIMMY.Types.Resource
      * @param {Resource~gressHandler} handler - function to invoke to consume a resource on create
      * @abstract
      */
@@ -103,6 +122,9 @@ export class Resource {
     static #egress;
     /**
      * Sets the method to be called to retrieve a resource on read
+     * @static
+     * @alias egress
+     * @memberOf SCIMMY.Types.Resource
      * @param {Resource~gressHandler} handler - function to invoke to retrieve a resource on read
      * @abstract
      */
@@ -119,6 +141,9 @@ export class Resource {
     static #degress;
     /**
      * Sets the method to be called to dispose of a resource on delete
+     * @static
+     * @alias degress
+     * @memberOf SCIMMY.Types.Resource
      * @param {Resource~gressHandler} handler - function to invoke to dispose of a resource on delete
      * @abstract
      */
@@ -128,6 +153,9 @@ export class Resource {
     
     /**
      * Describe this resource implementation
+     * @static
+     * @alias describe
+     * @memberOf SCIMMY.Types.Resource
      * @returns {{schema: String, endpoint: String, name: String, description: String, id: String}}
      */
     static describe() {
@@ -142,11 +170,12 @@ export class Resource {
     
     /**
      * Instantiate a new SCIM resource and parse any supplied parameters
+     * @constructs SCIMMY.Types.Resource
      * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
-     * @param {*[]} rest - all other arguments supplied to the resource constructor
+     * @param {any[]} rest - all other arguments supplied to the resource constructor
      */
     constructor(config = {}, ...rest) {
         let params = config;
@@ -202,6 +231,8 @@ export class Resource {
     /**
      * Calls resource's egress method for data retrieval
      * Wraps the results in valid SCIM list response or single resource syntax
+     * @alias read
+     * @memberOf SCIMMY.Types.Resource
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
      * @abstract
      */
@@ -211,6 +242,8 @@ export class Resource {
     
     /**
      * Calls resource's ingress method for consumption after unwrapping the SCIM resource
+     * @alias write
+     * @memberOf SCIMMY.Types.Resource
      * @returns {SCIMMY.Types.Schema}
      * @abstract
      */
@@ -221,7 +254,9 @@ export class Resource {
     /**
      * Retrieves resources via egress method, and applies specified patch operations
      * Emits patched resources for consumption with resource's ingress method
-     * @returns {SCIMMY.Messages.PatchOp}
+     * @alias patch
+     * @memberOf SCIMMY.Types.Resource
+     * @returns {SCIMMY.Types.Schema}
      * @abstract
      */
     patch() {
@@ -230,6 +265,8 @@ export class Resource {
     
     /**
      * Calls resource's degress method for disposal of the SCIM resource
+     * @alias dispose
+     * @memberOf SCIMMY.Types.Resource
      * @abstract
      */
     dispose() {

@@ -2,18 +2,20 @@ import Types from "../types.js";
 
 /**
  * SCIM EnterpriseUser Schema
- * @class SCIMMY.Schemas.EnterpriseUser
+ * @alias SCIMMY.Schemas.EnterpriseUser
  */
 export class EnterpriseUser extends Types.Schema {
-    /** @implements {SCIMMY.Types.Schema~definition} */
+    /**
+     * @static
+     * @alias definition
+     * @memberOf SCIMMY.Schemas.EnterpriseUser
+     * @implements {SCIMMY.Types.Schema.definition}
+     */
     static get definition() {
         return EnterpriseUser.#definition;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Schema~#definition}
-     * @private
-     */
+    /** @private */
     static #definition = new Types.SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
         new Types.Attribute("string", "employeeNumber"),
         new Types.Attribute("string", "costCenter"),
@@ -29,6 +31,8 @@ export class EnterpriseUser extends Types.Schema {
     
     /**
      * Instantiates a new enterprise user that conforms to the SCIM EnterpriseUser schema definition
+     * @constructs SCIMMY.Schemas.EnterpriseUser
+     * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location

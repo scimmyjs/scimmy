@@ -6,7 +6,7 @@ import Config from "./lib/config.js";
 
 /**
  * SCIMMY Container Class
- * @class SCIMMY
+ * @namespace SCIMMY
  */
 export default class SCIMMY {
     static Types = Types;

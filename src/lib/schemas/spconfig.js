@@ -2,18 +2,20 @@ import Types from "../types.js";
 
 /**
  * SCIM Service Provider Configuration Schema
- * @class SCIMMY.Schemas.ServiceProviderConfig
+ * @alias SCIMMY.Schemas.ServiceProviderConfig
  */
 export class ServiceProviderConfig extends Types.Schema {
-    /** @implements {SCIMMY.Types.Schema~definition} */
+    /**
+     * @static
+     * @alias definition
+     * @memberOf SCIMMY.Schemas.ServiceProviderConfig
+     * @implements {SCIMMY.Types.Schema.definition}
+     */
     static get definition() {
         return ServiceProviderConfig.#definition;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Schema~#definition}
-     * @private
-     */
+    /** @private */
     static #definition = new Types.SchemaDefinition(
         "ServiceProviderConfig", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
         "Schema for representing the service provider's configuration", [
@@ -52,6 +54,8 @@ export class ServiceProviderConfig extends Types.Schema {
     
     /**
      * Instantiates a new service provider configuration that conforms to the SCIM ServiceProviderConfig schema definition
+     * @constructs SCIMMY.Schemas.ServiceProviderConfig
+     * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [basepath] - the base path for resolution of a resource's location
      */

@@ -4,20 +4,27 @@ import Schemas from "../schemas.js";
 
 /**
  * SCIM User Resource
- * @class SCIMMY.Resources.User
+ * @alias SCIMMY.Resources.User
  */
 export class User extends Types.Resource {
-    /** @implements {SCIMMY.Types.Resource.endpoint} */
+    /**
+     * @static
+     * @alias endpoint
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.endpoint}
+     */
     static get endpoint() {
         return "/Users";
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#basepath}
-     * @private
-     */
+    /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /**
+     * @static
+     * @alias basepath
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.basepath}
+     */
     static basepath(path) {
         if (path === undefined) return User.#basepath;
         else if (User.#basepath === undefined)
@@ -26,49 +33,62 @@ export class User extends Types.Resource {
         return User;
     }
     
-    /** @implements {SCIMMY.Types.Resource.schema} */
+    /**
+     * @static
+     * @alias schema
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.schema}
+     */
     static get schema() {
         return Schemas.User;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#extensions}
-     * @private
-     */
+    /** @private */
     static #extensions = [];
-    /** @implements {SCIMMY.Types.Resource.extensions} */
+    /**
+     * @static
+     * @alias extensions
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.extensions}
+     */
     static get extensions() {
         return User.#extensions;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#ingress}
-     * @private
-     */
+    /** @private */
     static #ingress = () => {};
-    /** @implements {SCIMMY.Types.Resource.ingress} */
+    /**
+     * @static
+     * @alias ingress
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.ingress}
+     */
     static ingress(handler) {
         User.#ingress = handler;
         return User;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#egress}
-     * @private
-     */
+    /** @private */
     static #egress = () => {};
-    /** @implements {SCIMMY.Types.Resource.egress} */
+    /**
+     * @static
+     * @alias egress
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.egress}
+     */
     static egress(handler) {
         User.#egress = handler;
         return User;
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#degress}
-     * @private
-     */
+    /** @private */
     static #degress = () => {};
-    /** @implements {SCIMMY.Types.Resource.degress} */
+    /**
+     * @static
+     * @alias degress
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource.degress}
+     */
     static degress(handler) {
         User.#degress = handler;
         return User;
@@ -76,13 +96,17 @@ export class User extends Types.Resource {
     
     /**
      * Instantiate a new SCIM User resource and parse any supplied parameters
-     * @implements {SCIMMY.Types.Resource#constructor}
+     * @constructs SCIMMY.Resources.User
+     * @overrides SCIMMY.Types.Resource
+     * @inheritDoc
      */
     constructor(params, ...rest) {
         super(params, ...rest);
     }
     
     /**
+     * @alias read
+     * @memberOf SCIMMY.Resources.User
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.User}
      */
@@ -102,6 +126,8 @@ export class User extends Types.Resource {
     }
     
     /**
+     * @alias write
+     * @memberOf SCIMMY.Resources.User
      * @implements {SCIMMY.Types.Resource#write}
      * @returns {SCIMMY.Schemas.User}
      */
@@ -120,8 +146,10 @@ export class User extends Types.Resource {
     }
     
     /**
+     * @alias patch
+     * @memberOf SCIMMY.Resources.User
      * @implements {SCIMMY.Types.Resource#patch}
-     * @returns {SCIMMY.Messages.PatchOp}
+     * @returns {SCIMMY.Schemas.User}
      */
     async patch(request) {
         try {
@@ -135,7 +163,11 @@ export class User extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#dispose} */
+    /**
+     * @alias dispose
+     * @memberOf SCIMMY.Resources.User
+     * @implements {SCIMMY.Types.Resource#dispose}
+     */
     async dispose() {
         if (!!this.id) await User.#degress(this);
         else throw new Types.Error(404, null, `Resource ${this.id} not found`);

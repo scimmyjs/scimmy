@@ -7,7 +7,7 @@ import {SCIMError as Error} from "./types/error.js";
 
 /**
  * SCIMMY Types Container Class
- * @class SCIMMY.Types
+ * @namespace SCIMMY.Types
  */
 export default class Types {
     static Attribute = Attribute;

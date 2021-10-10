@@ -3,11 +3,12 @@ import {Filter} from "./filter.js";
 
 /**
  * SCIM Schema Definition
- * @class SCIMMY.Types.SchemaDefinition
+ * @alias SCIMMY.Types.SchemaDefinition
  */
 export class SchemaDefinition {
     /**
      * Constructs an instance of a full SCIM schema definition
+     * @constructs SCIMMY.Types.SchemaDefinition
      * @param {String} name - friendly name of the SCIM schema
      * @param {String} id - URN namespace of the SCIM schema
      * @param {String} [description=""] - a human-readable description of the schema

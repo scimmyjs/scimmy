@@ -4,20 +4,27 @@ import Config from "../config.js";
 
 /**
  * SCIM ServiceProviderConfig Resource
- * @class SCIMMY.Resources.ServiceProviderConfig
+ * @alias SCIMMY.Resources.ServiceProviderConfig
  */
 export class ServiceProviderConfig extends Types.Resource {
-    /** @implements {SCIMMY.Types.Resource.endpoint} */
+    /**
+     * @static
+     * @alias endpoint
+     * @memberOf SCIMMY.Resources.ServiceProviderConfig
+     * @implements {SCIMMY.Types.Resource.endpoint}
+     */
     static get endpoint() {
         return "/ServiceProviderConfig";
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource.#basepath}
-     * @private
-     */
+    /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /**
+     * @static
+     * @alias basepath
+     * @memberOf SCIMMY.Resources.ServiceProviderConfig
+     * @implements {SCIMMY.Types.Resource.basepath}
+     */
     static basepath(path) {
         if (path === undefined) return ServiceProviderConfig.#basepath;
         else if (ServiceProviderConfig.#basepath === undefined)
@@ -27,8 +34,10 @@ export class ServiceProviderConfig extends Types.Resource {
     }
     
     /**
+     * @static
+     * @alias extend
+     * @memberOf SCIMMY.Resources.ServiceProviderConfig
      * @implements {SCIMMY.Types.Resource.extend}
-     * @returns {SCIMMY.Types.Resource}
      * @throws {TypeError} SCIM 'ServiceProviderConfig' resource does not support extension
      */
     static extend() {
@@ -37,7 +46,8 @@ export class ServiceProviderConfig extends Types.Resource {
     
     /**
      * Instantiate a new SCIM ServiceProviderConfig resource and parse any supplied parameters
-     * @implements {SCIMMY.Types.Resource#constructor}
+     * @constructs SCIMMY.Resources.ServiceProviderConfig
+     * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
         // Bail out if a resource is requested with filter or attribute properties
@@ -47,7 +57,12 @@ export class ServiceProviderConfig extends Types.Resource {
         super(params, ...rest);
     }
     
-    /** @implements {SCIMMY.Types.Resource#read} */
+    /**
+     * @alias read
+     * @memberOf SCIMMY.Resources.ServiceProviderConfig
+     * @implements {SCIMMY.Types.Resource#read}
+     * @returns {SCIMMY.Schemas.ServiceProviderConfig}
+     */
     async read() {
         return new Schemas.ServiceProviderConfig(Config.get(), ServiceProviderConfig.basepath());
     }

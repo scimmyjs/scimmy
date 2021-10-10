@@ -9,11 +9,12 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 
 /**
  * SCIM Filter Type
- * @class SCIMMY.Types.Filter
+ * @alias SCIMMY.Types.Filter
  */
 export class Filter extends Array {
     /**
      * Instantiate and parse a new SCIM filter string or expression
+     * @constructs SCIMMY.Types.Filter
      * @param {String|Object[]} [query] - the query string to parse, or an existing set of filter expressions
      */
     constructor(query = "") {
