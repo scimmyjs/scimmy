@@ -1,4 +1,4 @@
-![SCIMMY](https://raw.githubusercontent.com/sleelin/scimmy/main/src/scimmy.png)
+###### [![SCIMMY](https://raw.githubusercontent.com/sleelin/scimmy/main/src/scimmy.png)](https://github.com/sleelin/scimmy)
 
 # SCIMMY - SCIM m(ade eas)y
 SCIM 2.0 (System for Cross-domain Identity Management) is a set of standards ([RFC7643](https://datatracker.ietf.org/doc/html/rfc7643) and [RFC7644](https://datatracker.ietf.org/doc/html/rfc7644)) 
