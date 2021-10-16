@@ -2,8 +2,8 @@
 
 # SCIMMY - SCIM m(ade eas)y
 SCIM 2.0 (System for Cross-domain Identity Management) is a set of standards ([RFC7643](https://datatracker.ietf.org/doc/html/rfc7643) and [RFC7644](https://datatracker.ietf.org/doc/html/rfc7644)) 
-designed to simplify resource provisioning and identity management in cloud-based applications and services.  
-SCIMMY aims to make it easier to rapidly implement code that sends and receives data conforming to these standards.  
+designed to simplify resource provisioning and identity management in cloud-based applications and services.
+SCIMMY aims to make it easier to rapidly implement code that sends and receives data conforming to these standards.
 It does this by providing a set of tools that can be used to parse incoming, and format outgoing data according to these standards.
 
 ##### Requirements
