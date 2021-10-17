@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: <span class="ancestors"><a href="index.html">SCIMMY</a><a href="SCIMMY.Types.html">.Types</a>.</span>Resource</title>
+    <script src="static/scripts/prettify/prettify.js"></script>
+    <script src="static/scripts/prettify/lang-css.js"></script>
+    <link type="text/css" rel="stylesheet" href="static/styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="static/styles/jsdoc-default.css">
+</head>
+
+<body>
+    <header>
+        
+            <h1 class="package-details">
+                <a class="package-name" href="index.html">
+                    
+                        <img src="static/assets/logo.png" />
+                    
+                </a>
+                <span class="package-version type-signature">1.0.0</span>
+            </h1>
+        
+        <h2 class="page-title">Class: <span class="ancestors"><a href="index.html">SCIMMY</a><a href="SCIMMY.Types.html">.Types</a>.</span>Resource</h2>
+    </header>
+    <nav><ul><li><h3><a href="index.html">SCIMMY</a></h3><ul><li><h4><a href="SCIMMY.Config.html">Config</a></h4></li><li><h4><a href="SCIMMY.Messages.html">Messages</a></h4><ul><li><a href="SCIMMY.Messages.Error.html">Error</a></li><li><a href="SCIMMY.Messages.ListResponse.html">ListResponse</a></li><li><a href="SCIMMY.Messages.PatchOp.html">PatchOp</a></li></ul></li><li><h4><a href="SCIMMY.Resources.html">Resources</a></h4><ul><li><a href="SCIMMY.Resources.Group.html">Group</a></li><li><a href="SCIMMY.Resources.ResourceType.html">ResourceType</a></li><li><a href="SCIMMY.Resources.Schema.html">Schema</a></li><li><a href="SCIMMY.Resources.ServiceProviderConfig.html">ServiceProviderConfig</a></li><li><a href="SCIMMY.Resources.User.html">User</a></li></ul></li><li><h4><a href="SCIMMY.Schemas.html">Schemas</a></h4><ul><li><a href="SCIMMY.Schemas.EnterpriseUser.html">EnterpriseUser</a></li><li><a href="SCIMMY.Schemas.Group.html">Group</a></li><li><a href="SCIMMY.Schemas.ResourceType.html">ResourceType</a></li><li><a href="SCIMMY.Schemas.ServiceProviderConfig.html">ServiceProviderConfig</a></li><li><a href="SCIMMY.Schemas.User.html">User</a></li></ul></li><li><h4><a href="SCIMMY.Types.html">Types</a></h4><ul><li><a href="SCIMMY.Types.Attribute.html">Attribute</a></li><li><a href="SCIMMY.Types.SchemaDefinition.html">SchemaDefinition</a></li><li><a href="SCIMMY.Types.Error.html">Error</a></li><li><a href="SCIMMY.Types.Filter.html">Filter</a></li><li><a href="SCIMMY.Types.Resource.html">Resource</a></li><li><a href="SCIMMY.Types.Schema.html">Schema</a></li></ul></li></ul></li></ul></nav>
+    <main id="main">
+        
+
+    <section>
+        <header>
+            
+                <h2>
+                    <span class="attribs"><span class="type-signature"> </span></span>
+                    <span class="ancestors"><a href="index.html">SCIMMY</a><a href="SCIMMY.Types.html">.Types</a>.</span>
+                    <span>Resource</span>
+                    
+                    <span class="signature">(config<span class="signature-attributes">opt</span>, &hellip;rest)</span><span class="type-signature"></span>
+                </h2>
+                <div class="class-description"><p>SCIM Resource</p></div>
+            
+            <div class="container-overview">
+                
+                    <article>
+    <header>
+        
+            <h2>Constructor</h2>
+            
+                <h4 class="name" id="Resource"><span class="type-signature"> </span>new Resource<span class="signature">(config<span class="signature-attributes">opt</span>, &hellip;rest)</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Instantiate a new SCIM resource and parse any supplied parameters</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L9">src/lib/types/resource.js, line 9</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        config<span class="signature-attributes">opt</span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">Object</span>|<span class="param-type">String</span>
+</td>
+
+            
+                <td class="default">{}</td>
+            
+
+            <td class="description last">
+                <p>the parameters of the resource instance if object, or the resource ID if string</p>
+                
+                    <h6>Properties</h6>
+                    
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        filter<span class="signature-attributes">opt</span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">String</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the filter to be applied on ingress/egress by implementing resource</p>
+                
+            </td>
+        </tr>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        excludedAttributes<span class="signature-attributes">opt</span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">String</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the comma-separated string list of attributes or filters to exclude on egress</p>
+                
+            </td>
+        </tr>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        attributes<span class="signature-attributes">opt</span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">String</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the comma-separated string list of attributes or filters to include on egress</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+                
+            </td>
+        </tr>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        &hellip;rest<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">Array.&lt;any></span>
+</td>
+
+            
+                <td class="default"></td>
+            
+
+            <td class="description last">
+                <p>all other arguments supplied to the resource constructor</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    
+    
+</article>
+                
+            </div>
+        </header>
+        <article>
+            
+
+            
+
+            
+
+            
+
+            
+
+            
+                <section>
+                    <h3 class="subsection-title">Members</h3>
+                    <article>
+    <header>
+        <h4 class="name" id=".endpoint">
+            <span class="type-signature">(abstract, static) </span><span>endpoint</span><span class="type-signature">: String</span>
+        </h4>
+
+        
+        <div class="description"><p>Retrieves a resource's endpoint relative to the service provider's base URL</p></div>
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type">String</span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L15">src/lib/types/resource.js, line 15</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+</article><article>
+    <header>
+        <h4 class="name" id=".schema">
+            <span class="type-signature">(abstract, static) </span><span>schema</span><span class="type-signature">: <a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>
+        </h4>
+
+        
+        <div class="description"><p>Retrieves a resource's core schema</p></div>
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L41">src/lib/types/resource.js, line 41</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+</article><article>
+    <header>
+        <h4 class="name" id=".extensions">
+            <span class="type-signature">(abstract, static) </span><span>extensions</span><span class="type-signature">: Array.&lt;Object></span>
+        </h4>
+
+        
+        <div class="description"><p>Get the list of registered schema extensions for a resource</p></div>
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type">Array.&lt;Object></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L57">src/lib/types/resource.js, line 57</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+</article>
+                </section>
+            
+
+            
+                <section>
+                    <h3 class="subsection-title">Methods</h3>
+                    <article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".basepath"><span class="type-signature">(abstract, static) </span>basepath<span class="signature">(path)</span><span class="type-signature"> &rarr; {<a href="SCIMMY.Types.Resource.html">SCIMMY.Types.Resource</a>}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Sets or retrieves the base path for resolution of a resource's location</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L32">src/lib/types/resource.js, line 32</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        path<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">String</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the path to use as the base of a resource's location</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Types.Resource.html">SCIMMY.Types.Resource</a></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".extend"><span class="type-signature">(static) </span>extend<span class="signature">(extension, required)</span><span class="type-signature"> &rarr; {<a href="SCIMMY.Types.Resource.html">SCIMMY.Types.Resource</a>,void}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Register an extension to the resource's core schema</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L67">src/lib/types/resource.js, line 67</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        extension<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>|<span class="param-type">Array.&lt;<a href="SCIMMY.Types.Attribute.html">SCIMMY.Types.Attribute</a>></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the schema extension to register</p>
+                
+            </td>
+        </tr>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        required<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">Boolean</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>whether or not the extension is required</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    <div class="param-desc"><p>this resource type implementation for chaining</p></div>
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Types.Resource.html">SCIMMY.Types.Resource</a></span>|<span class="param-type">void</span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".ingress"><span class="type-signature">(abstract, static) </span>ingress<span class="signature">(handler)</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Sets the method to be called to consume a resource on create</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L95">src/lib/types/resource.js, line 95</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        handler<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Resource.html#~gressHandler">SCIMMY.Types.Resource~gressHandler</a></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>function to invoke to consume a resource on create</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".egress"><span class="type-signature">(abstract, static) </span>egress<span class="signature">(handler)</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Sets the method to be called to retrieve a resource on read</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L111">src/lib/types/resource.js, line 111</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        handler<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Resource.html#~gressHandler">SCIMMY.Types.Resource~gressHandler</a></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>function to invoke to retrieve a resource on read</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".degress"><span class="type-signature">(abstract, static) </span>degress<span class="signature">(handler)</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Sets the method to be called to dispose of a resource on delete</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L127">src/lib/types/resource.js, line 127</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        handler<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Resource.html#~gressHandler">SCIMMY.Types.Resource~gressHandler</a></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>function to invoke to dispose of a resource on delete</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id=".describe"><span class="type-signature">(static) </span>describe<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Describe this resource implementation</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L135">src/lib/types/resource.js, line 135</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type">Object</span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id="read"><span class="type-signature">(abstract) </span>read<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="SCIMMY.Messages.ListResponse.html">SCIMMY.Messages.ListResponse</a>,<a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a>}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Calls resource's egress method for data retrieval.
+Wraps the results in valid SCIM list response or single resource syntax.</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L210">src/lib/types/resource.js, line 210</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Messages.ListResponse.html">SCIMMY.Messages.ListResponse</a></span>|<span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id="write"><span class="type-signature">(abstract) </span>write<span class="signature">(instance)</span><span class="type-signature"> &rarr; {<a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a>}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Calls resource's ingress method for consumption after unwrapping the SCIM resource</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L220">src/lib/types/resource.js, line 220</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        instance<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">Object</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the raw resource type instance for consumption by ingress method</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    <div class="param-desc"><p>the consumed resource type instance</p></div>
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id="patch"><span class="type-signature">(abstract) </span>patch<span class="signature">(message)</span><span class="type-signature"> &rarr; {<a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a>}</span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Retrieves resources via egress method, and applies specified patch operations.
+Emits patched resources for consumption with resource's ingress method.</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L231">src/lib/types/resource.js, line 231</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        message<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type">Object</span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the PatchOp message to apply to the received resource</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    <section class="returns">
+        
+        <h5>Returns:</h5>
+        
+            
+                
+                    <div class="param-desc"><p>the resource type instance after patching and consumption by ingress method</p></div>
+                    
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+                
+            
+        
+    </section>
+
+    
+    
+</article><article>
+    <header>
+        
+            
+            
+                <h4 class="name" id="dispose"><span class="type-signature">(abstract) </span>dispose<span class="signature">()</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Calls resource's degress method for disposal of the SCIM resource</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L239">src/lib/types/resource.js, line 239</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+
+    
+    
+    
+    
+</article>
+                </section>
+            
+
+            
+                <section>
+                    <h3 class="subsection-title">Type Definitions</h3>
+                    
+                        
+                            <article>
+    <header>
+        
+            
+            
+                <h4 class="name" id="~gressHandler"><span class="type-signature"> </span>gressHandler<span class="signature">(resource, instance<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+            
+            
+        
+
+        
+            <div class="description"><p>Handler for ingress/egress/degress of a resource</p></div>
+        
+    </header>
+
+    <section class="details">
+    <dl class="details-list">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    <div class="tag-type">
+        <dt>Type:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><span class="signature type-signature">{<span class="param-type">function</span>}</span></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    <div class="tag-source">
+        <dt>Source:</dt>
+        
+            <dd>
+                <ul class="dummy">
+                    <li><a href="https://github.com/sleelin/scimmy/blob/39d1ba2a36eeb134267f212326c4895a91a53f84/src/lib/types/resource.js#L76">src/lib/types/resource.js, line 76</a></li>
+                </ul>
+            </dd>
+        
+    </div>
+
+        
+
+        
+        
+        
+        
+    </dl>
+</section>
+
+    
+    <section class="params">
+        <h5 class="subsection-title">Parameters:</h5>
+        
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            
+            <th class="last">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        resource<span class="signature-attributes"></span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Resource.html">SCIMMY.Types.Resource</a></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>the resource performing the ingress/egress/degress</p>
+                
+            </td>
+        </tr>
+    
+        <tr>
+            
+                <td class="name">
+                    <code>
+                        instance<span class="signature-attributes">opt</span>
+                    </code>
+                </td>
+            
+
+            <td class="type">
+    <span class="param-type"><a href="SCIMMY.Types.Schema.html">SCIMMY.Types.Schema</a></span>
+</td>
+
+            
+
+            <td class="description last">
+                <p>an instance of the resource type that conforms to the resource's schema</p>
+                
+            </td>
+        </tr>
+    
+    </tbody>
+</table>
+
+    </section>
+
+
+    
+    
+    
+    
+</article>
+                        
+                    
+                </section>
+            
+
+            
+        </article>
+    </section>
+    
+
+        <footer>
+            Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a>
+            
+            on Sun Oct 17 2021 18:13:28 GMT+1100 (Australian Eastern Daylight Time)
+            
+        </footer>
+    </main>
+    <script>prettyPrint();</script>
+    <script src="static/scripts/linenumber.js"></script>
+</body>
+
+</html>
