@@ -311,6 +311,7 @@ export class PatchOp {
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - if supplied, specifies path to the attribute being replaced
      * @param {any|any[]} value - value being replaced on the resource or attribute specified by path
+     * @private
      */
     replace(index, path, value) {
         try {
