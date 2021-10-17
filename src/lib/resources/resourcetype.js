@@ -8,24 +8,14 @@ import Resources from "../resources.js";
  * @alias SCIMMY.Resources.ResourceType
  */
 export class ResourceType extends Types.Resource {
-    /**
-     * @static
-     * @alias endpoint
-     * @memberOf SCIMMY.Resources.ResourceType
-     * @implements {SCIMMY.Types.Resource.endpoint}
-     */
+    /** @implements {SCIMMY.Types.Resource.endpoint} */
     static get endpoint() {
         return "/ResourceTypes";
     }
     
     /** @private */
     static #basepath;
-    /**
-     * @static
-     * @alias basepath
-     * @memberOf SCIMMY.Resources.ResourceType
-     * @implements {SCIMMY.Types.Resource.basepath}
-     */
+    /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return ResourceType.#basepath;
         else if (ResourceType.#basepath === undefined)
@@ -35,9 +25,6 @@ export class ResourceType extends Types.Resource {
     }
     
     /**
-     * @static
-     * @alias extend
-     * @memberOf SCIMMY.Resources.ResourceType
      * @implements {SCIMMY.Types.Resource.extend}
      * @throws {TypeError} SCIM 'ResourceType' resource does not support extension
      */
@@ -47,7 +34,6 @@ export class ResourceType extends Types.Resource {
     
     /**
      * Instantiate a new SCIM ResourceType resource and parse any supplied parameters
-     * @constructs SCIMMY.Resources.ResourceType
      * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
@@ -59,8 +45,6 @@ export class ResourceType extends Types.Resource {
     }
     
     /**
-     * @alias read
-     * @memberOf SCIMMY.Resources.ResourceType
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.ResourceType}
      */

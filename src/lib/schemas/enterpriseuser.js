@@ -5,12 +5,7 @@ import Types from "../types.js";
  * @alias SCIMMY.Schemas.EnterpriseUser
  */
 export class EnterpriseUser extends Types.Schema {
-    /**
-     * @static
-     * @alias definition
-     * @memberOf SCIMMY.Schemas.EnterpriseUser
-     * @implements {SCIMMY.Types.Schema.definition}
-     */
+    /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return EnterpriseUser.#definition;
     }
@@ -31,7 +26,6 @@ export class EnterpriseUser extends Types.Schema {
     
     /**
      * Instantiates a new enterprise user that conforms to the SCIM EnterpriseUser schema definition
-     * @constructs SCIMMY.Schemas.EnterpriseUser
      * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response

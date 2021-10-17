@@ -7,24 +7,14 @@ import Schemas from "../schemas.js";
  * @alias SCIMMY.Resources.Schema
  */
 export class Schema extends Types.Resource {
-    /**
-     * @static
-     * @alias endpoint
-     * @memberOf SCIMMY.Resources.Schema
-     * @implements {SCIMMY.Types.Resource.endpoint}
-     */
+    /** @implements {SCIMMY.Types.Resource.endpoint} */
     static get endpoint() {
         return "/Schemas";
     }
     
     /** @private */
     static #basepath;
-    /**
-     * @static
-     * @alias basepath
-     * @memberOf SCIMMY.Resources.Schema
-     * @implements {SCIMMY.Types.Resource.basepath}
-     */
+    /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return Schema.#basepath;
         else if (Schema.#basepath === undefined)
@@ -34,9 +24,6 @@ export class Schema extends Types.Resource {
     }
     
     /**
-     * @static
-     * @alias extend
-     * @memberOf SCIMMY.Resources.Schema
      * @implements {SCIMMY.Types.Resource.extend}
      * @throws {TypeError} SCIM 'Schema' resource does not support extension
      */
@@ -46,7 +33,6 @@ export class Schema extends Types.Resource {
     
     /**
      * Instantiate a new SCIM Schema resource and parse any supplied parameters
-     * @constructs SCIMMY.Resources.Schema
      * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
@@ -58,8 +44,6 @@ export class Schema extends Types.Resource {
     }
     
     /**
-     * @alias read
-     * @memberOf SCIMMY.Resources.Schema
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|Object}
      */

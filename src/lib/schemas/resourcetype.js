@@ -5,12 +5,7 @@ import Types from "../types.js";
  * @alias SCIMMY.Schemas.ResourceType
  */
 export class ResourceType extends Types.Schema {
-    /**
-     * @static
-     * @alias definition
-     * @memberOf SCIMMY.Schemas.ResourceType
-     * @implements {SCIMMY.Types.Schema.definition}
-     */
+    /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return ResourceType.#definition;
     }
@@ -29,7 +24,6 @@ export class ResourceType extends Types.Schema {
     
     /**
      * Instantiates a new resource type that conforms to the SCIM ResourceType schema definition
-     * @constructs SCIMMY.Schemas.ResourceType
      * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [basepath] - the base path for resolution of a resource's location

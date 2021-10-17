@@ -14,7 +14,6 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 export class Filter extends Array {
     /**
      * Instantiate and parse a new SCIM filter string or expression
-     * @constructs SCIMMY.Types.Filter
      * @param {String|Object[]} [query] - the query string to parse, or an existing set of filter expressions
      */
     constructor(query = "") {
@@ -51,9 +50,9 @@ export class Filter extends Array {
     
     /**
      * Parse a SCIM filter string into an array of objects representing the query filter
-     * @private
      * @param {String} [query=""] - the filter parameter of a request as per [RFC7644§3.4.2.2]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2}
      * @returns {Object[]} parsed object representation of the queried filter
+     * @private
      */
     static #parse(query = "") {
         let results = [],

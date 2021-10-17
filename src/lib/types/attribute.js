@@ -183,7 +183,6 @@ const validate = {
 export class Attribute {
     /**
      * Constructs an instance of a full SCIM attribute definition
-     * @constructs SCIMMY.Types.Attribute
      * @param {String} type - the data type of the attribute
      * @param {String} name - the actual name of the attribute
      * @param {Object} [config] - additional config defining the attribute's characteristics
@@ -258,8 +257,6 @@ export class Attribute {
     
     /**
      * Remove a subAttribute from a complex attribute definition
-     * @alias truncate
-     * @memberOf SCIMMY.Types.Attribute
      * @param {String|SCIMMY.Types.Attribute} subAttributes - the child attributes to remove from the complex attribute definition
      * @returns {SCIMMY.Types.Attribute} this attribute instance for chaining
      */
@@ -282,8 +279,6 @@ export class Attribute {
     
     /**
      * Parse this Attribute instance into a valid SCIM attribute definition object
-     * @alias toJSON
-     * @memberOf SCIMMY.Types.Attribute
      * @returns {SCIMMY.Types.Attribute~AttributeDefinition} an object representing a valid SCIM attribute definition
      */
     toJSON() {
@@ -322,8 +317,6 @@ export class Attribute {
     
     /**
      * Coerce a given value by making sure it conforms to attribute's characteristics
-     * @alias coerce
-     * @memberOf SCIMMY.Types.Attribute
      * @param {any|any[]} source - value to coerce and confirm conformity with attribute's characteristics
      * @param {String} [direction] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {Boolean} [isComplexMultiValue=false] - indicates whether a coercion is for a single complex value in a collection of complex values

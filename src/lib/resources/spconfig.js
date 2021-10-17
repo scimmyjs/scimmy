@@ -7,24 +7,14 @@ import Config from "../config.js";
  * @alias SCIMMY.Resources.ServiceProviderConfig
  */
 export class ServiceProviderConfig extends Types.Resource {
-    /**
-     * @static
-     * @alias endpoint
-     * @memberOf SCIMMY.Resources.ServiceProviderConfig
-     * @implements {SCIMMY.Types.Resource.endpoint}
-     */
+    /** @implements {SCIMMY.Types.Resource.endpoint} */
     static get endpoint() {
         return "/ServiceProviderConfig";
     }
     
     /** @private */
     static #basepath;
-    /**
-     * @static
-     * @alias basepath
-     * @memberOf SCIMMY.Resources.ServiceProviderConfig
-     * @implements {SCIMMY.Types.Resource.basepath}
-     */
+    /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return ServiceProviderConfig.#basepath;
         else if (ServiceProviderConfig.#basepath === undefined)
@@ -34,9 +24,6 @@ export class ServiceProviderConfig extends Types.Resource {
     }
     
     /**
-     * @static
-     * @alias extend
-     * @memberOf SCIMMY.Resources.ServiceProviderConfig
      * @implements {SCIMMY.Types.Resource.extend}
      * @throws {TypeError} SCIM 'ServiceProviderConfig' resource does not support extension
      */
@@ -46,7 +33,6 @@ export class ServiceProviderConfig extends Types.Resource {
     
     /**
      * Instantiate a new SCIM ServiceProviderConfig resource and parse any supplied parameters
-     * @constructs SCIMMY.Resources.ServiceProviderConfig
      * @extends SCIMMY.Types.Resource
      */
     constructor(params, ...rest) {
@@ -58,8 +44,6 @@ export class ServiceProviderConfig extends Types.Resource {
     }
     
     /**
-     * @alias read
-     * @memberOf SCIMMY.Resources.ServiceProviderConfig
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Schemas.ServiceProviderConfig}
      */

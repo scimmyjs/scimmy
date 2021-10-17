@@ -5,12 +5,7 @@ import Types from "../types.js";
  * @alias SCIMMY.Schemas.Group
  */
 export class Group extends Types.Schema {
-    /**
-     * @static
-     * @alias definition
-     * @memberOf SCIMMY.Schemas.Group
-     * @implements {SCIMMY.Types.Schema.definition}
-     */
+    /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return Group.#definition;
     }
@@ -27,7 +22,6 @@ export class Group extends Types.Schema {
     
     /**
      * Instantiates a new group that conforms to the SCIM Group schema definition
-     * @constructs SCIMMY.Schemas.Group
      * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response

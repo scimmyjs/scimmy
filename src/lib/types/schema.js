@@ -9,10 +9,7 @@ import {SCIMError} from "./error.js";
 export class Schema {
     /**
      * Retrieves a schema's definition instance
-     * @static
-     * @alias definition
-     * @memberOf SCIMMY.Types.Schema
-     * @returns {SCIMMY.Types.SchemaDefinition}
+     * @type {SCIMMY.Types.SchemaDefinition}
      * @abstract
      */
     static get definition() {
@@ -29,9 +26,6 @@ export class Schema {
     
     /**
      * Extend a schema by mixing in other schemas or attributes
-     * @static
-     * @alias extend
-     * @memberOf SCIMMY.Types.Schema
      * @param {Array<SCIMMY.Types.Schema|SCIMMY.Types.Attribute>} extension - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      */
@@ -41,9 +35,6 @@ export class Schema {
     
     /**
      * Remove an attribute or subAttribute from the schema definition
-     * @static
-     * @alias truncate
-     * @memberOf SCIMMY.Types.Schema
      * @param {String|SCIMMY.Types.Attribute|Array<String|SCIMMY.Types.Attribute>} attributes - the child attributes to remove from the schema definition
      */
     static truncate(attributes) {
@@ -52,7 +43,6 @@ export class Schema {
     
     /**
      * Construct a resource instance after verifying schema compatibility
-     * @constructs SCIMMY.Types.Schema
      * @param {Object} data - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      */
