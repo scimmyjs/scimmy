@@ -1,0 +1,19 @@
+{
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["src"]
+  },
+  "opts": {
+    "recurse": true,
+    "template": "./node_modules/jsdoc-template-classy",
+    "destination": "./docs",
+    "readme": "./README.md",
+    "package": "./package.json"
+  },
+  "templates": {
+    "classy": {
+      "logo": "src/scimmy.png",
+      "apiEntry": "SCIMMY"
+    }
+  }
+}
