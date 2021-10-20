@@ -5,6 +5,9 @@ import {Filter} from "./filter.js";
 /**
  * SCIM Resource
  * @alias SCIMMY.Types.Resource
+ * @summary
+ * *   Extendable class representing a SCIM Resource Type, which acts as an interface between a SCIM resource type schema, and an app's internal data model.
+ * *   Handles incoming requests to read/write/delete a resource, parses any attribute, filter, and sort parameters of a request, and formats responses for consumption by other SCIM clients and service providers.
  */
 export class Resource {
     /**
@@ -148,7 +151,19 @@ export class Resource {
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
+     * @param {String} [config.sortBy] - the attribute retrieved resources should be sorted by
+     * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
+     * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
+     * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
      * @param {any[]} rest - all other arguments supplied to the resource constructor
+     * @property {String} [id] - ID of the resource instance being targeted
+     * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
+     * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
+     * @property {Object} [constraints] - sort and pagination properties parsed from the supplied config
+     * @property {String} [constraints.sortBy] - the attribute retrieved resources should be sorted by
+     * @property {String} [constraints.sortOrder] - the direction retrieved resources should be sorted in
+     * @property {Number} [constraints.startIndex] - offset index that retrieved resources should start from
+     * @property {Number} [constraints.count] - maximum number of retrieved resources that should be returned in one operation
      */
     constructor(config = {}, ...rest) {
         let params = config;

@@ -179,6 +179,8 @@ const validate = {
 /**
  * SCIM Attribute
  * @alias SCIMMY.Types.Attribute
+ * @summary
+ * *   Defines a SCIM schema attribute, and is used to ensure a given resource's value conforms to the attribute definition.
  */
 export class Attribute {
     /**
@@ -197,6 +199,10 @@ export class Attribute {
      * @param {String|Boolean} [config.uniqueness="none"] - the attribute's uniqueness characteristic
      * @param {String} [config.direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
      * @param {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
+     * @property {String} type - the data type of the attribute
+     * @property {String} name - the actual name of the attribute
+     * @property {Object} config - additional config defining the attribute's characteristics
+     * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
         let errorSuffix = `in attribute definition '${name}'`,

@@ -10,6 +10,8 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 /**
  * SCIM Filter Type
  * @alias SCIMMY.Types.Filter
+ * @summary
+ * *   Parses SCIM [filter expressions](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) into object representations of the filter expression, for use in resource retrieval.
  */
 export class Filter extends Array {
     /**
