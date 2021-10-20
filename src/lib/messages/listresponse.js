@@ -1,6 +1,8 @@
 /**
  * SCIM List Response Message Type
  * @alias SCIMMY.Messages.ListResponse
+ * @summary
+ * *   Formats supplied service provider resources as [ListResponse messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2), handling pagination and sort when required.
  */
 export class ListResponse {
     /**
@@ -12,7 +14,6 @@ export class ListResponse {
     
     /**
      * Instantiate a new SCIM List Response Message with relevant details
-     * @constructs SCIMMY.Messages.ListResponse
      * @param {Object|SCIMMY.Types.Schema[]} request - contents of the ListResponse message, or items to include in the list response
      * @param {Object} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
      * @param {String} [params.sortBy] - the attribute to sort results by, if any
@@ -20,6 +21,10 @@ export class ListResponse {
      * @param {Number} [params.startIndex=1] - offset index that items start from
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
+     * @property {Array<Object|SCIMMY.Types.Schema>} Resources - resources included in the list response
+     * @property {Number} totalResults - the total number of resources matching a given request
+     * @property {Number} startIndex - index within total results that included resources start from
+     * @property {Number} itemsPerPage - maximum number of items returned in this list response
      */
     constructor(request = [], params = {}) {
         let outbound = Array.isArray(request),

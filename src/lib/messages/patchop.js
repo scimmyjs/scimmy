@@ -1,7 +1,16 @@
 import {isDeepStrictEqual} from "util";
 import Types from "../types.js";
 
-// List of valid SCIM patch operations
+/**
+ * List of valid SCIM patch operations
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidPatchOperations
+ * @memberOf SCIMMY.Messages.PatchOp
+ * @default
+ */
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
 const pathSeparator = /(?!((?<!\w)\d)|(\[.*?))\.(?!(\d(?!\w))|(.*?\]))/g;
@@ -11,6 +20,9 @@ const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
 /**
  * SCIM Patch Operation Message Type
  * @alias SCIMMY.Messages.PatchOp
+ * @summary
+ * *   Parses [PatchOp messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2), making sure all specified "Operations" are valid and conform with the SCIM protocol.
+ * *   Provides a method to atomically apply PatchOp operations to a resource instance, handling any exceptions that occur along the way.
  */
 export class PatchOp {
     /**
@@ -43,9 +55,9 @@ export class PatchOp {
     
     /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
-     * @constructs SCIMMY.Messages.PatchOp
      * @param {Object} request - contents of the patch operation request being performed
      * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
+     * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request = {}, resource) {
         let {schemas = [], Operations: operations = []} = request;
@@ -96,8 +108,6 @@ export class PatchOp {
     
     /**
      * Apply patch operations to a resource as defined by the PatchOp instance
-     * @alias apply
-     * @memberOf SCIMMY.Messages.PatchOp
      * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
      * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
      */
@@ -177,11 +187,11 @@ export class PatchOp {
         
         /**
          * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpDetails
-         * @private
          * @property {Boolean} complex - whether the target attribute value should be complex
          * @property {Boolean} multiValued - whether the target attribute expects a collection of values
          * @property {String} property - name of the targeted attribute to apply values to
          * @property {Object[]} targets - the resources containing the attributes to apply values to
+         * @private
          */
         return {
             complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
