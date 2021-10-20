@@ -9,7 +9,19 @@ import Schemas from "./schemas.js";
 /**
  * SCIM Resources Container Class
  * @namespace SCIMMY.Resources
- */
+ * @example <caption>Basic usage with provided resource type implementations</caption>
+ * SCIMMY.Resources.declare(SCIMMY.Resources.User)
+ *      .ingress((resource, data) => {/ Your handler for creating or modifying user resources /})
+ *      .egress((resource) => {/ Your handler for retrieving user resources /})
+ *      .degress((resource) => {/ Your handler for deleting user resources /});
+ * @example <caption>Advanced usage with custom resource type implementations</caption>
+ * SCIMMY.Resources.declare(class MyResourceType extends SCIMMY.Types.Resource {
+ *      read() {/ Your handler for retrieving resources /})
+ *      write(data) {/ Your handler for creating or modifying resources /}
+ *      dispose() {/ Your handler for deleting resources /})
+ *      // ...the rest of your resource type implementation //
+ * });
+*/
 export default class Resources {
     // Store declared resources for later retrieval
     /** @private */
