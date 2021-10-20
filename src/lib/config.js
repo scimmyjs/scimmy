@@ -7,6 +7,99 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
 /**
  * SCIM Service Provider Configuration Container Class
  * @namespace SCIMMY.Config
+ * @description
+ * SCIMMY provides a singleton class, `SCIMMY.Config`, that acts as a central store for a SCIM Service Provider's configuration.  
+ * It is used for defining SCIM specification features supported (e.g. PATCH, sort, filter, etc).  
+ * This can be either directly by an implementing service provider, or retrieved by a client (identity provider) from a remote service provider.  
+ * By default, all specification features are marked as disabled, as your implementation may not support them.
+ *
+ * ## Retrieving Configuration
+ *
+ * The stored configuration can be retrieved by calling `{@link SCIMMY.Config.get}()`, which returns a cloned object representing the configuration _at the time of retrieval_.
+ *
+ * > **Note:**  
+ * > To prevent accidental configuration changes, the returned object has been trapped, and attempting to change a configuration value directly on this object will throw a TypeError with the message `"SCIM Configuration can only be changed via the 'set' method"`
+ *
+ * The structure of the object reflects the example provided in [RFC7643§8.5](https://datatracker.ietf.org/doc/html/rfc7643#section-8.5):
+ * ```json
+ * {
+ *    "documentationUri": "/path/to/documentation.html",
+ *    "patch": {
+ *        "supported": false
+ *    },
+ *    "bulk": {
+ *        "supported": false,
+ *        "maxOperations": 1000,
+ *        "maxPayloadSize": 1048576
+ *    },
+ *    "filter": {
+ *        "supported": false,
+ *        "maxResults": 200
+ *    },
+ *    "changePassword": {
+ *        "supported": false
+ *    },
+ *    "sort": {
+ *        "supported": false
+ *    },
+ *    "etag": {
+ *        "supported": false
+ *    },
+ *    "authenticationSchemes": []
+ * }
+ * ```
+ *
+ * ## Setting Configuration
+ *
+ * The stored configuration can be changed via the `{@link SCIMMY.Config.set}` method. This method can be called either with an object representing the new configuration, or with a configuration property name string and value pair.
+ * *   Where the only child property of a top-level configuration property is "supported", a boolean can be supplied as the value, which will be used as the value of the "supported" property.
+ *     ```js
+ *     // This will set patch.supported to true
+ *     SCIMMY.Config.set("patch", true);
+ *     ```
+ * *   The "filter" and "bulk" properties also accept a number value, which will be interpreted as being the value of the "maxResults" and "maxOperations" child properties respectively, and will automatically set "supported" to true.
+ *     ```js
+ *     // This will set filter.maxResults to 20, and filter.supported to true
+ *     SCIMMY.Config.set("filter", 20);
+ *     ```
+ *
+ * > **Note:**  
+ * > Supplied values are validated against SCIMMY's ServiceProviderConfig schema definition.  
+ * > Providing values with incompatible types (e.g. the string "100" instead of the number 100) will throw a TypeError.  
+ * > This ensures configuration values always conform to the standard. See [RFC7643§5](https://datatracker.ietf.org/doc/html/rfc7643#section-5) for more information.
+ *
+ * Multiple values can also be set at the same time, and changes are cumulative, so omitted properties will not be unset:
+ * ```js
+ * // With both shorthand and full syntax
+ * SCIMMY.Config.set({
+ *    documentationUri: "https://example.com/docs/scim.html",
+ *    patch: true,
+ *    filter: 100,
+ *    bulk: {
+ *        supported: true,
+ *        maxPayloadSize: 2097152
+ *    },
+ *    authenticationSchemes: [
+ *        {/ Your authentication scheme details /}
+ *    ]
+ * });
+ * ```
+ *
+ * ### Authentication Schemes
+ *
+ * Service provider authentication schemes can be set in the same way as other configuration properties, and are cumulative.  
+ * The authenticationSchemes collection can be reset by providing an empty array as the value for the authenticationSchemes property.
+ * ```js
+ * // Both of these will append the supplied values to the authenticationSchemes property
+ * SCIMMY.Config.set("authenticationSchemes", {/ Your authentication scheme details /});
+ * SCIMMY.Config.set("authenticationSchemes", [
+ *      {/ Your primary authentication scheme details /},
+ *      {/ Your secondary authentication scheme details /}
+ * ]);
+ *
+ * // Reset the authenticationSchemes collection
+ * SCIMMY.Config.set("authenticationSchemes", []);
+ * ```
  */
 export default class Config {
     /**
