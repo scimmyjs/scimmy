@@ -5,7 +5,7 @@
   },
   "opts": {
     "recurse": true,
-    "template": "./node_modules/jsdoc-template-classy",
+    "template": "./node_modules/classy-template",
     "destination": "./docs",
     "readme": "./README.md",
     "package": "./package.json"
