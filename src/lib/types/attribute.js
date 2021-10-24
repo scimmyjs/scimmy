@@ -1,28 +1,48 @@
 /**
  * Collection of valid attribute type characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidAttributeTypes
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
 
 /**
  * Collection of valid attribute mutability characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidMutabilityValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
 
 /**
  * Collection of valid attribute returned characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidReturnedValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const returned = ["always", "never", "default", "request"];
 
 /**
  * Collection of valid attribute uniqueness characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidUniquenessValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const uniqueness = ["none", "server", "global"];
 
