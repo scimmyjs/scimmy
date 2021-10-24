@@ -6,6 +6,8 @@ import Resources from "../resources.js";
 /**
  * SCIM ResourceType Resource
  * @alias SCIMMY.Resources.ResourceType
+ * @summary
+ * *   Formats SCIM Resource Type implementations declared in `{@link SCIMMY.Resources}` for transmission/consumption according to the ResourceType schema set out in [RFC7643§6](https://datatracker.ietf.org/doc/html/rfc7643#section-6).
  */
 export class ResourceType extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */

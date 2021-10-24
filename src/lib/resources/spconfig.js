@@ -5,6 +5,8 @@ import Config from "../config.js";
 /**
  * SCIM ServiceProviderConfig Resource
  * @alias SCIMMY.Resources.ServiceProviderConfig
+ * @summary
+ * *   Formats SCIM Service Provider Configuration set in `{@link SCIMMY.Config}` for transmission/consumption according to the Service Provider Configuration schema set out in [RFC7643§5](https://datatracker.ietf.org/doc/html/rfc7643#section-5).
  */
 export class ServiceProviderConfig extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */

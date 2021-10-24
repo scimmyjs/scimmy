@@ -5,6 +5,8 @@ import Schemas from "../schemas.js";
 /**
  * SCIM Schema Resource
  * @alias SCIMMY.Resources.Schema
+ * @summary
+ * *   Formats SCIM schema definition implementations declared in `{@link SCIMMY.Schemas}` for transmission/consumption according to the Schema Definition schema set out in [RFC7643§7](https://datatracker.ietf.org/doc/html/rfc7643#section-7).
  */
 export class Schema extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */

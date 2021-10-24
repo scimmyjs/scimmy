@@ -3,6 +3,8 @@ import Types from "../types.js";
 /**
  * SCIM ResourceType Schema
  * @alias SCIMMY.Schemas.ResourceType
+ * @summary
+ * *   Ensures a ResourceType instance conforms to the ResourceType schema set out in [RFC7643§6](https://datatracker.ietf.org/doc/html/rfc7643#section-6).
  */
 export class ResourceType extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema.definition} */
