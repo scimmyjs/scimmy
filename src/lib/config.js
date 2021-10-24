@@ -14,11 +14,12 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
  * By default, all specification features are marked as disabled, as your implementation may not support them.
  *
  * ## Retrieving Configuration
- *
- * The stored configuration can be retrieved by calling `{@link SCIMMY.Config.get}()`, which returns a cloned object representing the configuration _at the time of retrieval_.
+ * The stored configuration can be retrieved by calling `{@link SCIMMY.Config.get}()`, which returns a cloned object 
+ * representing the configuration _at the time of retrieval_.
  *
  * > **Note:**  
- * > To prevent accidental configuration changes, the returned object has been trapped, and attempting to change a configuration value directly on this object will throw a TypeError with the message `"SCIM Configuration can only be changed via the 'set' method"`
+ * > To prevent accidental configuration changes, the returned object has been trapped, and attempting to change a configuration 
+ * > value directly on this object will throw a TypeError with the message `"SCIM Configuration can only be changed via the 'set' method"`
  *
  * The structure of the object reflects the example provided in [RFC7643§8.5](https://datatracker.ietf.org/doc/html/rfc7643#section-8.5):
  * ```json
@@ -50,7 +51,6 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
  * ```
  *
  * ## Setting Configuration
- *
  * The stored configuration can be changed via the `{@link SCIMMY.Config.set}` method. This method can be called either with an object representing the new configuration, or with a configuration property name string and value pair.
  * *   Where the only child property of a top-level configuration property is "supported", a boolean can be supplied as the value, which will be used as the value of the "supported" property.
  *     ```js
@@ -86,7 +86,6 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
  * ```
  *
  * ### Authentication Schemes
- *
  * Service provider authentication schemes can be set in the same way as other configuration properties, and are cumulative.  
  * The authenticationSchemes collection can be reset by providing an empty array as the value for the authenticationSchemes property.
  * ```js
