@@ -8,6 +8,14 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
 /**
  * SCIM Schemas Container Class
  * @namespace SCIMMY.Schemas
+ * @description
+ * SCIMMY provides a singleton class, `SCIMMY.Schemas`, that is used to declare schema definitions implemented by a SCIM Service Provider.
+ * It also provides access to supplied implementations of core resource type schema definitions.
+ * It is also used to retrieve a service provider's declared schema definitions to be sent via the Schemas HTTP endpoint.
+ *
+ * > **Note:**
+ * > The `SCIMMY.Schemas` class is a singleton, which means that declared schema definitions
+ * > will remain the same, regardless of where the class is accessed from within your code.
  */
 export default class Schemas {
     // Store declared schema definitions for later retrieval
@@ -49,9 +57,9 @@ export default class Schemas {
      * Get registration status of specific schema implementation, or get all registered schema definitions
      * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema implementation or name to query registration status for
      * @returns {Object|SCIMMY.Types.SchemaDefinition|Boolean}
-     *   - {Object} containing object with declared schema definitions for exposure via Schemas HTTP endpoint
-     *   - {SCIMMY.Types.SchemaDefinition} the registered schema definition with matching name or ID
-     *   - {Boolean} the registration status of the specified schema implementation
+     * *   Object containing declared schema definitions for exposure via Schemas HTTP endpoint, if no arguments are supplied.
+     * *   The registered schema definition with matching name or ID, or undefined, if a string argument is supplied.
+     * *   The registration status of the specified schema definition, if a class extending `SCIMMY.Types.SchemaDefinition` was supplied.
      */
     static declared(definition) {
         // If no definition specified, return declared schema definitions
