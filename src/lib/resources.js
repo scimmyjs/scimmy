@@ -11,7 +11,7 @@ import Schemas from "./schemas.js";
  * @namespace SCIMMY.Resources
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Resources`, that is used to declare resource types implemented by a SCIM Service Provider.
- * It also provides access to supplied implementations of core resource types that can rapidly be used to support well-known resource types.  
+ * It also provides access to supplied implementations of core resource types that can be used to easily support well-known resource types.  
  * It is also used to retrieve a service provider's declared resource types to be sent via the ResourceTypes HTTP endpoint.
  * 
  * > **Note:**  
@@ -139,7 +139,7 @@ export default class Resources {
      * @returns {Object|SCIMMY.Types.Resource|Boolean}
      * *   A containing object with registered resource implementations for exposure as ResourceTypes, if no arguments are supplied.
      * *   The registered resource type implementation with matching name, or undefined, if a string argument is supplied.
-     * *   The registration status of the specified resource implementation, if a class extending `SCIMMY.Types.Resource` was supplied.
+     * *   The registration status of the specified resource implementation, if a class extending `SCIMMY.Types.Resource` is supplied.
      */
     static declared(resource) {
         // If no resource specified, return declared resources
