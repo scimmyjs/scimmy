@@ -5,6 +5,9 @@ import {SCIMError} from "./error.js";
 /**
  * SCIM Schema
  * @alias SCIMMY.Types.Schema
+ * @summary
+ * *   Extendable class which provides the ability to construct resource instances with automated validation of conformity to a resource's schema definition.
+ * *   Once instantiated, any modifications will also be validated against the attached schema definition's matching attribute configuration (e.g. for mutability or canonical values).
  */
 export class Schema {
     /**
@@ -30,6 +33,7 @@ export class Schema {
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      */
     static extend(extension, required = false) {
+        // TODO: SchemaDefinition instance, not Schema classes
         this.definition.extend((extension.prototype instanceof Schema ? extension.definition : extension), required);
     }
     

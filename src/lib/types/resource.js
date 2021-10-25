@@ -5,6 +5,9 @@ import {Filter} from "./filter.js";
 /**
  * SCIM Resource
  * @alias SCIMMY.Types.Resource
+ * @summary
+ * *   Extendable class representing a SCIM Resource Type, which acts as an interface between a SCIM resource type schema, and an app's internal data model.
+ * *   Handles incoming requests to read/write/delete a resource, parses any attribute, filter, and sort parameters of a request, and formats responses for consumption by other SCIM clients and service providers.
  */
 export class Resource {
     /**
@@ -25,8 +28,8 @@ export class Resource {
     static #basepath;
     /**
      * Sets or retrieves the base path for resolution of a resource's location
-     * @param {String} path - the path to use as the base of a resource's location
-     * @returns {SCIMMY.Types.Resource}
+     * @param {String} [path] - the path to use as the base of a resource's location
+     * @returns {SCIMMY.Types.Resource|String} this resource type class for chaining if path is a string, or the resource's basepath
      * @abstract
      */
     static basepath(path) {
@@ -60,12 +63,13 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
-     * @param {SCIMMY.Types.Schema|SCIMMY.Types.Attribute[]} extension - the schema extension to register
+     * @param {SCIMMY.Types.Schema} extension - the schema extension to register
      * @param {Boolean} required - whether or not the extension is required
      * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
         if (!this.extensions.find(e => e.schema === extension)) {
+            // TODO: extension.prototype instanceof Schema
             if (extension instanceof Schema) this.extensions.push({schema: extension, required: required});
             this.schema.extend(extension, required);
         }
@@ -90,6 +94,7 @@ export class Resource {
     /**
      * Sets the method to be called to consume a resource on create
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to consume a resource on create
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static ingress(handler) {
@@ -106,6 +111,7 @@ export class Resource {
     /**
      * Sets the method to be called to retrieve a resource on read
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static egress(handler) {
@@ -122,6 +128,7 @@ export class Resource {
     /**
      * Sets the method to be called to dispose of a resource on delete
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to dispose of a resource on delete
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static degress(handler) {
@@ -129,10 +136,20 @@ export class Resource {
     }
     
     /**
-     * Describe this resource implementation
-     * @returns {{schema: String, endpoint: String, name: String, description: String, id: String}}
+     * Describe this resource type implementation
+     * @returns {SCIMMY.Types.Resource~ResourceType} object describing the resource type implementation 
      */
     static describe() {
+        /**
+         * @typedef {Object} SCIMMY.Types.Resource~ResourceType
+         * @property {String} id - URN namespace of the resource's SCIM schema definition
+         * @property {String} name - friendly name of the resource's SCIM schema definition
+         * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
+         * @property {String} description - human-readable description of the resource
+         * @property {Object} [schemaExtensions] - schema extensions that augment the resource
+         * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
+         * @property {Boolean} schemaExtensions[].required - whether or not resource instances must include the schema extension
+         */
         return {
             id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,
             description: this.schema.definition.description, schema: this.schema.definition.id,
@@ -148,7 +165,19 @@ export class Resource {
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
+     * @param {String} [config.sortBy] - the attribute retrieved resources should be sorted by
+     * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
+     * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
+     * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
      * @param {any[]} rest - all other arguments supplied to the resource constructor
+     * @property {String} [id] - ID of the resource instance being targeted
+     * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
+     * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
+     * @property {Object} [constraints] - sort and pagination properties parsed from the supplied config
+     * @property {String} [constraints.sortBy] - the attribute retrieved resources should be sorted by
+     * @property {String} [constraints.sortOrder] - the direction retrieved resources should be sorted in
+     * @property {Number} [constraints.startIndex] - offset index that retrieved resources should start from
+     * @property {Number} [constraints.count] - maximum number of retrieved resources that should be returned in one operation
      */
     constructor(config = {}, ...rest) {
         let params = config;
@@ -205,6 +234,8 @@ export class Resource {
      * Calls resource's egress method for data retrieval.
      * Wraps the results in valid SCIM list response or single resource syntax.
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
+     * *   A collection of resources matching instance's configured filter, if no ID was supplied to resource constructor.
+     * *   The specifically requested resource instance, if an ID was supplied to resource constructor.
      * @abstract
      */
     read() {

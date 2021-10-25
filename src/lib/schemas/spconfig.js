@@ -3,6 +3,8 @@ import Types from "../types.js";
 /**
  * SCIM Service Provider Configuration Schema
  * @alias SCIMMY.Schemas.ServiceProviderConfig
+ * @summary
+ * *   Ensures a ServiceProviderConfig instance conforms to the Service Provider Configuration schema set out in [RFC7643§5](https://datatracker.ietf.org/doc/html/rfc7643#section-5).
  */
 export class ServiceProviderConfig extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema.definition} */

@@ -3,6 +3,8 @@ import Types from "../types.js";
 /**
  * SCIM Group Schema
  * @alias SCIMMY.Schemas.Group
+ * @summary
+ * *   Ensures a Group instance conforms to the Group schema set out in [RFC7643§4.2](https://datatracker.ietf.org/doc/html/rfc7643#section-4.2).
  */
 export class Group extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema.definition} */

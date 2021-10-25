@@ -5,6 +5,9 @@ import Schemas from "../schemas.js";
 /**
  * SCIM User Resource
  * @alias SCIMMY.Resources.User
+ * @summary
+ * *   Handles read/write/patch/dispose operations for SCIM User resources with specified ingress/egress/degress methods.
+ * *   Formats SCIM User resources for transmission/consumption using the `{@link SCIMMY.Schemas.User}` schema class.
  */
 export class User extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */
@@ -70,6 +73,12 @@ export class User extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.User}
+     * @example
+     * // Retrieve user with ID "1234"
+     * await (new SCIMMY.Resources.User("1234")).read();
+     * @example
+     * // Retrieve users with an email ending in "@example.com"
+     * await (new SCIMMY.Resources.User({filter: 'email.value -ew "@example.com"'})).read();
      */
     async read() {
         if (!this.id) {
@@ -89,6 +98,12 @@ export class User extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#write}
      * @returns {SCIMMY.Schemas.User}
+     * @example
+     * // Create a new user with userName "someGuy"
+     * await (new SCIMMY.Resources.User()).write({userName: "someGuy"});
+     * @example
+     * // Set userName attribute to "someGuy" for user with ID "1234"
+     * await (new SCIMMY.Resources.User("1234")).write({userName: "someGuy"});
      */
     async write(instance) {
         try {
@@ -107,6 +122,9 @@ export class User extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#patch}
      * @returns {SCIMMY.Schemas.User}
+     * @example
+     * // Set userName to "someGuy" for user with ID "1234" with a patch operation (see {@link SCIMMY.Messages.PatchOp})
+     * await (new SCIMMY.Resources.User("1234")).patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});
      */
     async patch(message) {
         try {
@@ -120,7 +138,12 @@ export class User extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#dispose} */
+    /**
+     * @implements {SCIMMY.Types.Resource#dispose}
+     * @example
+     * // Delete user with ID "1234"
+     * await (new SCIMMY.Resources.User("1234")).dispose();
+     */
     async dispose() {
         if (!!this.id) await User.#degress(this);
         else throw new Types.Error(404, null, `Resource ${this.id} not found`);

@@ -3,6 +3,9 @@ import Types from "../types.js";
 /**
  * SCIM EnterpriseUser Schema
  * @alias SCIMMY.Schemas.EnterpriseUser
+ * @summary
+ * *   Ensures an EnterpriseUser instance conforms to the EnterpriseUser schema extension set out in [RFC7643§4.3](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
+ * *   Can be used directly, but is typically used to extend the `SCIMMY.Schemas.User` schema definition.
  */
 export class EnterpriseUser extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema.definition} */

@@ -4,6 +4,9 @@ import {Filter} from "./filter.js";
 /**
  * SCIM Schema Definition
  * @alias SCIMMY.Types.SchemaDefinition
+ * @summary
+ * *   Defines an underlying SCIM schema definition, containing the schema's URN namespace, friendly name, description, and collection of attributes that make up the schema.
+ * *   Provides a way to ensure all properties of a resource conform to their attribute definitions, as well as enabling JSON expression of schemas for consumption by other SCIM clients or service providers.
  */
 export class SchemaDefinition {
     /**
@@ -12,6 +15,10 @@ export class SchemaDefinition {
      * @param {String} id - URN namespace of the SCIM schema
      * @param {String} [description=""] - a human-readable description of the schema
      * @param {SCIMMY.Types.Attribute[]} [attributes=[]] - attributes that make up the schema
+     * @property {String} name - friendly name of the SCIM schema
+     * @property {String} id - URN namespace of the SCIM schema
+     * @property {String} description - human-readable description of the schema
+     * @property {SCIMMY.Types.Attribute[]} attributes - attributes that make up the schema
      */
     constructor(name = "", id = "", description = "", attributes = []) {
         // Store the schema name, ID, and description
@@ -107,6 +114,7 @@ export class SchemaDefinition {
      */
     extend(extensions = [], required) {
         // Go through all extensions to register
+        // TODO: make sure extensions are unique
         for (let extension of (Array.isArray(extensions) ? extensions : [extensions])) {
             // If the extension is an attribute, add it to the schema definition instance
             if (extension instanceof Attribute) this.attributes.push(extension);

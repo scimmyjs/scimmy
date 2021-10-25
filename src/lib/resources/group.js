@@ -5,6 +5,9 @@ import Schemas from "../schemas.js";
 /**
  * SCIM Group Resource
  * @alias SCIMMY.Resources.Group
+ * @summary
+ * *   Handles read/write/patch/dispose operations for SCIM Group resources with specified ingress/egress/degress methods.
+ * *   Formats SCIM Group resources for transmission/consumption using the `{@link SCIMMY.Schemas.Group}` schema class.
  */
 export class Group extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.endpoint} */
@@ -70,6 +73,12 @@ export class Group extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.Group}
+     * @example
+     * // Retrieve group with ID "1234"
+     * await (new SCIMMY.Resources.Group("1234")).read();
+     * @example
+     * // Retrieve groups with a group name starting with "A"
+     * await (new SCIMMY.Resources.Group({filter: 'displayName -sw "A"'})).read();
      */
     async read() {
         if (!this.id) {
@@ -89,6 +98,12 @@ export class Group extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#write}
      * @returns {SCIMMY.Schemas.Group}
+     * @example
+     * // Create a new group with displayName "A Group"
+     * await (new SCIMMY.Resources.Group()).write({displayName: "A Group"});
+     * @example
+     * // Set members attribute for group with ID "1234"
+     * await (new SCIMMY.Resources.Group("1234")).write({members: [{value: "5678"}]});
      */
     async write(instance) {
         try {
@@ -107,6 +122,9 @@ export class Group extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#patch}
      * @returns {SCIMMY.Schemas.Group}
+     * @example
+     * // Add member to group with ID "1234" with a patch operation (see {@link SCIMMY.Messages.PatchOp})
+     * await (new SCIMMY.Resources.Group("1234")).patch({Operations: [{op: "add", path: "members", value: {value: "5678"}}]});
      */
     async patch(message) {
         try {
@@ -120,7 +138,12 @@ export class Group extends Types.Resource {
         }
     }
     
-    /** @implements {SCIMMY.Types.Resource#dispose} */
+    /** 
+     * @implements {SCIMMY.Types.Resource#dispose}
+     * @example
+     * // Delete group with ID "1234"
+     * await (new SCIMMY.Resources.Group("1234")).dispose();
+     */
     async dispose() {
         if (!!this.id) await Group.#degress(this);
         else throw new Types.Error(404, null, `Resource ${this.id} not found`);

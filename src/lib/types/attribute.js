@@ -1,28 +1,48 @@
 /**
  * Collection of valid attribute type characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidAttributeTypes
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
 
 /**
  * Collection of valid attribute mutability characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidMutabilityValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
 
 /**
  * Collection of valid attribute returned characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidReturnedValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const returned = ["always", "never", "default", "request"];
 
 /**
  * Collection of valid attribute uniqueness characteristic's values
- * @type {string[]}
- * @private
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidUniquenessValues
+ * @memberOf SCIMMY.Types.Attribute
+ * @default
  */
 const uniqueness = ["none", "server", "global"];
 
@@ -179,24 +199,34 @@ const validate = {
 /**
  * SCIM Attribute
  * @alias SCIMMY.Types.Attribute
+ * @summary
+ * *   Defines a SCIM schema attribute, and is used to ensure a given resource's value conforms to the attribute definition.
  */
 export class Attribute {
+    /**
+     * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
+     * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
+     * @property {String} [description=""] - a human-readable description of the attribute
+     * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
+     * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
+     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case sensitive
+     * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
+     * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
+     * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
+     * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
+     * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
+     */
+    
     /**
      * Constructs an instance of a full SCIM attribute definition
      * @param {String} type - the data type of the attribute
      * @param {String} name - the actual name of the attribute
-     * @param {Object} [config] - additional config defining the attribute's characteristics
-     * @param {Boolean} [config.multiValued=false] - does the attribute expect a collection of values
-     * @param {String} [config.description=""] - a human-readable description of the attribute
-     * @param {Boolean} [config.required=false] - whether the attribute is required for the type instance to be valid
-     * @param {Boolean|String[]} [config.canonicalValues=false] - values the attribute's contents must be set to
-     * @param {Boolean} [config.caseExact=false] - whether the attribute's contents is case sensitive
-     * @param {Boolean|String} [config.mutable=true] - whether the attribute's contents is modifiable
-     * @param {Boolean|String} [config.returned=true] - whether the attribute is returned in a response
-     * @param {Boolean|String[]} [config.referenceTypes=false] - list of referenced types if attribute type is reference
-     * @param {String|Boolean} [config.uniqueness="none"] - the attribute's uniqueness characteristic
-     * @param {String} [config.direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
+     * @param {SCIMMY.Types.Attribute~AttributeConfig|Object} [config] - additional config defining the attribute's characteristics
      * @param {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
+     * @property {String} type - the data type of the attribute
+     * @property {String} name - the actual name of the attribute
+     * @property {SCIMMY.Types.Attribute~AttributeConfig} config - additional config defining the attribute's characteristics
+     * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
         let errorSuffix = `in attribute definition '${name}'`,
@@ -290,7 +320,7 @@ export class Attribute {
          * @property {Boolean} multiValued - boolean value indicating an attribute's plurality
          * @property {String} description - a human-readable description of the attribute
          * @property {Boolean} required - boolean value indicating whether or not the attribute is required
-         * @property {AttributeDefinition[]} [subAttributes] - defines the sub-attributes of a complex attribute
+         * @property {SCIMMY.Types.Attribute~AttributeDefinition[]} [subAttributes] - defines the sub-attributes of a complex attribute
          * @property {Boolean} [caseExact] - boolean value indicating whether or not a string attribute is case sensitive
          * @property {String[]} [canonicalValues] - collection of canonical values
          * @property {String} mutability - indicates whether or not an attribute is modifiable

@@ -3,6 +3,8 @@ import Types from "../types.js";
 /**
  * SCIM User Schema
  * @alias SCIMMY.Schemas.User
+ * @summary
+ * *   Ensures a User instance conforms to the User schema set out in [RFC7643§4.1](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1).
  */
 export class User extends Types.Schema {
     /** @implements {SCIMMY.Types.Schema.definition} */

@@ -1,0 +1,24 @@
+{
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["src"]
+  },
+  "opts": {
+    "recurse": true,
+    "template": "./node_modules/classy-template",
+    "destination": "./docs",
+    "readme": "./README.md",
+    "package": "./package.json"
+  },
+  "markdown": {
+    "idInHeadings": true
+  },
+  "templates": {
+    "classy": {
+      "name": "SCIMMY",
+      "logo": "src/scimmy.png",
+      "showName": false,
+      "apiEntry": "SCIMMY"
+    }
+  }
+}
