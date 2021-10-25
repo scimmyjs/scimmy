@@ -68,8 +68,8 @@ import Schemas from "./schemas.js";
  *     ```
  * *   Before or during declaration, directly on the resource, via the resource's `{@link SCIMMY.Types.Resource.extend extend}` method:
  *     ```
- *     // Add the EnterpriseUser schema as a required extension before declaration
- *     SCIMMY.Resources.User.extend(SCIMMY.Schemas.EnterpriseUser, true);
+ *     // Add the EnterpriseUser schema as an optional extension before declaration
+ *     SCIMMY.Resources.User.extend(SCIMMY.Schemas.EnterpriseUser, false);
  *     SCIMMY.Resources.declare(SCIMMY.Resources.User);
  *     
  *     // Add the EnterpriseUser schema as a required extension during declaration
