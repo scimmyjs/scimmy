@@ -69,8 +69,7 @@ export class Resource {
      */
     static extend(extension, required) {
         if (!this.extensions.find(e => e.schema === extension)) {
-            // TODO: extension.prototype instanceof Schema
-            if (extension instanceof Schema) this.extensions.push({schema: extension, required: required});
+            if (extension.prototype instanceof Schema) this.extensions.push({schema: extension, required: required});
             this.schema.extend(extension, required);
         }
         
