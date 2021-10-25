@@ -15,6 +15,7 @@
     "require": "./dist/cjs/scimmy.cjs"
   },
   "scripts": {
+    "test": "node packager.js -t test",
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",
     "prepare": "node packager.js -t prepack",
