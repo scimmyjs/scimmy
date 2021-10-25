@@ -1,4 +1,4 @@
-###### [![SCIMMY](https://raw.githubusercontent.com/sleelin/scimmy/main/src/scimmy.png)](https://github.com/sleelin/scimmy)
+###### [![SCIMMY](https://raw.githubusercontent.com/sleelin/scimmy/main/src/scimmy.png)](https://scimmyjs.github.io)
 
 # SCIMMY - SCIM m(ade eas)y
 SCIM 2.0 (System for Cross-domain Identity Management) is a set of standards ([RFC7643](https://datatracker.ietf.org/doc/html/rfc7643) and [RFC7644](https://datatracker.ietf.org/doc/html/rfc7644)) 
@@ -37,16 +37,18 @@ SCIMMY.Resources.declare(class MyResourceType extends SCIMMY.Types.Resource {
 
 ## API
 
-SCIMMY provides the following interfaces:
-*   ```SCIMMY.Config```
+SCIMMY exports a singleton class which provides the following interfaces:
+*   `SCIMMY.Config`
     *   SCIM Service Provider Configuration container store.
-*   ```SCIMMY.Types```
+*   `SCIMMY.Types`
     *   SCIMMY classes for implementing schemas and resource types.
-*   ```SCIMMY.Messages```
+*   `SCIMMY.Messages`
     *   Implementations of non-resource SCIM "message" schemas, such as ListResponse and PatchOp.
-*   ```SCIMMY.Schemas```
+*   `SCIMMY.Schemas`
     *   Container store for declaring and retrieving schemas implemented by a service provider.
     *   Also provides access to bundled schema implementations of [SCIM Core Resource Schemas](https://datatracker.ietf.org/doc/html/rfc7643#section-4).
-*   ```SCIMMY.Resources```
+*   `SCIMMY.Resources`
     *   Container store for declaring and retrieving resource types implemented by a service provider.
     *   Also provides access to bundled resource type implementations of [SCIM Core Resource Types](https://datatracker.ietf.org/doc/html/rfc7643#section-4).
+
+For more details on how to use SCIMMY, [visit the documentation](https://scimmyjs.github.io).
