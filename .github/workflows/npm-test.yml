@@ -13,3 +13,4 @@ jobs:
           node-version: 16
       - run: npm install --ignore-scripts true
       - run: npm test
+      - run: npm pack
