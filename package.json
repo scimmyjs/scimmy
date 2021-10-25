@@ -30,13 +30,13 @@
     "rfc7643",
     "rfc7644"
   ],
-  "homepage": "https://github.com/sleelin/scimmy#readme",
+  "homepage": "https://scimmyjs.github.io",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sleelin/scimmy.git"
+    "url": "git+https://github.com/scimmyjs/scimmy.git"
   },
   "bugs": {
-    "url": "https://github.com/sleelin/scimmy/issues"
+    "url": "https://github.com/scimmyjs/scimmy/issues"
   },
   "devDependencies": {
     "chalk": "^4.1.2",
