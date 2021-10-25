@@ -63,12 +63,13 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
-     * @param {SCIMMY.Types.Schema|SCIMMY.Types.Attribute[]} extension - the schema extension to register
+     * @param {SCIMMY.Types.Schema} extension - the schema extension to register
      * @param {Boolean} required - whether or not the extension is required
      * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
         if (!this.extensions.find(e => e.schema === extension)) {
+            // TODO: extension.prototype instanceof Schema
             if (extension instanceof Schema) this.extensions.push({schema: extension, required: required});
             this.schema.extend(extension, required);
         }

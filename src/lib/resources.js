@@ -46,6 +46,41 @@ import Schemas from "./schemas.js";
  * > inadvisable, as having more than one name for a resource type would be thoroughly confusing for consuming 
  * > SCIM clients and service providers.
  * 
+ * ### Extending Resource Types
+ * With the exception of the `ResourceType`, `Schema`, and `ServiceProviderConfig` resources, resource type implementations
+ * can have schema extensions attached to them via the `{@link SCIMMY.Types.Resource.extend extend}` method inherited from
+ * the `{@link SCIMMY.Types.Resource}` class. Schema extensions added to resource type implementations will automatically
+ * be included in the `schemaExtensions` attribute when formatted by the `ResourceType` resource, and the extension's
+ * schema definition declared to the `{@link SCIMMY.Schemas}` class.
+ * 
+ * Resource type implementations can be extended:
+ * *   At the time of declaration via the declaration config object:
+ *     ```
+ *     // Add the EnterpriseUser schema as a required extension at declaration
+ *     SCIMMY.Resources.declare(SCIMMY.Resources.User, {
+ *          extensions: [{schema: SCIMMY.Schemas.EnterpriseUser, required: true}]
+ *     });
+ *     ```
+ * *   Immediately after declaration via the resource's `{@link SCIMMY.Types.Resource.extend extend}` method:
+ *     ```
+ *     // Add the EnterpriseUser schema as a required extension after declaration
+ *     SCIMMY.Resources.declare(SCIMMY.Resources.User).extend(SCIMMY.Schemas.EnterpriseUser, true);
+ *     ```
+ * *   Before or during declaration, directly on the resource, via the resource's `{@link SCIMMY.Types.Resource.extend extend}` method:
+ *     ```
+ *     // Add the EnterpriseUser schema as a required extension before declaration
+ *     SCIMMY.Resources.User.extend(SCIMMY.Schemas.EnterpriseUser, true);
+ *     SCIMMY.Resources.declare(SCIMMY.Resources.User);
+ *     
+ *     // Add the EnterpriseUser schema as a required extension during declaration
+ *     SCIMMY.Resources.declare(SCIMMY.Resources.User.extend(SCIMMY.Schemas.EnterpriseUser, true));
+ *     ```
+ * *   Any time after declaration, directly on the retrieved resource, via the resource's `{@link SCIMMY.Types.Resource.extend extend}` method:
+ *     ```
+ *     // Add the EnterpriseUser schema as a required extension after declaration
+ *     SCIMMY.Resources.declared("User").extend(SCIMMY.Schemas.EnterpriseUser, true);
+ *     ```
+ * 
  * ## Retrieving Declared Types
  * Declared resource type implementations can be retrieved via the `{@link SCIMMY.Resources.declared}` method.
  * *   All currently declared resource types can be retrieved by calling the method with no arguments.  
@@ -120,6 +155,7 @@ export default class Resources {
             
             // Register any supplied schema extensions
             if (Array.isArray(config.extensions)) {
+                // TODO: don't support attributes here?
                 for (let {schema, attributes, required} of config.extensions) {
                     Resources.#declared[name].extend(schema ?? attributes, required);
                 }

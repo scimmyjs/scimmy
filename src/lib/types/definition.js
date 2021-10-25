@@ -114,6 +114,7 @@ export class SchemaDefinition {
      */
     extend(extensions = [], required) {
         // Go through all extensions to register
+        // TODO: make sure extensions are unique
         for (let extension of (Array.isArray(extensions) ? extensions : [extensions])) {
             // If the extension is an attribute, add it to the schema definition instance
             if (extension instanceof Attribute) this.attributes.push(extension);
