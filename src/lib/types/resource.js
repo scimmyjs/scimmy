@@ -28,8 +28,8 @@ export class Resource {
     static #basepath;
     /**
      * Sets or retrieves the base path for resolution of a resource's location
-     * @param {String} path - the path to use as the base of a resource's location
-     * @returns {SCIMMY.Types.Resource}
+     * @param {String} [path] - the path to use as the base of a resource's location
+     * @returns {SCIMMY.Types.Resource|String} this resource type class for chaining if path is a string, or the resource's basepath
      * @abstract
      */
     static basepath(path) {
@@ -94,6 +94,7 @@ export class Resource {
     /**
      * Sets the method to be called to consume a resource on create
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to consume a resource on create
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static ingress(handler) {
@@ -110,6 +111,7 @@ export class Resource {
     /**
      * Sets the method to be called to retrieve a resource on read
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static egress(handler) {
@@ -126,6 +128,7 @@ export class Resource {
     /**
      * Sets the method to be called to dispose of a resource on delete
      * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to dispose of a resource on delete
+     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
     static degress(handler) {
@@ -133,10 +136,20 @@ export class Resource {
     }
     
     /**
-     * Describe this resource implementation
-     * @returns {{schema: String, endpoint: String, name: String, description: String, id: String}}
+     * Describe this resource type implementation
+     * @returns {SCIMMY.Types.Resource~ResourceType} object describing the resource type implementation 
      */
     static describe() {
+        /**
+         * @typedef {Object} SCIMMY.Types.Resource~ResourceType
+         * @property {String} id - URN namespace of the resource's SCIM schema definition
+         * @property {String} name - friendly name of the resource's SCIM schema definition
+         * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
+         * @property {String} description - human-readable description of the resource
+         * @property {Object} [schemaExtensions] - schema extensions that augment the resource
+         * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
+         * @property {Boolean} schemaExtensions[].required - whether or not resource instances must include the schema extension
+         */
         return {
             id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,
             description: this.schema.definition.description, schema: this.schema.definition.id,
@@ -221,6 +234,8 @@ export class Resource {
      * Calls resource's egress method for data retrieval.
      * Wraps the results in valid SCIM list response or single resource syntax.
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
+     * *   A collection of resources matching instance's configured filter, if no ID was supplied to resource constructor.
+     * *   The specifically requested resource instance, if an ID was supplied to resource constructor.
      * @abstract
      */
     read() {
