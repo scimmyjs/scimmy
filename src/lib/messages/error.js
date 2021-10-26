@@ -1,3 +1,5 @@
+import Types from "../types.js";
+
 /**
  * HTTP response status codes specified by RFC7644§3.12
  * @enum
@@ -55,9 +57,11 @@ export class Error {
      */
     constructor(ex) {
         // Dereference parts of the exception
-        let {status = 500, scimType, message: detail} = ex;
+        let {schemas = [], status = 500, scimType, message: detail} = ex;
         
-        // TODO: rethrow parsed error responses
+        // Rethrow SCIM Error messages when error message schema ID is present
+        if (schemas.includes(Error.#id))
+            throw new Types.Error(status, scimType, detail);
         // Validate the supplied parameters
         if (!validStatusCodes.includes(Number(status)))
             throw new TypeError(`Incompatible HTTP status code '${status}' supplied to SCIM Error Message constructor`);
