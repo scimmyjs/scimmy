@@ -1,8 +1,26 @@
 import {SCIMError} from "./error.js";
 
-// Logic Operators
+/**
+ * Collection of valid logical operator strings in a filter expression
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidLogicStrings
+ * @memberOf SCIMMY.Types.Filter
+ * @default
+ */
 const operators = ["and", "or", "not"];
-// Comparison Operations
+/**
+ * Collection of valid comparison operator strings in a filter expression
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidComparisonStrings
+ * @memberOf SCIMMY.Types.Filter
+ * @default
+ */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
 const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
@@ -16,12 +34,16 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
 export class Filter extends Array {
     /**
      * Instantiate and parse a new SCIM filter string or expression
-     * @param {String|Object[]} [query] - the query string to parse, or an existing set of filter expressions
+     * @param {String|Object[]} [expression] - the query string to parse, or an existing set of filter expressions
+     * @property {String} [expression] - the raw string that was parsed by the filter
      */
-    constructor(query = "") {
-        super(...(Array.isArray(query) ? query : []));
+    constructor(expression = "") {
+        super(...(Array.isArray(expression) ? expression : []));
         Object.setPrototypeOf(this, Filter.prototype);
-        if (typeof query === "string" && query.length) this.splice(0, 0, ...Filter.#parse(String(query)));
+        if (typeof expression === "string" && expression.length) {
+            this.expression = expression;
+            this.splice(0, 0, ...Filter.#parse(String(expression)));
+        }
     }
     
     /**
