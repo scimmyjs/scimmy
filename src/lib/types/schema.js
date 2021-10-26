@@ -33,7 +33,6 @@ export class Schema {
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      */
     static extend(extension, required = false) {
-        // TODO: SchemaDefinition instance, not Schema classes
         this.definition.extend((extension.prototype instanceof Schema ? extension.definition : extension), required);
     }
     

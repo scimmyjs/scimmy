@@ -86,7 +86,7 @@ export default class Schemas {
      * Register a SchemaDefinition implementation for exposure via Schemas HTTP endpoint
      * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition to register
      * @param {String|Object} [config] - the configuration to feed to the schema being declared
-     * @returns {SCIMMY.Types.SchemaDefinition|Schemas} the Schemas class or declared schema class for chaining
+     * @returns {SCIMMY.Schemas|SCIMMY.Types.SchemaDefinition} the Schemas class or declared schema class for chaining
      */
     static declare(definition, config) {
         // Source name from schema definition if config is an object
@@ -141,8 +141,9 @@ export default class Schemas {
                 .map(([, d]) => d).find((d) => [d?.id, d?.name].includes(definition));
         }
         // If the definition is an instance of SchemaDefinition, see if it is already declared
-        // TODO: need a better way to check if specific definitions are registered
-        else if (definition instanceof Types.SchemaDefinition) return Schemas.#definitions[definition.constructor.name] === definition;
+        else if (definition instanceof Types.SchemaDefinition) {
+            return Object.entries(Schemas.declared()).some(([, d]) => d === definition);
+        }
         // Otherwise, the schema definition isn't declared...
         else return false;
     }
