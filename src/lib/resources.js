@@ -137,7 +137,7 @@ export default class Resources {
         
         // Prevent registering a resource implementation that already exists
         if (!!Resources.#declared[name]) throw new TypeError(`Resource '${name}' already declared`);
-        else Resources[name] = Resources.#declared[name] = resource;
+        else Resources.#declared[name] = resource;
         
         // Set up the resource if a config object was supplied
         if (typeof config === "object") {
@@ -155,7 +155,6 @@ export default class Resources {
             
             // Register any supplied schema extensions
             if (Array.isArray(config.extensions)) {
-                // TODO: don't support attributes here?
                 for (let {schema, attributes, required} of config.extensions) {
                     Resources.#declared[name].extend(schema ?? attributes, required);
                 }
