@@ -229,7 +229,7 @@ export class Attribute {
      * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        let errorSuffix = `in attribute definition '${name}'`,
+        let errorSuffix = `attribute definition '${name}'`,
             // Collect type and name values for validation
             safelyTyped = [["type", type], ["name", name]],
             // Collect canonicalValues and referenceTypes values for validation
@@ -239,34 +239,37 @@ export class Attribute {
                 ["mutability", config.mutable, mutability],
                 ["returned", config.returned, returned],
                 ["uniqueness", config.uniqueness, uniqueness]
-            ];
+            ],
+            // Make sure attribute name is valid
+            [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
         
         // Make sure name and type are supplied, and type is valid
         for (let [param, value] of safelyTyped) if (typeof value !== "string")
             throw new TypeError(`Required parameter '${param}' missing from Attribute instantiation`);
-        if (!types.includes(type)) {
-            throw new TypeError(`Type '${type}' not recognised ${errorSuffix}`);
-        }
+        if (!types.includes(type))
+            throw new TypeError(`Type '${type}' not recognised in ${errorSuffix}`);
+        if (!!invalidNameChar)
+            throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
         
         // Make sure mutability, returned, and uniqueness config values are valid
         for (let [key, value, values] of safelyConfigured) {
             if ((typeof value === "string" && !values.includes(value))) {
-                throw new TypeError(`Attribute '${key}' value '${value}' not recognised ${errorSuffix}`);
+                throw new TypeError(`Attribute '${key}' value '${value}' not recognised in ${errorSuffix}`);
             } else if (value !== undefined && !["string", "boolean"].includes(typeof value)) {
-                throw new TypeError(`Attribute '${key}' value must be either string or boolean ${errorSuffix}`);
+                throw new TypeError(`Attribute '${key}' value must be either string or boolean in ${errorSuffix}`);
             }
         }
         
         // Make sure canonicalValues and referenceTypes are valid if they are specified
         for (let [key, value] of safelyCollected) {
             if (value !== undefined && value !== false && !Array.isArray(value)) {
-                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' ${errorSuffix}`)
+                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`)
             }
         }
         
         // Make sure attribute type is 'complex' if subAttributes are defined
         if (subAttributes.length && type !== "complex") {
-            throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified ${errorSuffix}`);
+            throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified in ${errorSuffix}`);
         }
         
         // Attribute config is valid, proceed
