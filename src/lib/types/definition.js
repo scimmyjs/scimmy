@@ -113,20 +113,37 @@ export class SchemaDefinition {
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
     extend(extensions = [], required) {
+        let attribs = this.attributes.map(a => a instanceof SchemaDefinition ? Object.getPrototypeOf(a) : a);
+        
         // Go through all extensions to register
-        // TODO: make sure extensions are unique
         for (let extension of (Array.isArray(extensions) ? extensions : [extensions])) {
             // If the extension is an attribute, add it to the schema definition instance
-            if (extension instanceof Attribute) this.attributes.push(extension);
+            if (extension instanceof Attribute) {
+                // Make sure the attribute isn't already included
+                if (!attribs.includes(extension)) {
+                    // Make sure attribute name is unique
+                    if (this.attributes.some(a => a.name === extension.name))
+                        throw new TypeError(`Schema definition '${this.id}' already declares attribute '${extension.name}'`);
+                    
+                    this.attributes.push(extension);
+                }
+            }
             // If the extension is a schema definition, add it to the schema definition instance
             else if (extension instanceof SchemaDefinition) {
-                // Proxy the schema definition for use in this schema definition
-                this.attributes.push(Object.create(extension, {
-                    // Store whether the extension is required
-                    required: {value: required ?? extension.required ?? false},
-                    // When queried, only return attributes that directly belong to the schema definition
-                    attributes: {get: () => extension.attributes.filter(a => a instanceof Attribute && !a?.config?.shadow)}
-                }));
+                // Make sure the extension isn't already included
+                if (!attribs.includes(extension)) {
+                    // Make sure extension name is unique
+                    if (attribs.filter(a => a instanceof SchemaDefinition).some(d => d.id === extension.id))
+                        throw new TypeError(`Schema definition '${this.id}' already declares extension '${extension.id}'`);
+                    
+                    // Proxy the schema definition for use in this schema definition
+                    this.attributes.push(Object.create(extension, {
+                        // Store whether the extension is required
+                        required: {value: required ?? extension.required ?? false},
+                        // When queried, only return attributes that directly belong to the schema definition
+                        attributes: {get: () => extension.attributes.filter(a => a instanceof Attribute && !a?.config?.shadow)}
+                    }));
+                }
                 
                 // Go through the schema extension definition and directly register any nested schema definitions
                 let surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
