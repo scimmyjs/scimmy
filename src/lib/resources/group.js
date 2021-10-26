@@ -121,9 +121,10 @@ export class Group extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource#patch}
+     * @see SCIMMY.Messages.PatchOp
      * @returns {SCIMMY.Schemas.Group}
      * @example
-     * // Add member to group with ID "1234" with a patch operation (see {@link SCIMMY.Messages.PatchOp})
+     * // Add member to group with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
      * await (new SCIMMY.Resources.Group("1234")).patch({Operations: [{op: "add", path: "members", value: {value: "5678"}}]});
      */
     async patch(message) {

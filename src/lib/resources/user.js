@@ -121,9 +121,10 @@ export class User extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource#patch}
+     * @see SCIMMY.Messages.PatchOp
      * @returns {SCIMMY.Schemas.User}
      * @example
-     * // Set userName to "someGuy" for user with ID "1234" with a patch operation (see {@link SCIMMY.Messages.PatchOp})
+     * // Set userName to "someGuy" for user with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
      * await (new SCIMMY.Resources.User("1234")).patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});
      */
     async patch(message) {
