@@ -449,6 +449,11 @@ export class Attribute {
                     
                     // Evaluate complex attribute's sub-attributes
                     if (isComplexMultiValue) {
+                        // Make sure values are complex before proceeding
+                        if (Object(source) !== source) {
+                            throw new TypeError(`Complex attribute '${this.name}' expected complex value but received '${typeof source}'`);
+                        }
+                        
                         let resource = {};
                         
                         // Go through each sub-attribute for coercion
@@ -500,6 +505,9 @@ export class Attribute {
                             
                             throw ex;
                         }
+                        
+                        // Reassign values to catch missing required sub-attributes
+                        for (let [key, value] of Object.entries(target)) target[key] = value;
                     } else {
                         // Go through each value and coerce their sub-attributes
                         for (let value of (multiValued ? source : [source])) {
