@@ -157,8 +157,13 @@ export default class Config {
                 let target = Config.#config[key];
                 
                 if (key === "documentationUri") {
-                    // Handle documentationUri string
-                    Config.#config.documentationUri = Schemas.ServiceProviderConfig.definition.attribute(key).coerce(value);
+                    // documentationUri must be a string
+                    if (!!value && String(value) !== value)
+                        throw new TypeError("SCIM configuration: attribute 'documentationUri' expected value type 'string'");
+                    
+                    // Assign documentationUri string
+                    if (!!value) Config.#config.documentationUri = Schemas.ServiceProviderConfig.definition.attribute(key).coerce(value);
+                    else delete Config.#config.documentationUri;
                 } else if (Array.isArray(target)) {
                     // Target is multi-valued (authenticationSchemes), add coerced values to config, or reset if empty
                     if (!value || (Array.isArray(value) && value.length === 0)) target.splice(0);
