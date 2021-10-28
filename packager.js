@@ -138,6 +138,31 @@ export class Packager {
     }
     
     /**
+     * Run tests using Mocha
+     * @param {String} [filter] - the grep filter to pass to Mocha
+     * @param {String} [reporter] - the reporter to pass to Mocha
+     * @returns {Promise<Function>} a promise that resolves or rejects with a function to show test results
+     */
+    static async test(filter, reporter = "base") {
+        const {default: Mocha} = await import("mocha");
+        let mocha = new Mocha()
+            .reporter(...(typeof reporter === "object" ? [reporter.name, reporter.options] : [reporter]))
+            .addFile(`./${path.join(basepath, "./test/scimmy.js")}`)
+            .grep(`/${filter ?? ".*"}/i`);
+        
+        return new Promise((resolve, reject) => {
+            mocha.timeout("2m").loadFilesAsync().then(() => mocha.run()).then((runner) => {
+                if (reporter === "base") {
+                    let reporter = new Mocha.reporters.Base(runner),
+                        epilogue = reporter.epilogue.bind(reporter);
+                    
+                    runner.on("end", () => !!reporter.stats.failures ? reject(epilogue) : resolve(epilogue));
+                }
+            });
+        });
+    }
+    
+    /**
      * Use RollupJS to bundle sources into defined packages
      * @param {String} src - the source directory to read assets from
      * @param {String} dest - the destination directory to write bundles to
@@ -213,7 +238,12 @@ export class Packager {
 }
 
 if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
-    const config = minimist(process.argv, {alias: {t: "target"}});
+    const config = minimist(process.argv, {
+        alias: {
+            t: "target",
+            f: "testFilter"
+        }
+    });
     
     switch (config.target) {
         case "clean":
@@ -234,6 +264,7 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
             break;
         
         case "test":
+            await Packager.test(config.testFilter, "spec");
             break;
             
         default:
