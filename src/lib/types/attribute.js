@@ -275,11 +275,13 @@ export class Attribute {
         // Attribute config is valid, proceed
         this.type = type;
         this.name = name;
-        this.config = {
+        // Prevent addition and removal of properties from config
+        // TODO: intercept values for validation
+        this.config = Object.seal({
             required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
             description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
             ...config
-        };
+        });
         
         if (type === "complex") this.subAttributes = [...subAttributes];
         
