@@ -10,12 +10,12 @@ export let ResourcesSuite = (SCIMMY) => {
         assert.ok(!!SCIMMY.Resources, "Static class 'Resources' not defined"));
     
     describe("SCIMMY.Resources", () => {
-        describe(".declare", () => {
+        describe(".declare()", () => {
             it("should have static method 'declare'", () => 
                 assert.ok(typeof SCIMMY.Resources.declare === "function", "Static method 'declare' not defined"));
         });
         
-        describe(".declared", () => {
+        describe(".declared()", () => {
             it("should have static method 'declared'", () =>
                 assert.ok(typeof SCIMMY.Resources.declared === "function", "Static method 'declared' not defined"));
         });

@@ -10,12 +10,12 @@ export let SchemasSuite = (SCIMMY) => {
         assert.ok(!!SCIMMY.Schemas, "Static class 'Schemas' not defined"));
     
     describe("SCIMMY.Schemas", () => {
-        describe(".declare", () => {
+        describe(".declare()", () => {
             it("should have static method 'declare'", () =>
                 assert.ok(typeof SCIMMY.Schemas.declare === "function", "Static method 'declare' not defined"));
         });
-    
-        describe(".declared", () => {
+        
+        describe(".declared()", () => {
             it("should have static method 'declared'", () =>
                 assert.ok(typeof SCIMMY.Schemas.declared === "function", "Static method 'declared' not defined"));
         });

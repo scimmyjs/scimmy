@@ -13,7 +13,7 @@ export let ConfigSuite = (SCIMMY) => {
         assert.ok(!!SCIMMY.Config, "Static class 'Config' not defined"));
     
     describe("SCIMMY.Config", () => {
-        describe(".get", () => {
+        describe(".get()", () => {
             it("should have static method 'get'", () => 
                 assert.ok(typeof SCIMMY.Config.get === "function", "Static method 'get' not defined"));
             
@@ -21,11 +21,11 @@ export let ConfigSuite = (SCIMMY) => {
                 returnsImmutableObject("get", SCIMMY.Config.get()));
         });
         
-        describe(".set", () => {
+        describe(".set()", () => {
             it("should have static method 'set'", () => 
                 assert.ok(typeof SCIMMY.Config.set === "function", "Static method 'set' not defined"));
             
-            it("should return an immutable object", () =>
+            it("should return an immutable object", () => 
                 returnsImmutableObject("set", SCIMMY.Config.set()));
             
             it("should do nothing without arguments", () => {
@@ -78,7 +78,7 @@ export let ConfigSuite = (SCIMMY) => {
                     assert.strictEqual(SCIMMY.Config.get()[attrib].supported, true,
                         `Static method 'set' did not accept complex value 'supported' for '${attrib}' attribute`);
                 });
-    
+                
                 it(`should not accept shorthand string value for '${attrib}' attribute`, () => {
                     assert.throws(() => (SCIMMY.Config.set(attrib, "test")),
                         {name: "TypeError", message: `SCIM configuration: attribute '${attrib}' expected value type 'complex' but got 'string'`},
