@@ -123,7 +123,7 @@ export default class Schemas {
             
             // Get any undeclared schema definition extensions
             for (let e of [...new Set(definitions.map(d => d.attributes.filter(a => a instanceof Types.SchemaDefinition))
-                .flat(Infinity).map(e => Object.getPrototypeOf(e)))].filter(e => !Schemas.declared(e))) {
+                .flat(Infinity).map(e => Object.getPrototypeOf(e)))]) {
                 // ...and declare them
                 Schemas.declare(e);
             }
