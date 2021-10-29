@@ -17,6 +17,7 @@ export class SCIMError extends Error {
      */
     constructor(status, scimType, message) {
         super(message);
+        Object.setPrototypeOf(this, SCIMError);
         
         this.status = status;
         this.scimType = scimType;
