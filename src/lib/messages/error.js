@@ -47,33 +47,34 @@ export class Error {
     
     /**
      * Instantiate a new SCIM Error Message with relevant details
-     * @param {Object} ex - the initiating exception to parse into a SCIM error message
-     * @param {SCIMMY.Messages.Error~ValidStatusTypes} ex.status - HTTP status code to be sent with the error
-     * @param {String} ex.scimType - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
-     * @param {String} ex.detail - a human-readable description of what caused the error to occur
+     * @param {Object} [ex={}] - the initiating exception to parse into a SCIM error message
+     * @param {SCIMMY.Messages.Error~ValidStatusTypes} ex.status=500 - HTTP status code to be sent with the error
+     * @param {SCIMMY.Messages.Error~ValidScimTypes} [ex.scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
+     * @param {String} [ex.detail] - a human-readable description of what caused the error to occur
      * @property {String} status - stringified HTTP status code to be sent with the error
      * @property {String} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
-     * @property {String} detail - a human-readable description of what caused the error to occur
+     * @property {String} [detail] - a human-readable description of what caused the error to occur
      */
-    constructor(ex) {
+    constructor(ex = {}) {
         // Dereference parts of the exception
-        let {schemas = [], status = 500, scimType, message: detail} = ex;
+        let {schemas = [], status = 500, scimType, message, detail = message} = ex,
+            errorSuffix = "SCIM Error Message constructor";
         
         // Rethrow SCIM Error messages when error message schema ID is present
         if (schemas.includes(Error.#id))
             throw new Types.Error(status, scimType, detail);
         // Validate the supplied parameters
         if (!validStatusCodes.includes(Number(status)))
-            throw new TypeError(`Incompatible HTTP status code '${status}' supplied to SCIM Error Message constructor`);
+            throw new TypeError(`Incompatible HTTP status code '${status}' supplied to ${errorSuffix}`);
         if (!!scimType && !validScimTypes.includes(scimType))
-            throw new TypeError(`Unknown detail error keyword '${scimType}' supplied to SCIM Error Message constructor`);
-        if (!!scimType && !validCodeTypes[Number(status)].includes(scimType))
-            throw new TypeError(`HTTP status code '${Number(status)}' not valid for detail error keyword '${scimType}' in SCIM Error Message constructor`);
+            throw new TypeError(`Unknown detail error keyword '${scimType}' supplied to ${errorSuffix}`);
+        if (!!scimType && !validCodeTypes[Number(status)]?.includes(scimType))
+            throw new TypeError(`HTTP status code '${Number(status)}' not valid for detail error keyword '${scimType}' in ${errorSuffix}`);
         
         // No exceptions thrown, assign the parameters to the instance
         this.schemas = [Error.#id];
         this.status = String(status);
-        if (!!scimType) this.scimType = scimType;
-        this.detail = detail;
+        if (!!scimType) this.scimType = String(scimType);
+        if (!!detail) this.detail = detail;
     }
 }
