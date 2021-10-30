@@ -1,5 +1,5 @@
 {
-  "rethrow": [
+  "inbound": [
     {
       "schemas": [
         "urn:ietf:params:scim:api:messages:2.0:Error"
@@ -17,7 +17,7 @@
       "detail": "A uniqueness constraint failed"
     }
   ],
-  "typeChecks": {
+  "outbound": {
     "valid": [
       {
         "status": "409",

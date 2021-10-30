@@ -19,7 +19,7 @@ export let ErrorSuite = (SCIMMY) => {
         });
         
         it("should rethrow inbound SCIM Error messages at instantiation", async () => {
-            let {rethrow: suite} = await fixtures;
+            let {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
                 assert.throws(() => new SCIMMY.Messages.Error(fixture),
@@ -49,7 +49,7 @@ export let ErrorSuite = (SCIMMY) => {
         });
         
         it("should verify 'scimType' value is valid for a given 'status' code", async () => {
-            let {typeChecks: {valid, invalid}} = await fixtures;
+            let {outbound: {valid, invalid}} = await fixtures;
             
             for (let fixture of valid) {
                 let actual = new SCIMMY.Messages.Error(fixture),
