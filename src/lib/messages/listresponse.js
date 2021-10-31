@@ -29,15 +29,15 @@ export class ListResponse {
     constructor(request = [], params = {}) {
         let outbound = Array.isArray(request),
             resources = (outbound ? request : request?.Resources ?? []),
-            totalResults = resources.length,
+            totalResults = (outbound ? resources.totalResults ?? resources.length : request.totalResults),
             {sortBy, sortOrder = "ascending"} = params ?? {},
             {startIndex = 1, count = 20, itemsPerPage = count} = (outbound ? params : request);
         
         // Verify the ListResponse contents are valid
         if (!outbound && Array.isArray(request.schemas) && (!request.schemas.includes(ListResponse.#id) || request.schemas.length > 1))
             throw new TypeError(`ListResponse request body messages must exclusively specify schema as '${ListResponse.#id}'`);
-        if (typeof startIndex !== "number" || typeof itemsPerPage !== "number")
-            throw new TypeError("Expected 'startIndex' and 'itemsPerPage' parameters to be numbers in ListResponse message constructor");
+        if ([startIndex, itemsPerPage].some((v) => (typeof v !== "number" || !Number.isInteger(v) || v < 1)))
+            throw new TypeError("Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor");
         if (sortBy !== undefined && typeof sortBy !== "string")
             throw new TypeError("Expected 'sortBy' parameter to be a string in ListResponse message constructor");
         if (sortBy !== undefined && !["ascending", "descending"].includes(sortOrder))
