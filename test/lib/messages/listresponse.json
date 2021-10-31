@@ -1,0 +1,60 @@
+{
+  "inbound": [
+    {
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      "totalResults": 16, "startIndex": 1, "itemsPerPage": 2, "Resources": [
+        {"id": 1, "userName": "AdeleV"}, {"id": 2, "userName": "GradyA"}
+      ]
+    },
+    {
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      "totalResults": 16, "startIndex": 3, "itemsPerPage": 2, "Resources": [
+        {"id": 3, "userName": "LynneR"}, {"id": 4, "userName": "MeganB"}
+      ]
+    }
+  ],
+  "outbound": {
+    "source": [
+      {"id": 1, "userName": "AdeleV", "name": {"formatted": "Adele Vance"}, "date": "2021-07-25T12:37:58.132Z", "number": 4},
+      {"id": 2, "userName": "GradyA", "name": {"formatted": "Grady Archie"}, "date": "2021-09-22T02:32:12.026Z", "number": 6},
+      {"id": 3, "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}, "date": "2021-08-05T10:11:57.910Z", "number": 14},
+      {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9},
+      {"id": 5, "userName": "DiegoS", "name": {"formatted": "Diego Siciliani"}, "date": "2021-07-13T11:03:28.202Z", "number": 12},
+      {"id": 6, "userName": "PradeepG", "name": {"formatted": "Pradeep Gupta"}, "date": "2021-09-11T15:57:40.114Z", "number": 1},
+      {"id": 7, "userName": "HenriettaM", "name": {"formatted": "Henrietta Mueller"}, "date": "2021-08-25T14:00:23.925Z", "number": 10},
+      {"id": 8, "userName": "AlexW", "name": {"formatted": "Alex Wilber"}, "date": "2021-10-25T18:45:22.984Z", "number": 2},
+      {"id": 9, "userName": "NestorW", "name": {"formatted": "Nestor Wilke"}, "date": "2021-10-19T04:00:08.652Z", "number": 3},
+      {"id": 10, "userName": "PattiF", "name": {"formatted": "Patti Fernandez"}, "date": "2021-07-19T00:15:28.313Z", "number": 11},
+      {"id": 11, "userName": "MiriamG", "name": {"formatted": "Miriam Graham"}, "date": "2021-10-15T21:24:51.391Z", "number": 13},
+      {"id": 12, "userName": "LeeG", "name": {"formatted": "Lee Gu"}, "date": "2021-10-12T23:30:26.847Z", "number": 5},
+      {"id": 13, "userName": "IsaiahL", "name": {"formatted": "Isaiah Langer"}, "date": "2021-09-30T16:03:02.186Z", "number": 7},
+      {"id": 14, "userName": "JoniS", "name": {"formatted": "Joni Sherman"}, "date": "2021-10-18T04:31:09.963Z", "number": 8},
+      {"id": 15, "userName": "LidiaH", "name": {"formatted": "Lidia Holloway"}, "date": "2021-10-15T21:37:36.111Z", "number": 15},
+      {"id": 16, "userName": "JohannaL", "name": {"formatted": "Johanna Lorenz"}, "date": "2021-07-19T19:39:26.251Z", "number": 16}
+    ],
+    "targets": [
+      {
+        "sortBy": "userName",
+        "expected": [1, 8, 5, 2, 7, 13, 16, 14, 12, 15, 3, 4, 11, 9, 10, 6]
+      },
+      {
+        "sortBy": "name.formatted",
+        "sortOrder": "descending",
+        "expected": [6, 10, 9, 11, 4, 3, 15, 12, 14, 16, 13, 7, 2, 5, 8, 1]
+      },
+      {
+        "sortBy": "date",
+        "expected": [5, 10, 16, 1, 3, 7, 4, 6, 2, 13, 12, 11, 15, 14, 9, 8]
+      },
+      {
+        "sortBy": "number",
+        "expected": [6, 8, 9, 1, 12, 2, 13, 14, 4, 7, 10, 5, 11, 3, 15, 16]
+      },
+      {
+        "sortBy": "number",
+        "sortOrder": "descending",
+        "expected": [16, 15, 3, 11, 5, 10, 7, 4, 14, 13, 2, 12, 1, 9, 8, 6]
+      }
+    ]
+  }
+}
