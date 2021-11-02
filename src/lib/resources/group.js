@@ -129,8 +129,9 @@ export class Group extends Types.Resource {
      */
     async patch(message) {
         try {
-            return await new Messages.PatchOp(message, new Schemas.Group((await Group.#egress(this)).shift(), "out"))
-                .apply(async (instance) => await Group.#ingress(this, instance))
+            return await new Messages.PatchOp(message)
+                .apply(new Schemas.Group((await Group.#egress(this)).shift(), "out"), 
+                    async (instance) => await Group.#ingress(this, instance))
                 .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;

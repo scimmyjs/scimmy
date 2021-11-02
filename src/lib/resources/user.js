@@ -129,8 +129,9 @@ export class User extends Types.Resource {
      */
     async patch(message) {
         try {
-            return await new Messages.PatchOp(message, new Schemas.User((await User.#egress(this)).shift(), "out"))
-                .apply(async (instance) => await User.#ingress(this, instance))
+            return await new Messages.PatchOp(message)
+                .apply(new Schemas.User((await User.#egress(this)).shift(), "out"), 
+                    async (instance) => await User.#ingress(this, instance))
                 .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;

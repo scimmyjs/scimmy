@@ -33,33 +33,11 @@ export class PatchOp {
     static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
     
     /**
-     * SCIM SchemaDefinition instance for resource being patched
-     * @type {SCIMMY.Types.SchemaDefinition}
-     * @private
-     */
-    #schema;
-    
-    /**
-     * Original SCIM Schema resource instance being patched
-     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
-     * @private
-     */
-    #source;
-    
-    /**
-     * Target SCIM Schema resource instance to apply patches to
-     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
-     * @private
-     */
-    #target;
-    
-    /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} request - contents of the patch operation request being performed
-     * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
-    constructor(request = {}, resource) {
+    constructor(request = {}) {
         let {schemas = [], Operations: operations = []} = request;
         
         // Make sure specified schema is valid
@@ -97,35 +75,80 @@ export class PatchOp {
                 throw new Types.Error(400, "invalidPath", `Invalid path '${path}' for operation ${index} in PatchOp request body`);
         }
         
-        if (resource !== undefined) {
-            // Bail out if resource is specified, and it's not a Schema instance
-            if (!(resource instanceof Types.Schema))
-                throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
-            
-            // Store details about the resource being patched
-            this.#schema = resource.constructor.definition;
-            this.#source = resource;
-            this.#target = new resource.constructor(resource, "out");
-        }
-        
         // Store the attributes that define a PatchOp
         this.schemas = [PatchOp.#id];
         this.Operations = operations;
     }
     
     /**
+     * SCIM SchemaDefinition instance for resource being patched
+     * @type {SCIMMY.Types.SchemaDefinition}
+     * @private
+     */
+    #schema;
+    
+    /**
+     * Original SCIM Schema resource instance being patched
+     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @private
+     */
+    #source;
+    
+    /**
+     * Target SCIM Schema resource instance to apply patches to
+     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @private
+     */
+    #target;
+    
+    /**
      * Apply patch operations to a resource as defined by the PatchOp instance
+     * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
      * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
      */
-    async apply(finalise) {
+    async apply(resource, finalise) {
+        // Bail out if resource is not specified, or it's not a Schema instance
+        if ((resource === undefined) || !(resource instanceof Types.Schema))
+            throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
+        
+        // Store details about the resource being patched
+        this.#schema = resource.constructor.definition;
+        this.#source = resource;
+        this.#target = new resource.constructor(resource, "out");
+        
         // Go through all specified operations
         for (let operation of this.Operations) {
             let index = (this.Operations.indexOf(operation) + 1),
                 {op, path, value} = operation;
             
             // And action it
-            this[op.toLowerCase()](index, path, value);
+            switch (op.toLowerCase()) {
+                case "add":
+                    this.#add(index, path, value);
+                    break;
+                    
+                case "remove":
+                    this.#remove(index, path, value);
+                    break;
+                    
+                case "replace":
+                    try {
+                        // Call remove, then call add!
+                        if (path !== undefined) this.#remove(index, path);
+                        this.#add(index, path, value);
+                        break;
+                    } catch (ex) {
+                        // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
+                        let forReplaceOp = "for 'replace' op";
+                        ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
+                        throw ex;
+                    }
+                    
+                default:
+                    // I don't know how we made it to here, as this should have been checked earlier, but just in case!
+                    throw new Types.Error(400, "invalidSyntax", `Invalid operation '${op}' for operation ${index} in PatchOp request body`);
+            }
         }
         
         // If finalise is a method, feed it the target to retrieve final representation of resource
@@ -215,7 +238,7 @@ export class PatchOp {
      * @param {any|any[]} value - value being added to the resource or attribute specified by path
      * @private
      */
-    add(index, path, value) {
+    #add(index, path, value) {
         if (path === undefined) {
             // If path is unspecified, value must be a plain object
             if (typeof value !== "object" || Array.isArray(value))
@@ -223,7 +246,7 @@ export class PatchOp {
             
             // Go through and add the data specified by value
             for (let [key, val] of Object.entries(value)) {
-                if (typeof value[key] === "object") this.add(index, key, value[key]);
+                if (typeof value[key] === "object") this.#add(index, key, value[key]);
                 else try {
                     this.#target[key] = val;
                 } catch (ex) {
@@ -276,7 +299,7 @@ export class PatchOp {
      * @param {any|any[]} value - value being removed from the resource or attribute specified by path
      * @private
      */
-    remove(index, path, value) {
+    #remove(index, path, value) {
         // Validate and extract details about the operation
         let {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
         
@@ -319,27 +342,7 @@ export class PatchOp {
                 .join(".");
             
             // Remove targeted values from parent attributes
-            this.remove(index, parentPath, targets);
-        }
-    }
-    
-    /**
-     * Perform the "replace" operation on the resource
-     * @param {Number} index - the operation's location in the list of operations, for use in error messages
-     * @param {String} path - if supplied, specifies path to the attribute being replaced
-     * @param {any|any[]} value - value being replaced on the resource or attribute specified by path
-     * @private
-     */
-    replace(index, path, value) {
-        try {
-            // Call remove, then call add!
-            if (path !== undefined) this.remove(index, path);
-            this.add(index, path, value);
-        } catch (ex) {
-            // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
-            let forReplaceOp = "for 'replace' op";
-            ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
-            throw ex;
+            this.#remove(index, parentPath, targets);
         }
     }
 }
