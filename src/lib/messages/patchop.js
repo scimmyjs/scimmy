@@ -66,7 +66,9 @@ export class PatchOp {
         if (schemas.length !== 1 || !schemas.includes(PatchOp.#id))
             throw new Types.Error(400, "invalidSyntax", `PatchOp request body messages must exclusively specify schema as '${PatchOp.#id}'`);
         
-        // Make sure request body contains operations to perform
+        // Make sure request body contains valid operations to perform
+        if (!Array.isArray(operations))
+            throw new Types.Error(400, "invalidValue", "PatchOp expects 'Operations' attribute of 'request' parameter to be an array");
         if (!operations.length)
             throw new Types.Error(400, "invalidValue", "PatchOp request body must contain 'Operations' attribute with at least one operation");
         
@@ -75,6 +77,9 @@ export class PatchOp {
             let index = (operations.indexOf(operation) + 1),
                 {op, path, value} = operation;
             
+            // Make sure operation is of type 'complex' (i.e. it's an object)
+            if (Object(operation) !== operation || Array.isArray(operation))
+                throw new Types.Error(400, "invalidValue", `PatchOp request body expected value type 'complex' for operation ${index} but found type '${Array.isArray(operation) ? "collection" : typeof operation}'`);
             // Make sure all operations have a valid action defined
             if (op === undefined)
                 throw new Types.Error(400, "invalidValue", `Missing required attribute 'op' from operation ${index} in PatchOp request body`);
@@ -88,18 +93,20 @@ export class PatchOp {
             if ("remove" === op.toLowerCase() && path === undefined)
                 throw new Types.Error(400, "noTarget", `Missing required attribute 'path' for 'remove' op of operation ${index} in PatchOp request body`);
             // Make sure path attribute is a string
-            if (!!path && typeof path !== "string")
+            if (path !== undefined && typeof path !== "string")
                 throw new Types.Error(400, "invalidPath", `Invalid path '${path}' for operation ${index} in PatchOp request body`);
         }
         
-        // Bail out if resource is specified, and it's not a Schema instance
-        if (!(resource instanceof Types.Schema) && resource !== undefined)
-            throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
-        
-        // Store details about the resource being patched
-        this.#schema = resource.constructor.definition;
-        this.#source = resource;
-        this.#target = new resource.constructor(resource, "out");
+        if (resource !== undefined) {
+            // Bail out if resource is specified, and it's not a Schema instance
+            if (!(resource instanceof Types.Schema))
+                throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
+            
+            // Store details about the resource being patched
+            this.#schema = resource.constructor.definition;
+            this.#source = resource;
+            this.#target = new resource.constructor(resource, "out");
+        }
         
         // Store the attributes that define a PatchOp
         this.schemas = [PatchOp.#id];
