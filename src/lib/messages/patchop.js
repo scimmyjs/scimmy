@@ -33,21 +33,32 @@ export class PatchOp {
     static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
     
     /**
+     * Whether or not the PatchOp message has been fully formed
+     * Fully formed inbound requests will be considered to have been dispatched
+     * @type {Boolean}
+     * @private
+     */
+    #dispatched = false;
+    
+    /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} request - contents of the patch operation request being performed
      * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
-    constructor(request = {}) {
-        let {schemas = [], Operations: operations = []} = request;
+    constructor(request) {
+        let {schemas = [], Operations: operations = []} = request ?? {};
+        
+        // Determine if message is being prepared (outbound) or has been dispatched (inbound) 
+        this.#dispatched = (request !== undefined);
         
         // Make sure specified schema is valid
-        if (schemas.length !== 1 || !schemas.includes(PatchOp.#id))
+        if (this.#dispatched && (schemas.length !== 1 || !schemas.includes(PatchOp.#id)))
             throw new Types.Error(400, "invalidSyntax", `PatchOp request body messages must exclusively specify schema as '${PatchOp.#id}'`);
         
         // Make sure request body contains valid operations to perform
         if (!Array.isArray(operations))
             throw new Types.Error(400, "invalidValue", "PatchOp expects 'Operations' attribute of 'request' parameter to be an array");
-        if (!operations.length)
+        if (this.#dispatched && !operations.length)
             throw new Types.Error(400, "invalidValue", "PatchOp request body must contain 'Operations' attribute with at least one operation");
         
         // Make sure all specified operations are valid
@@ -108,9 +119,13 @@ export class PatchOp {
      * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
      */
     async apply(resource, finalise) {
+        // Bail out if message has not been dispatched (i.e. it's not ready yet)
+        if (!this.#dispatched)
+            throw new TypeError("PatchOp expected message to be dispatched before calling 'apply' method");
+        
         // Bail out if resource is not specified, or it's not a Schema instance
         if ((resource === undefined) || !(resource instanceof Types.Schema))
-            throw new TypeError("PatchOp expected 'resource' to be an instance of Schema");
+            throw new TypeError("Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method");
         
         // Store details about the resource being patched
         this.#schema = resource.constructor.definition;
@@ -136,6 +151,7 @@ export class PatchOp {
                     try {
                         // Call remove, then call add!
                         if (path !== undefined) this.#remove(index, path);
+                        // TODO: complex multi-value paths no longer have targets after they're removed...
                         this.#add(index, path, value);
                         break;
                     } catch (ex) {
@@ -315,8 +331,8 @@ export class PatchOp {
                         // Make sure filter values is an array for easy use of "includes" comparison when filtering
                         let values = (Array.isArray(value) ? value : [value]),
                             // If values are complex, build a filter to match with - otherwise just use values
-                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Types.Filter(values
-                                .map(f => Object.entries(f)
+                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Types.Filter(
+                                values.map(f => Object.entries(f)
                                     // Get rid of any empty values from the filter
                                     .filter(([, value]) => value !== undefined)
                                     // Turn it into an equity filter string
