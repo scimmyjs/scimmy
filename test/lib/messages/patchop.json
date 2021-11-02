@@ -1,0 +1,43 @@
+{
+  "inbound": {
+    "add": [
+      {
+        "source": {"id": "1234", "userName": "asdf"},
+        "target": {"id": "1234", "userName": "asdf", "displayName": "asdf", "nickName": "dsaf", "name": {"honorificPrefix": "Mr"}},
+        "ops": [
+          {"op": "add", "value": {"displayName": "asdf", "name": {"honorificPrefix": "Mr"}}},
+          {"op": "add", "path": "nickName", "value": "dsaf"}
+        ]
+      }
+    ],
+    "remove": [
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf"},
+        "ops": [{"op": "remove", "path": "name"}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}, {"type": "home", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "remove", "path": "emails", "value": {"type": "home"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "target": {"id": "1234", "userName": "asdf"},
+        "ops": [{"op": "remove", "path": "emails[type eq \"work\"]"}]
+      }
+    ],
+    "replace": [
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf", "name": {"formatted": "Test"}},
+        "ops": [{"op": "replace", "path": "name", "value": {"formatted": "Test"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}]
+      }
+    ]
+  }
+}
