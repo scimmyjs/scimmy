@@ -20,7 +20,20 @@ export class SchemaDefinition {
      * @property {String} description - human-readable description of the schema
      * @property {SCIMMY.Types.Attribute[]} attributes - attributes that make up the schema
      */
-    constructor(name = "", id = "", description = "", attributes = []) {
+    constructor(name, id, description = "", attributes = []) {
+        // Make sure name, ID, and description values are supplied
+        for (let [param, value] of [["name", name], ["id", id], ["description", description]]) {
+            // Bail out if parameter value is empty
+            if (value === undefined)
+                throw new TypeError(`Required parameter '${param}' missing from SchemaDefinition instantiation`);
+            if (typeof value !== "string" || (param !== "description" && !value.length))
+                throw new TypeError(`Expected '${param}' to be a ${param !== "description" ? "non-empty string" : "string"} in SchemaDefinition instantiation`);
+        }
+        
+        // Make sure ID is a valid SCIM schema URN namespace
+        if (!id.startsWith("urn:ietf:params:scim:schemas:"))
+            throw new TypeError(`Invalid SCIM schema URN namespace '${id}' in SchemaDefinition instantiation`);
+        
         // Store the schema name, ID, and description
         this.name = name;
         this.id = id;
@@ -108,7 +121,7 @@ export class SchemaDefinition {
     
     /**
      * Extend a schema definition instance by mixing in other schemas or attributes
-     * @param {Array<SCIMMY.Types.Schema|SCIMMY.Types.Attribute>} extensions - the schema extensions or collection of attributes to register
+     * @param {Array<SCIMMY.Types.SchemaDefinition|SCIMMY.Types.Attribute>} extensions - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
@@ -150,7 +163,7 @@ export class SchemaDefinition {
                 for (let definition of surplusSchemas) this.extend(definition);
             }
             // If something other than a schema definition or attribute is supplied, bail out!
-            else throw new TypeError("Expected 'definition' to be a collection of SchemaDefinition or Attribute instances");
+            else throw new TypeError("Expected 'extensions' to be a collection of SchemaDefinition or Attribute instances");
         }
         
         return this;
