@@ -209,7 +209,8 @@ export class SchemaDefinition {
      */
     coerce(data, direction = "both", basepath, filters) {
         // Make sure there is data to coerce...
-        if (data === undefined) throw new Error("No data to coerce");
+        if (data === undefined || Array.isArray(data) || Object(data) !== data)
+            throw new TypeError("Expected 'data' parameter to be an object in SchemaDefinition instance");
         
         let filter = (filters ?? []).slice(0).shift(),
             target = {},
