@@ -6,42 +6,33 @@ import assert from "assert";
 export let ListResponseSuite = (SCIMMY) => {
     const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
     const fixtures = fs.readFile(path.join(basepath, "./listresponse.json"), "utf8").then((f) => JSON.parse(f));
+    const params = {id: "urn:ietf:params:scim:api:messages:2.0:ListResponse"};
+    const template = {schemas: [params.id], Resources: [], totalResults: 0, startIndex: 1, itemsPerPage: 20};
     
     it("should include static class 'ListResponse'", () => 
         assert.ok(!!SCIMMY.Messages.ListResponse, "Static class 'ListResponse' not defined"));
     
     describe("SCIMMY.Messages.ListResponse", () => {
-        const defaultListResponse = {
-            schemas: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"], 
-            Resources: [], totalResults: 0, startIndex: 1, itemsPerPage: 20
-        };
-        
         it("should not require arguments at instantiation", () => {
-            assert.deepStrictEqual({...(new SCIMMY.Messages.ListResponse())}, defaultListResponse,
+            assert.deepStrictEqual({...(new SCIMMY.Messages.ListResponse())}, template,
                 "ListResponse did not instantiate with correct default properties");
         });
         
         it("should not accept requests with invalid schemas", () => {
-            assert.throws(() => 
-                new SCIMMY.Messages.ListResponse({schemas: ["nonsense"]}),
+            assert.throws(() => new SCIMMY.Messages.ListResponse({schemas: ["nonsense"]}),
                 {name: "TypeError", message: "ListResponse request body messages must exclusively specify schema as 'urn:ietf:params:scim:api:messages:2.0:ListResponse'"},
-                "ListResponse instantiated with invalid 'schemas' property"
-            );
-            
+                "ListResponse instantiated with invalid 'schemas' property");
             assert.throws(() => 
-                new SCIMMY.Messages.ListResponse({schemas: ["urn:ietf:params:scim:api:messages:2.0:ListResponse", "nonsense"]}),
+                new SCIMMY.Messages.ListResponse({schemas: [params.id, "nonsense"]}),
                 {name: "TypeError", message: "ListResponse request body messages must exclusively specify schema as 'urn:ietf:params:scim:api:messages:2.0:ListResponse'"},
-                "ListResponse instantiated with invalid 'schemas' property"
-            );
+                "ListResponse instantiated with invalid 'schemas' property");
         });
         
         it("should expect 'startIndex' parameter to be a positive integer", () => {
             for (let value of ["a string", -1, 1.5]) {
-                assert.throws(() =>
-                    new SCIMMY.Messages.ListResponse([], {startIndex: value}),
+                assert.throws(() => new SCIMMY.Messages.ListResponse([], {startIndex: value}),
                     {name: "TypeError", message: "Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor"},
-                    `ListResponse instantiated with invalid 'startIndex' parameter value '${value}'`
-                );
+                    `ListResponse instantiated with invalid 'startIndex' parameter value '${value}'`);
             }
         });
         
@@ -49,20 +40,16 @@ export let ListResponseSuite = (SCIMMY) => {
             let {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                let list = new SCIMMY.Messages.ListResponse(fixture, {startIndex: 20});
-                
-                assert.ok(list.startIndex === fixture.startIndex, 
+                assert.ok((new SCIMMY.Messages.ListResponse(fixture, {startIndex: 20})).startIndex === fixture.startIndex, 
                     `ListResponse did not use 'startIndex' value included in inbound fixture #${suite.indexOf(fixture)+1}`);
             }
         });
         
         it("should expect 'itemsPerPage' parameter to be a positive integer", () => {
             for (let value of ["a string", -1, 1.5]) {
-                assert.throws(() =>
-                    new SCIMMY.Messages.ListResponse([], {itemsPerPage: value}),
+                assert.throws(() => new SCIMMY.Messages.ListResponse([], {itemsPerPage: value}),
                     {name: "TypeError", message: "Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor"},
-                    `ListResponse instantiated with invalid 'itemsPerPage' parameter value '${value}'`
-                );
+                    `ListResponse instantiated with invalid 'itemsPerPage' parameter value '${value}'`);
             }
         });
         
@@ -70,25 +57,18 @@ export let ListResponseSuite = (SCIMMY) => {
             let {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                let list = new SCIMMY.Messages.ListResponse(fixture, {itemsPerPage: 200});
-                
-                assert.ok(list.itemsPerPage === fixture.itemsPerPage,
+                assert.ok((new SCIMMY.Messages.ListResponse(fixture, {itemsPerPage: 200})).itemsPerPage === fixture.itemsPerPage,
                     `ListResponse did not use 'itemsPerPage' value included in inbound fixture #${suite.indexOf(fixture)+1}`);
             }
         });
         
         it("should expect 'sortBy' parameter to be a string", () => {
-            assert.throws(() =>
-                new SCIMMY.Messages.ListResponse([], {sortBy: 1}),
+            assert.throws(() => new SCIMMY.Messages.ListResponse([], {sortBy: 1}),
                 {name: "TypeError", message: "Expected 'sortBy' parameter to be a string in ListResponse message constructor"},
-                "ListResponse instantiated with invalid 'sortBy' parameter value '1'"
-            );
-            
-            assert.throws(() =>
-                new SCIMMY.Messages.ListResponse([], {sortBy: {}}),
+                "ListResponse instantiated with invalid 'sortBy' parameter value '1'");
+            assert.throws(() => new SCIMMY.Messages.ListResponse([], {sortBy: {}}),
                 {name: "TypeError", message: "Expected 'sortBy' parameter to be a string in ListResponse message constructor"},
-                "ListResponse instantiated with invalid 'sortBy' parameter complex value"
-            );
+                "ListResponse instantiated with invalid 'sortBy' parameter complex value");
         });
         
         it("should ignore 'sortOrder' parameter if 'sortBy' parameter is not defined", () => {
@@ -100,18 +80,18 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should expect 'sortOrder' parameter to be either 'ascending' or 'descending' if 'sortBy' parameter is defined", () => {
-            assert.throws(() =>
-                new SCIMMY.Messages.ListResponse([], {sortBy: "test", sortOrder: "a string"}),
+            assert.throws(() => new SCIMMY.Messages.ListResponse([], {sortBy: "test", sortOrder: "a string"}),
                 {name: "TypeError", message: "Expected 'sortOrder' parameter to be either 'ascending' or 'descending' in ListResponse message constructor"},
-                "ListResponse accepted invalid 'sortOrder' parameter value 'a string'"
-            );
+                "ListResponse accepted invalid 'sortOrder' parameter value 'a string'");
         });
         
         it("should have instance member 'Resources' that is an array", () => {
             let list = new SCIMMY.Messages.ListResponse();
             
-            assert.ok("Resources" in list, "Instance member 'Resources' not defined");
-            assert.ok(Array.isArray(list.Resources), "Instance member 'Resources' was not an array");
+            assert.ok("Resources" in list,
+                "Instance member 'Resources' not defined");
+            assert.ok(Array.isArray(list.Resources),
+                "Instance member 'Resources' was not an array");
         });
         
         it("should have instance member 'totalResults' that is a non-negative integer", () => {
@@ -129,9 +109,7 @@ export let ListResponseSuite = (SCIMMY) => {
             let {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                let list = new SCIMMY.Messages.ListResponse(fixture, {totalResults: 200});
-                
-                assert.ok(list.totalResults === fixture.totalResults,
+                assert.ok((new SCIMMY.Messages.ListResponse(fixture, {totalResults: 200})).totalResults === fixture.totalResults,
                     `ListResponse did not use 'totalResults' value included in inbound fixture #${suite.indexOf(fixture)+1}`);
             }
         });
@@ -154,9 +132,7 @@ export let ListResponseSuite = (SCIMMY) => {
                 list = new SCIMMY.Messages.ListResponse(source, {sortOrder: "descending"});
             
             for (let item of source) {
-                let index = source.indexOf(item);
-                
-                assert.ok(item.id === list.Resources[index]?.id,
+                assert.ok(item.id === list.Resources[source.indexOf(item)]?.id,
                     "ListResponse unexpectedly sorted resources when 'sortBy' parameter was not supplied");
             }
         });
@@ -176,9 +152,7 @@ export let ListResponseSuite = (SCIMMY) => {
             let {outbound: {source}} = await fixtures;
             
             for (let length of [2, 5, 10, 200, 1]) {
-                let list = new SCIMMY.Messages.ListResponse(source, {itemsPerPage: length});
-                
-                assert.ok(list.Resources.length <= length,
+                assert.ok((new SCIMMY.Messages.ListResponse(source, {itemsPerPage: length})).Resources.length <= length,
                     "ListResponse included more resources than specified in 'itemsPerPage' parameter");
             }
         });

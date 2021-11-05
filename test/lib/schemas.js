@@ -11,13 +11,17 @@ export let SchemasSuite = (SCIMMY) => {
     
     describe("SCIMMY.Schemas", () => {
         describe(".declare()", () => {
-            it("should have static method 'declare'", () =>
-                assert.ok(typeof SCIMMY.Schemas.declare === "function", "Static method 'declare' not defined"));
+            it("should have static method 'declare'", () => {
+                assert.ok(typeof SCIMMY.Schemas.declare === "function",
+                    "Static method 'declare' not defined");
+            });
         });
         
         describe(".declared()", () => {
-            it("should have static method 'declared'", () =>
-                assert.ok(typeof SCIMMY.Schemas.declared === "function", "Static method 'declared' not defined"));
+            it("should have static method 'declared'", () => {
+                assert.ok(typeof SCIMMY.Schemas.declared === "function",
+                    "Static method 'declared' not defined");
+            });
         });
     
         ResourceTypeSuite(SCIMMY);
