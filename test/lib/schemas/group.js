@@ -11,6 +11,7 @@ export let GroupSuite = (SCIMMY, SchemasHooks) => {
         assert.ok(!!SCIMMY.Schemas.Group, "Static class 'Group' not defined"));
     
     describe("SCIMMY.Schemas.Group", () => {
+        describe("#constructor", SchemasHooks.construct(SCIMMY.Schemas.Group, fixtures));
         describe(".definition", SchemasHooks.definition(SCIMMY.Schemas.Group, fixtures));
     });
 }

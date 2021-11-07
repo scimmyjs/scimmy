@@ -7,6 +7,19 @@ import {EnterpriseUserSuite} from "./schemas/enterpriseuser.js";
 
 export let SchemasSuite = (SCIMMY) => {
     const SchemasHooks = {
+        construct: (TargetSchema, fixtures) => (() => {
+            it("should require 'resource' parameter to be an object at instantiation", () => {
+                assert.throws(() => new TargetSchema(),
+                    {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
+                    "Schema instance did not expect 'resource' parameter to be defined");
+                assert.throws(() => new TargetSchema("a string"),
+                    {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
+                    "Schema instantiation did not fail with 'resource' parameter string value 'a string'");
+                assert.throws(() => new TargetSchema([]),
+                    {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
+                    "Schema instantiation did not fail with 'resource' parameter array value");
+            });
+        }),
         definition: (TargetSchema, fixtures) => (() => {
             it("should have static member 'definition' that is an instance of SchemaDefinition", () => {
                 assert.ok("definition" in TargetSchema,

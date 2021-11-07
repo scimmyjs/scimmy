@@ -11,6 +11,7 @@ export let ResourceTypeSuite = (SCIMMY, SchemasHooks) => {
         assert.ok(!!SCIMMY.Schemas.ResourceType, "Static class 'ResourceType' not defined"));
     
     describe("SCIMMY.Schemas.ResourceType", () => {
+        describe("#constructor", SchemasHooks.construct(SCIMMY.Schemas.ResourceType, fixtures));
         describe(".definition", SchemasHooks.definition(SCIMMY.Schemas.ResourceType, fixtures));
     });
 }

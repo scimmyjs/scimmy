@@ -11,6 +11,7 @@ export let UserSuite = (SCIMMY, SchemasHooks) => {
         assert.ok(!!SCIMMY.Schemas.User, "Static class 'User' not defined"));
     
     describe("SCIMMY.Schemas.User", () => {
+        describe("#constructor", SchemasHooks.construct(SCIMMY.Schemas.User, fixtures));
         describe(".definition", SchemasHooks.definition(SCIMMY.Schemas.User, fixtures));
     });
 }

@@ -11,6 +11,7 @@ export let EnterpriseUserSuite = (SCIMMY, SchemasHooks) => {
         assert.ok(!!SCIMMY.Schemas.EnterpriseUser, "Static class 'EnterpriseUser' not defined"));
     
     describe("SCIMMY.Schemas.EnterpriseUser", () => {
+        describe("#constructor", SchemasHooks.construct(SCIMMY.Schemas.EnterpriseUser, fixtures));
         describe(".definition", SchemasHooks.definition(SCIMMY.Schemas.EnterpriseUser, fixtures));
     });
 }

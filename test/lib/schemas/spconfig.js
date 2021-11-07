@@ -11,6 +11,7 @@ export let ServiceProviderConfigSuite = (SCIMMY, SchemasHooks) => {
         assert.ok(!!SCIMMY.Schemas.ServiceProviderConfig, "Static class 'ServiceProviderConfig' not defined"));
     
     describe("SCIMMY.Schemas.ServiceProviderConfig", () => {
+        describe("#constructor", SchemasHooks.construct(SCIMMY.Schemas.ServiceProviderConfig, fixtures));
         describe(".definition", SchemasHooks.definition(SCIMMY.Schemas.ServiceProviderConfig, fixtures));
     });
 }
