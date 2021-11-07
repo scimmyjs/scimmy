@@ -19,6 +19,23 @@ export let SchemasSuite = (SCIMMY) => {
                     {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
                     "Schema instantiation did not fail with 'resource' parameter array value");
             });
+            
+            it("should validate 'schemas' property of 'resource' parameter if it is defined", () => {
+                // Add an empty required extension
+                TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test"), true);
+                
+                assert.throws(() => new TargetSchema({schemas: ["a string"]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                        message: "The request body supplied a schema type that is incompatible with this resource"},
+                    "Schema instance did not validate 'schemas' property of 'resource' parameter");
+                assert.throws(() => new TargetSchema({schemas: [TargetSchema.definition.id]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "The request body is missing schema extension 'urn:ietf:params:scim:schemas:Test' required by this resource type"},
+                    "Schema instance did not validate required extensions in 'schemas' property of 'resource' parameter");
+                
+                // Remove the extension so it doesn't interfere later
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+            });
         }),
         definition: (TargetSchema, fixtures) => (() => {
             it("should have static member 'definition' that is an instance of SchemaDefinition", () => {
