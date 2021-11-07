@@ -36,6 +36,21 @@ export let SchemasSuite = (SCIMMY) => {
                 // Remove the extension so it doesn't interfere later
                 TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
             });
+            
+            it("should define getters and setters for all attributes in the schema definition", async () => {
+                let {definition, constructor = {}} = await fixtures,
+                    attributes = definition.attributes.map(a => a.name),
+                    instance = new TargetSchema(constructor);
+                
+                for (let attrib of attributes) {
+                    assert.ok(attrib in instance,
+                        `Schema instance did not define member '${attrib}'`);
+                    assert.ok(typeof Object.getOwnPropertyDescriptor(instance, attrib).get === "function",
+                        `Schema instance member '${attrib}' was not defined with a 'get' method`);
+                    assert.ok(typeof Object.getOwnPropertyDescriptor(instance, attrib).set === "function",
+                        `Schema instance member '${attrib}' was not defined with a 'set' method`);
+                }
+            });
         }),
         definition: (TargetSchema, fixtures) => (() => {
             it("should have static member 'definition' that is an instance of SchemaDefinition", () => {
