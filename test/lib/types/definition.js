@@ -334,10 +334,10 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
                     "Instance method 'coerce' did not expect 'data' argument to be defined");
                 assert.throws(() => definition.coerce("a string"),
                     {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
-                    "Instance method 'coerce' proceeded on 'data' argument with string value 'a string'");
+                    "Instance method 'coerce' did not fail with 'data' argument string value 'a string'");
                 assert.throws(() => definition.coerce([]),
                     {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
-                    "Instance method 'coerce' proceeded on 'data' argument with string value 'a string'");
+                    "Instance method 'coerce' did not fail with 'data' argument array value");
             });
             
             // TODO: verify common attributes are set by coerce method
