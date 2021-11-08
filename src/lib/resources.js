@@ -128,7 +128,7 @@ export default class Resources {
      */
     static declare(resource, config) {
         // Source name from resource if config is an object
-        let name = (typeof config === "string" ? config : resource.name);
+        let name = (typeof config === "string" ? config : resource?.name);
         if (typeof config === "object") name = config.name ?? name;
         
         // Make sure the registering resource is valid
