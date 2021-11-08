@@ -126,12 +126,81 @@ export let SchemasSuite = (SCIMMY) => {
                 assert.ok(typeof SCIMMY.Schemas.declare === "function",
                     "Static method 'declare' not defined");
             });
+            
+            it("should expect 'definition' argument to be an instance of SchemaDefinition", () => {
+                assert.throws(() => SCIMMY.Schemas.declare(),
+                    {name: "TypeError", message: "Registering schema definition must be of type 'SchemaDefinition'"},
+                    "Static method 'declare' did not expect 'definition' parameter to be specified");
+                assert.throws(() => SCIMMY.Schemas.declare({}),
+                    {name: "TypeError", message: "Registering schema definition must be of type 'SchemaDefinition'"},
+                    "Static method 'declare' did not expect 'definition' parameter to be an instance of SchemaDefinition");
+            });
+            
+            it("should always return self after declaration", () => {
+                assert.strictEqual(SCIMMY.Schemas.declare(SCIMMY.Schemas.User.definition), SCIMMY.Schemas,
+                    "Static method 'declare' did not return Schemas for chaining");
+            });
+            
+            it("should ignore definition instances that are already declared with the same name", () => {
+                try {
+                    SCIMMY.Schemas.declare(SCIMMY.Schemas.User.definition);
+                } catch {
+                    assert.fail("Static method 'declare' did not ignore redeclaration of existing name/instance pair");
+                }
+            });
+            
+            it("should expect all schema definitions to have unique names", () => {
+                assert.throws(() => SCIMMY.Schemas.declare(SCIMMY.Schemas.EnterpriseUser.definition, "User"),
+                    {name: "TypeError", message: `Schema definition 'User' already declared with id '${SCIMMY.Schemas.User.definition.id}'`},
+                    "Static method 'declare' did not expect schema definitions to have unique names");
+            });
+            
+            it("should not declare an existing schema definition under a new name", () => {
+                assert.throws(() => SCIMMY.Schemas.declare(SCIMMY.Schemas.User.definition, "Test"),
+                    {name: "TypeError", message: `Schema definition '${SCIMMY.Schemas.User.definition.id}' already declared with name 'User'`},
+                    "Static method 'declare' did not prevent existing schema definition from declaring under a new name");
+            });
         });
         
         describe(".declared()", () => {
             it("should have static method 'declared'", () => {
                 assert.ok(typeof SCIMMY.Schemas.declared === "function",
                     "Static method 'declared' not defined");
+            });
+            
+            it("should return all declared definitions when called without arguments", () => {
+                assert.deepStrictEqual(SCIMMY.Schemas.declared(), {User: SCIMMY.Schemas.User.definition},
+                    "Static method 'declared' did not return all declared definitions when called without arguments");
+            });
+            
+            it("should find declaration status of definitions by name", () => {
+                assert.ok(SCIMMY.Schemas.declared("User"),
+                    "Static method 'declared' did not find declaration status of declared 'User' schema by name");
+                assert.ok(!SCIMMY.Schemas.declared("EnterpriseUser"),
+                    "Static method 'declared' did not find declaration status of undeclared 'EnterpriseUser' schema by name");
+            });
+            
+            it("should find declaration status of definitions by ID", () => {
+                assert.ok(SCIMMY.Schemas.declared(SCIMMY.Schemas.User.definition.id),
+                    "Static method 'declared' did not find declaration status of declared 'User' schema by ID");
+                assert.ok(!SCIMMY.Schemas.declared(SCIMMY.Schemas.EnterpriseUser.definition.id),
+                    "Static method 'declared' did not find declaration status of undeclared 'EnterpriseUser' schema by ID");
+            });
+            
+            it("should find declaration status of definitions by instance", () => {
+                assert.ok(SCIMMY.Schemas.declared(SCIMMY.Schemas.User.definition),
+                    "Static method 'declared' did not find declaration status of declared 'User' schema by instance");
+                assert.ok(!SCIMMY.Schemas.declared(SCIMMY.Schemas.EnterpriseUser.definition),
+                    "Static method 'declared' did not find declaration status of undeclared 'EnterpriseUser' schema by instance");
+            });
+    
+            it("should find nested schema extension definition instances", () => {
+                let extension = new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test");
+                
+                SCIMMY.Schemas.User.extend(extension);
+                assert.deepStrictEqual(SCIMMY.Schemas.declared(), {User: SCIMMY.Schemas.User.definition, Test: extension},
+                    "Static method 'declared' did not find nested schema extension definition instances");
+                SCIMMY.Schemas.User.truncate(extension.id);
             });
         });
         
