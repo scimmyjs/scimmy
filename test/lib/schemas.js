@@ -51,6 +51,54 @@ export let SchemasSuite = (SCIMMY) => {
                         `Schema instance member '${attrib}' was not defined with a 'set' method`);
                 }
             });
+            
+            it("should include lower-case attribute name property accessor aliases", async () => {
+                let {constructor = {}} = await fixtures,
+                    instance = new TargetSchema(constructor),
+                    [key, value] = Object.entries(constructor).shift();
+                
+                try {
+                    instance[key.toLowerCase()] = value.toUpperCase();
+                    assert.strictEqual(instance[key], value.toUpperCase(),
+                        "Schema instance did not include lower-case attribute aliases");
+                } catch (ex) {
+                    if (ex.scimType !== "mutability") throw ex;
+                }
+            });
+            
+            it("should include extension schema attribute property accessor aliases", async () => {
+                // Add an extension with one attribute
+                TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test", "", [
+                    new SCIMMY.Types.Attribute("string", "testValue")
+                ]));
+                
+                // Construct an instance to test against
+                let {constructor = {}} = await fixtures,
+                    target = "urn:ietf:params:scim:schemas:Test:testValue",
+                    instance = new TargetSchema(constructor);
+                
+                instance[target] = "a string";
+                assert.strictEqual(instance[target], "a string",
+                    "Schema instance did not include schema extension attribute aliases");
+                instance[target.toLowerCase()] = "another string";
+                assert.strictEqual(instance[target], "another string",
+                    "Schema instance did not include lower-case schema extension attribute aliases");
+                
+                // Remove the extension so it doesn't interfere later
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+            });
+            
+            it("should be frozen after instantiation", async () => {
+                let {constructor = {}} = await fixtures,
+                    instance = new TargetSchema(constructor);
+                
+                assert.throws(() => instance.test = true,
+                    {name: "TypeError", message: "Cannot add property test, object is not extensible"},
+                    "Schema was extensible after instantiation");
+                assert.throws(() => delete instance.meta,
+                    {name: "TypeError", message: `Cannot delete property 'meta' of #<${instance.constructor.name}>`},
+                    "Schema was not sealed after instantiation");
+            });
         }),
         definition: (TargetSchema, fixtures) => (() => {
             it("should have static member 'definition' that is an instance of SchemaDefinition", () => {
@@ -86,7 +134,7 @@ export let SchemasSuite = (SCIMMY) => {
                     "Static method 'declared' not defined");
             });
         });
-    
+        
         ResourceTypeSuite(SCIMMY, SchemasHooks);
         ServiceProviderConfigSuite(SCIMMY, SchemasHooks);
         UserSuite(SCIMMY, SchemasHooks);

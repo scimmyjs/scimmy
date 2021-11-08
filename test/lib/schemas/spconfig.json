@@ -1,8 +1,8 @@
 {
   "constructor": {
-    "patch": {"supported": true}, "bulk": {"supported": false, "maxOperations": 1000, "maxPayloadSize": 1048576},
-    "filter": {"supported": true, "maxResults": 200}, "changePassword": {"supported": false}, "sort": {"supported": true},
-    "etag": {"supported": false}, "authenticationSchemes": []
+    "documentationUri": "https://example.com/scim.html", "patch": {"supported": true}, "sort": {"supported": true}, 
+    "filter": {"supported": true, "maxResults": 200}, "etag": {"supported": false}, "changePassword": {"supported": false},
+    "bulk": {"supported": false, "maxOperations": 1000, "maxPayloadSize": 1048576}, "authenticationSchemes": []
   },
   "definition": {
     "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
