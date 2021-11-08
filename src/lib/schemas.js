@@ -90,7 +90,7 @@ export default class Schemas {
      */
     static declare(definition, config) {
         // Source name from schema definition if config is an object
-        let name = (typeof config === "string" ? config : definition.name).replace(/\s+/g, "");
+        let name = (typeof config === "string" ? config : definition?.name ?? "").replace(/\s+/g, "");
         if (typeof config === "object") name = config.name ?? name;
         
         // Make sure the registering schema is valid
