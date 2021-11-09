@@ -51,8 +51,7 @@ export class Schema extends Types.Resource {
      */
     async read() {
         if (!this.id) {
-            return new Messages.ListResponse(Object.entries(Schemas.declared())
-                .map(([, S]) => S.describe(Schema.basepath())));
+            return new Messages.ListResponse(Schemas.declared().map((S) => S.describe(Schema.basepath())));
         } else {
             try {
                 return Schemas.declared(this.id).describe(Schema.basepath());

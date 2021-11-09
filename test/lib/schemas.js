@@ -21,20 +21,22 @@ export let SchemasSuite = (SCIMMY) => {
             });
             
             it("should validate 'schemas' property of 'resource' parameter if it is defined", () => {
-                // Add an empty required extension
-                TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test"), true);
-                
-                assert.throws(() => new TargetSchema({schemas: ["a string"]}),
-                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                        message: "The request body supplied a schema type that is incompatible with this resource"},
-                    "Schema instance did not validate 'schemas' property of 'resource' parameter");
-                assert.throws(() => new TargetSchema({schemas: [TargetSchema.definition.id]}),
-                    {name: "SCIMError", status: 400, scimType: "invalidValue",
-                        message: "The request body is missing schema extension 'urn:ietf:params:scim:schemas:Test' required by this resource type"},
-                    "Schema instance did not validate required extensions in 'schemas' property of 'resource' parameter");
-                
-                // Remove the extension so it doesn't interfere later
-                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                try {
+                    // Add an empty required extension
+                    TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test"), true);
+                    
+                    assert.throws(() => new TargetSchema({schemas: ["a string"]}),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "The request body supplied a schema type that is incompatible with this resource"},
+                        "Schema instance did not validate 'schemas' property of 'resource' parameter");
+                    assert.throws(() => new TargetSchema({schemas: [TargetSchema.definition.id]}),
+                        {name: "SCIMError", status: 400, scimType: "invalidValue",
+                            message: "The request body is missing schema extension 'urn:ietf:params:scim:schemas:Test' required by this resource type"},
+                        "Schema instance did not validate required extensions in 'schemas' property of 'resource' parameter");
+                } finally {
+                    // Remove the extension so it doesn't interfere later
+                    TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                }
             });
             
             it("should define getters and setters for all attributes in the schema definition", async () => {
@@ -67,25 +69,27 @@ export let SchemasSuite = (SCIMMY) => {
             });
             
             it("should include extension schema attribute property accessor aliases", async () => {
-                // Add an extension with one attribute
-                TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test", "", [
-                    new SCIMMY.Types.Attribute("string", "testValue")
-                ]));
-                
-                // Construct an instance to test against
-                let {constructor = {}} = await fixtures,
-                    target = "urn:ietf:params:scim:schemas:Test:testValue",
-                    instance = new TargetSchema(constructor);
-                
-                instance[target] = "a string";
-                assert.strictEqual(instance[target], "a string",
-                    "Schema instance did not include schema extension attribute aliases");
-                instance[target.toLowerCase()] = "another string";
-                assert.strictEqual(instance[target], "another string",
-                    "Schema instance did not include lower-case schema extension attribute aliases");
-                
-                // Remove the extension so it doesn't interfere later
-                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                try {
+                    // Add an extension with one attribute
+                    TargetSchema.extend(new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test", "", [
+                        new SCIMMY.Types.Attribute("string", "testValue")
+                    ]));
+                    
+                    // Construct an instance to test against
+                    let {constructor = {}} = await fixtures,
+                        target = "urn:ietf:params:scim:schemas:Test:testValue",
+                        instance = new TargetSchema(constructor);
+                    
+                    instance[target] = "a string";
+                    assert.strictEqual(instance[target], "a string",
+                        "Schema instance did not include schema extension attribute aliases");
+                    instance[target.toLowerCase()] = "another string";
+                    assert.strictEqual(instance[target], "another string",
+                        "Schema instance did not include lower-case schema extension attribute aliases");
+                } finally {
+                    // Remove the extension so it doesn't interfere later
+                    TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                }
             });
             
             it("should be frozen after instantiation", async () => {
@@ -169,7 +173,7 @@ export let SchemasSuite = (SCIMMY) => {
             });
             
             it("should return all declared definitions when called without arguments", () => {
-                assert.deepStrictEqual(SCIMMY.Schemas.declared(), {User: SCIMMY.Schemas.User.definition},
+                assert.deepStrictEqual(SCIMMY.Schemas.declared(), [SCIMMY.Schemas.User.definition],
                     "Static method 'declared' did not return all declared definitions when called without arguments");
             });
             
@@ -193,14 +197,17 @@ export let SchemasSuite = (SCIMMY) => {
                 assert.ok(!SCIMMY.Schemas.declared(SCIMMY.Schemas.EnterpriseUser.definition),
                     "Static method 'declared' did not find declaration status of undeclared 'EnterpriseUser' schema by instance");
             });
-    
+            
             it("should find nested schema extension definition instances", () => {
                 let extension = new SCIMMY.Types.SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test");
                 
-                SCIMMY.Schemas.User.extend(extension);
-                assert.deepStrictEqual(SCIMMY.Schemas.declared(), {User: SCIMMY.Schemas.User.definition, Test: extension},
-                    "Static method 'declared' did not find nested schema extension definition instances");
-                SCIMMY.Schemas.User.truncate(extension.id);
+                try {
+                    SCIMMY.Schemas.User.extend(extension);
+                    assert.deepStrictEqual(SCIMMY.Schemas.declared(), [SCIMMY.Schemas.User.definition, extension],
+                        "Static method 'declared' did not find nested schema extension definition instances");
+                } finally {
+                    SCIMMY.Schemas.User.truncate(extension.id);
+                }
             });
         });
         
