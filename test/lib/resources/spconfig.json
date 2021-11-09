@@ -1,0 +1,7 @@
+{
+  "egress": {
+    "patch": {"supported": false}, "bulk": {"supported": false, "maxOperations": 1000, "maxPayloadSize": 1048576},
+    "filter": {"supported": false, "maxResults": 200}, "changePassword": {"supported": false},
+    "sort": {"supported": false}, "etag": {"supported": false}, "authenticationSchemes": []
+  }
+}
