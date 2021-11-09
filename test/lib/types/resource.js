@@ -1,6 +1,6 @@
 import assert from "assert";
 
-export let ResourceSuite = async (SCIMMY) => {
+export let ResourceSuite = (SCIMMY) => {
     it("should include static class 'Resource'", () => 
         assert.ok(!!SCIMMY.Types.Resource, "Static class 'Resource' not defined"));
     

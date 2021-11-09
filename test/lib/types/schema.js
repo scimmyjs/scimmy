@@ -1,6 +1,6 @@
 import assert from "assert";
 
-export let SchemaSuite = async (SCIMMY) => {
+export let SchemaSuite = (SCIMMY) => {
     it("should include static class 'Schema'", () => 
         assert.ok(!!SCIMMY.Types.Schema, "Static class 'Schema' not defined"));
     
