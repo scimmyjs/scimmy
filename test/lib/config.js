@@ -24,6 +24,9 @@ export let ConfigSuite = (SCIMMY) => {
         });
         
         describe(".set()", () => {
+            let origin = JSON.parse(JSON.stringify(SCIMMY.Config.get()));
+            after(() => SCIMMY.Config.set(origin));
+            
             it("should have static method 'set'", () => {
                 assert.ok(typeof SCIMMY.Config.set === "function",
                     "Static method 'set' not defined");
