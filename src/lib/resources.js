@@ -127,13 +127,17 @@ export default class Resources {
      * @returns {SCIMMY.Resources|SCIMMY.Types.Resource} the Resources class or registered resource type class for chaining
      */
     static declare(resource, config) {
-        // Source name from resource if config is an object
-        let name = (typeof config === "string" ? config : resource?.name);
-        if (typeof config === "object") name = config.name ?? name;
-        
         // Make sure the registering resource is valid
         if (!resource || !(resource.prototype instanceof Types.Resource))
             throw new TypeError("Registering resource must be of type 'Resource'");
+        
+        // Make sure config is valid, if supplied
+        if (config !== undefined && (typeof config !== "string" && (typeof config !== "object" || Array.isArray(config))))
+            throw new TypeError("Resource declaration expected 'config' parameter to be either a name string or configuration object")
+        
+        // Source name from resource if config is an object
+        let name = (typeof config === "string" ? config : resource?.name);
+        if (typeof config === "object") name = config.name ?? name;
         
         // Prevent registering a resource implementation that already exists
         if (!!Resources.#declared[name]) throw new TypeError(`Resource '${name}' already declared`);
