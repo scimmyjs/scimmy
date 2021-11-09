@@ -1,0 +1,9 @@
+{
+  "ingress": {},
+  "egress": [
+    {"id": "1", "userName": "AdeleV", "name": {"formatted": "Adele Vance"}},
+    {"id": "2", "userName": "GradyA", "name": {"formatted": "Grady Archie"}},
+    {"id": "3", "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}},
+    {"id": "4", "userName": "MeganB", "name": {"formatted": "Megan Bowen"}}
+  ]
+}
