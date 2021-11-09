@@ -1,0 +1,9 @@
+{
+  "ingress": {"displayName": "Test Group"},
+  "egress": [
+    {"id": "1", "displayName": "Accounting"},
+    {"id": "2", "displayName": "Sales"},
+    {"id": "3", "displayName": "Management"},
+    {"id": "4", "displayName": "Technical Support"}
+  ]
+}
