@@ -1,5 +1,5 @@
 {
-  "ingress": {},
+  "ingress": {"userName": "Test"},
   "egress": [
     {"id": "1", "userName": "AdeleV", "name": {"formatted": "Adele Vance"}},
     {"id": "2", "userName": "GradyA", "name": {"formatted": "Grady Archie"}},
