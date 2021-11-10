@@ -53,7 +53,8 @@ export let ResourcesSuite = (SCIMMY) => {
             if (fixtures) {
                 let handler = async (res, instance) => {
                     let {egress} = await fixtures,
-                        target = Object.assign((!!res.id ? egress.find(f => f.id === res.id) : {id: "5"}), instance);
+                        target = Object.assign((!!res.id ? egress.find(f => f.id === res.id) : {id: "5"}), 
+                            JSON.parse(JSON.stringify({...instance, schemas: undefined, meta: undefined})));
                     
                     if (!egress.includes(target)) egress.push(target);
                     return target;
@@ -74,9 +75,11 @@ export let ResourcesSuite = (SCIMMY) => {
         egress: (TargetResource, fixtures) => (() => {
             if (fixtures) {
                 let handler = async (res) => {
-                    let {egress} = await fixtures;
+                    let {egress} = await fixtures,
+                        target = (!!res.id ? egress.find(f => f.id === res.id) : egress);
                     
-                    return (!!res.id ? egress.find(f => f.id === res.id) : egress);
+                    if (!target) throw new Error("Not found");
+                    else return (Array.isArray(target) ? target : [target]);
                 };
                 
                 assert.ok(Object.getOwnPropertyNames(TargetResource).includes("egress"),
@@ -155,7 +158,7 @@ export let ResourcesSuite = (SCIMMY) => {
             });
             
             if (listable) {
-                it("should return a ListResponse if resource was instantiated without an ID", async () => {
+                it("should call egress to return a ListResponse if resource was instantiated without an ID", async () => {
                     let {egress: expected} = await fixtures,
                         result = await (new TargetResource()).read(),
                         resources = result?.Resources.map(r => JSON.parse(JSON.stringify({
@@ -167,11 +170,29 @@ export let ResourcesSuite = (SCIMMY) => {
                     assert.deepStrictEqual(resources, expected,
                         "Instance method 'read' did not return a ListResponse containing all resources from fixture");
                 });
+                
+                it("should call egress to return the requested resource instance if resource was instantiated with an ID", async () => {
+                    let {egress: [expected]} = await fixtures,
+                        actual = JSON.parse(JSON.stringify({
+                            ...await (new TargetResource(expected.id)).read(), 
+                            schemas: undefined, meta: undefined, attributes: undefined
+                        }));
+                    
+                    assert.deepStrictEqual(actual, expected,
+                        "Instance method 'read' did not return the requested resource instance by ID");
+                });
+                
+                it("should expect a resource with supplied ID to exist", async () => {
+                    await assert.rejects(() => new TargetResource("10").read(),
+                        {name: "SCIMError", status: 404, scimType: null, message: /10 not found/},
+                        "Instance method 'read' did not expect requested resource to exist");
+                });
             } else {
                 it("should return the requested resource without sugar-coating", async () => {
                     let {egress: expected} = await fixtures,
-                        result = await (new TargetResource()).read(),
-                        actual = JSON.parse(JSON.stringify({...result, schemas: undefined, meta: undefined}));
+                        actual = JSON.parse(JSON.stringify({
+                            ...await (new TargetResource()).read(), schemas: undefined, meta: undefined
+                        }));
                     
                     assert.deepStrictEqual(actual, expected,
                         "Instance method 'read' did not return the requested resource without sugar-coating");
@@ -186,6 +207,63 @@ export let ResourcesSuite = (SCIMMY) => {
                     assert.ok(typeof (new TargetResource()).write === "function",
                         "Instance method 'write' was not a function");
                 });
+                
+                it("should expect 'instance' argument to be an object", async () => {
+                    // Creating new resources via POST
+                    await assert.rejects(() => new TargetResource().write(),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Missing request body payload for POST operation"},
+                        "Instance method 'write' did not expect 'instance' parameter to exist for new resources");
+                    await assert.rejects(() => new TargetResource().write("a string"),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation POST expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter string value 'a string' for new resources");
+                    await assert.rejects(() => new TargetResource().write(false),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation POST expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter boolean value 'false' for new resources");
+                    await assert.rejects(() => new TargetResource().write([]),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation POST expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter array value for new resources");
+                    
+                    // Updating existing resources via PUT
+                    await assert.rejects(() => new TargetResource("1").write(),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Missing request body payload for PUT operation"},
+                        "Instance method 'write' did not expect 'instance' parameter to exist for existing resources");
+                    await assert.rejects(() => new TargetResource("1").write("a string"),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation PUT expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter string value 'a string' for existing resources");
+                    await assert.rejects(() => new TargetResource("1").write(false),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation PUT expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter boolean value 'false' for existing resources");
+                    await assert.rejects(() => new TargetResource("1").write([]),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "Operation PUT expected request body payload to be single complex value"},
+                        "Instance method 'write' did not reject 'instance' parameter array value for existing resources");
+                });
+                
+                it("should call ingress to create new resources when resource instantiated without ID", async () => {
+                    let {ingress: source} = await fixtures,
+                        result = await (new TargetResource()).write(source);
+                    
+                    assert.deepStrictEqual(await (new TargetResource(result.id)).read(), result,
+                        "Instance method 'write' did not create new resource");
+                });
+                
+                it("should call ingress to update existing resources when resource instantiated with ID", async () => {
+                    let {egress: [fixture]} = await fixtures,
+                        [, target] = Object.keys(fixture),
+                        instance = {...fixture, [target]: "TEST"},
+                        expected = await (new TargetResource(fixture.id)).write(instance),
+                        actual = await (new TargetResource(fixture.id)).read();
+                    
+                    assert.deepStrictEqual(actual, expected,
+                        "Instance method 'write' did not update existing resource");
+                });
             } else {
                 assert.throws(() => new TargetResource().write(),
                     {name: "TypeError", message: `Method 'write' not implemented by resource '${TargetResource.name}'`},
@@ -199,6 +277,50 @@ export let ResourcesSuite = (SCIMMY) => {
                         "Resource did not implement instance method 'patch'");
                     assert.ok(typeof (new TargetResource()).patch === "function",
                         "Instance method 'patch' was not a function");
+                });
+                
+                it("should expect 'message' argument to be an object", async () => {
+                    await assert.rejects(() => new TargetResource().patch(),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax", 
+                            message: "Missing message body from PatchOp request"},
+                        "Instance method 'patch' did not expect 'message' parameter to exist");
+                    await assert.rejects(() => new TargetResource().patch("a string"),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "PatchOp request expected message body to be single complex value"},
+                        "Instance method 'patch' did not reject 'instance' parameter string value 'a string'");
+                    await assert.rejects(() => new TargetResource().patch(false),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "PatchOp request expected message body to be single complex value"},
+                        "Instance method 'patch' did not reject 'instance' parameter boolean value 'false'");
+                    await assert.rejects(() => new TargetResource().patch([]),
+                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                            message: "PatchOp request expected message body to be single complex value"},
+                        "Instance method 'patch' did not reject 'instance' parameter array value");
+                });
+                
+                it("should return nothing when applied PatchOp does not modify resource", async () => {
+                    let {egress: [fixture]} = await fixtures,
+                        [, target] = Object.keys(fixture),
+                        result = await (new TargetResource(fixture.id)).patch({
+                            schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                            Operations: [{op: "add", path: target, value: "TEST"}]
+                        });
+                    
+                    assert.deepStrictEqual(result, undefined,
+                        "Instance method 'patch' did not return nothing when resource was not modified");
+                });
+                
+                it("should return the full resource when applied PatchOp modifies resource", async () => {
+                    let {egress: [fixture]} = await fixtures,
+                        [, target] = Object.keys(fixture),
+                        expected = {...fixture, [target]: "Test"},
+                        actual = await (new TargetResource(fixture.id)).patch({
+                            schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                            Operations: [{op: "add", path: target, value: "Test"}]
+                        });
+                    
+                    assert.deepStrictEqual(JSON.parse(JSON.stringify({...actual, schemas: undefined, meta: undefined})), expected,
+                        "Instance method 'patch' did not return the full resource when resource was modified");
                 });
             } else {
                 assert.throws(() => new TargetResource().patch(),
@@ -217,8 +339,23 @@ export let ResourcesSuite = (SCIMMY) => {
                 
                 it("should expect resource instances to have 'id' property", async () => {
                     await assert.rejects(() => new TargetResource().dispose(),
-                        {name: "SCIMError", status: 404, scimType: null, message: "Resource undefined not found"},
+                        {name: "SCIMError", status: 404, scimType: null,
+                            message: "DELETE operation must target a specific resource"},
                         "Instance method 'dispose' did not expect resource instance to have 'id' property");
+                });
+                
+                it("should call degress to delete a resource instance", async () => {
+                    await assert.doesNotReject(() => new TargetResource("5").dispose(),
+                        "Instance method 'dispose' rejected a valid degress request");
+                    await assert.rejects(() => new TargetResource("5").dispose(),
+                        {name: "SCIMError", status: 404, scimType: null, message: /5 not found/},
+                        "Instance method 'dispose' did not delete the given resource");
+                });
+                
+                it("should expect a resource with supplied ID to exist", async () => {
+                    await assert.rejects(() => new TargetResource("5").dispose(),
+                        {name: "SCIMError", status: 404, scimType: null, message: /5 not found/},
+                        "Instance method 'dispose' did not expect requested resource to exist");
                 });
             } else {
                 assert.throws(() => new TargetResource().dispose(),
