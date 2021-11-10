@@ -106,6 +106,11 @@ export class User extends Types.Resource {
      * await (new SCIMMY.Resources.User("1234")).write({userName: "someGuy"});
      */
     async write(instance) {
+        if (instance === undefined)
+            throw new Types.Error(400, "invalidSyntax", `Missing request body payload for ${!!this.id ? "PUT" : "POST"} operation`);
+        if (Object(instance) !== instance || Array.isArray(instance))
+            throw new Types.Error(400, "invalidSyntax", `Operation ${!!this.id ? "PUT" : "POST"} expected request body payload to be single complex value`);
+        
         try {
             // TODO: handle incoming read-only and immutable attribute tests
             return new Schemas.User(
@@ -128,6 +133,11 @@ export class User extends Types.Resource {
      * await (new SCIMMY.Resources.User("1234")).patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});
      */
     async patch(message) {
+        if (message === undefined)
+            throw new Types.Error(400, "invalidSyntax", "Missing message body from PatchOp request");
+        if (Object(message) !== message || Array.isArray(message))
+            throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
+        
         try {
             return await new Messages.PatchOp(message)
                 .apply(new Schemas.User((await User.#egress(this)).shift(), "out"), 
@@ -148,6 +158,6 @@ export class User extends Types.Resource {
      */
     async dispose() {
         if (!!this.id) await User.#degress(this);
-        else throw new Types.Error(404, null, `Resource ${this.id} not found`);
+        else throw new Types.Error(404, null, "DELETE operation must target a specific resource");
     }
 }
