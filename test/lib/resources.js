@@ -138,8 +138,61 @@ export let ResourcesSuite = (SCIMMY) => {
             });
         }),
         construct: (TargetResource, filterable = true) => (() => {
+            it("should not require arguments at instantiation", () => {
+                assert.doesNotThrow(() => new TargetResource(),
+                    "Resource did not instantiate without arguments");
+            });
+            
             if (filterable) {
-                // TODO: tests for when the resource isn't an internal one
+                it("should expect query parameters to be an object after instantiation", () => {
+                    let fixtures = [
+                        ["number value '1'", 1],
+                        ["boolean value 'false'", false],
+                        ["array value", []]
+                    ];
+                    
+                    for (let [label, value] of fixtures) {
+                        assert.throws(() => new TargetResource(value),
+                            {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                                message: "Expected query parameters to be a single complex object value"},
+                            `Resource did not reject query parameters ${label}`);
+                    }
+                });
+                
+                it("should expect 'id' argument to be a non-empty string, if supplied", () => {
+                    let fixtures = [
+                        ["null value", null],
+                        ["number value '1'", 1],
+                        ["boolean value 'false'", false],
+                        ["array value", []]
+                    ];
+                    
+                    for (let [label, value] of fixtures) {
+                        assert.throws(() => new TargetResource(value, {}),
+                            {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                                message: "Expected 'id' parameter to be a non-empty string"},
+                            `Resource did not reject 'id' parameter ${label}`);
+                    }
+                });
+                
+                let suites = [["filter", "non-empty"], ["excludedAttributes", "comma-separated list"], ["attributes", "comma-separated list"]],
+                    fixtures = [
+                        ["object value", {}],
+                        ["number value '1'", 1],
+                        ["boolean value 'false'", false],
+                        ["array value", []]
+                    ];
+                
+                for (let [prop, type] of suites) {
+                    it(`should expect '${prop}' property of query parameters to be a ${type} string`, () => {
+                        for (let [label, value] of fixtures) {
+                            assert.throws(() => new TargetResource({[prop]: value}),
+                                {name: "SCIMError", status: 400, scimType: "invalidFilter",
+                                    message: `Expected ${prop} to be a ${type} string`},
+                                `Resource did not reject '${prop}' property of query parameter with ${label}`);
+                        }
+                    });
+                }
             } else {
                 it("should not instantiate when a filter has been specified", () => {
                     assert.throws(() => new TargetResource({filter: "id pr"}),
@@ -209,41 +262,29 @@ export let ResourcesSuite = (SCIMMY) => {
                 });
                 
                 it("should expect 'instance' argument to be an object", async () => {
-                    // Creating new resources via POST
-                    await assert.rejects(() => new TargetResource().write(),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Missing request body payload for POST operation"},
-                        "Instance method 'write' did not expect 'instance' parameter to exist for new resources");
-                    await assert.rejects(() => new TargetResource().write("a string"),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation POST expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter string value 'a string' for new resources");
-                    await assert.rejects(() => new TargetResource().write(false),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation POST expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter boolean value 'false' for new resources");
-                    await assert.rejects(() => new TargetResource().write([]),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation POST expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter array value for new resources");
+                    let suites = [["POST", "new resources"], ["PUT", "existing resources", "1"]],
+                        fixtures = [
+                            ["string value 'a string'", "a string"],
+                            ["number value '1'", 1],
+                            ["boolean value 'false'", false],
+                            ["array value", []]
+                        ];
                     
-                    // Updating existing resources via PUT
-                    await assert.rejects(() => new TargetResource("1").write(),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Missing request body payload for PUT operation"},
-                        "Instance method 'write' did not expect 'instance' parameter to exist for existing resources");
-                    await assert.rejects(() => new TargetResource("1").write("a string"),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation PUT expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter string value 'a string' for existing resources");
-                    await assert.rejects(() => new TargetResource("1").write(false),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation PUT expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter boolean value 'false' for existing resources");
-                    await assert.rejects(() => new TargetResource("1").write([]),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "Operation PUT expected request body payload to be single complex value"},
-                        "Instance method 'write' did not reject 'instance' parameter array value for existing resources");
+                    for (let [method, name, value] of suites) {
+                        let resource = new TargetResource(value);
+                        
+                        await assert.rejects(() => resource.write(),
+                            {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                                message: `Missing request body payload for ${method} operation`},
+                            `Instance method 'write' did not expect 'instance' parameter to exist for ${name}`);
+                        
+                        for (let [label, value] of fixtures) {
+                            await assert.rejects(() => resource.write(value),
+                                {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                                    message: `Operation ${method} expected request body payload to be single complex value`},
+                                `Instance method 'write' did not reject 'instance' parameter ${label} for ${name}`);
+                        }
+                    }
                 });
                 
                 it("should call ingress to create new resources when resource instantiated without ID", async () => {
