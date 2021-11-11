@@ -321,22 +321,23 @@ export let ResourcesSuite = (SCIMMY) => {
                 });
                 
                 it("should expect 'message' argument to be an object", async () => {
+                    let fixtures = [
+                        ["string value 'a string'", "a string"],
+                        ["boolean value 'false'", false],
+                        ["array value", []]
+                    ];
+                    
                     await assert.rejects(() => new TargetResource().patch(),
                         {name: "SCIMError", status: 400, scimType: "invalidSyntax", 
                             message: "Missing message body from PatchOp request"},
                         "Instance method 'patch' did not expect 'message' parameter to exist");
-                    await assert.rejects(() => new TargetResource().patch("a string"),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "PatchOp request expected message body to be single complex value"},
-                        "Instance method 'patch' did not reject 'instance' parameter string value 'a string'");
-                    await assert.rejects(() => new TargetResource().patch(false),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "PatchOp request expected message body to be single complex value"},
-                        "Instance method 'patch' did not reject 'instance' parameter boolean value 'false'");
-                    await assert.rejects(() => new TargetResource().patch([]),
-                        {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                            message: "PatchOp request expected message body to be single complex value"},
-                        "Instance method 'patch' did not reject 'instance' parameter array value");
+                    
+                    for (let [label, value] of fixtures) {
+                        await assert.rejects(() => new TargetResource().patch(value),
+                            {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                                message: "PatchOp request expected message body to be single complex value"},
+                            `Instance method 'patch' did not reject 'message' parameter ${label}`);
+                    }
                 });
                 
                 it("should return nothing when applied PatchOp does not modify resource", async () => {
