@@ -146,11 +146,8 @@ export let SchemasSuite = (SCIMMY) => {
             });
             
             it("should ignore definition instances that are already declared with the same name", () => {
-                try {
-                    SCIMMY.Schemas.declare(SCIMMY.Schemas.User.definition);
-                } catch {
-                    assert.fail("Static method 'declare' did not ignore redeclaration of existing name/instance pair");
-                }
+                assert.doesNotThrow(() => SCIMMY.Schemas.declare(SCIMMY.Schemas.User.definition),
+                    "Static method 'declare' did not ignore redeclaration of existing name/instance pair");
             });
             
             it("should expect all schema definitions to have unique names", () => {

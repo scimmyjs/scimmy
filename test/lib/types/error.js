@@ -6,11 +6,8 @@ export let ErrorSuite = (SCIMMY) => {
     
     describe("SCIMMY.Types.Error", () => {
         it("should not require arguments at instantiation", () => {
-            try {
-                new SCIMMY.Types.Error();
-            } catch {
-                assert.fail("Error type class did not instantiate without arguments");
-            }
+            assert.doesNotThrow(() => new SCIMMY.Types.Error(),
+                "Error type class did not instantiate without arguments");
         });
         
         it("should extend native 'Error' class", () => {

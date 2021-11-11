@@ -72,11 +72,8 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should ignore 'sortOrder' parameter if 'sortBy' parameter is not defined", () => {
-            try {
-                new SCIMMY.Messages.ListResponse([], {sortOrder: "a string"});
-            } catch (ex) {
-                assert.fail("ListResponse did not ignore invalid 'sortOrder' parameter when 'sortBy' parameter was not defined");
-            }
+            assert.doesNotThrow(() => new SCIMMY.Messages.ListResponse([], {sortOrder: "a string"}), 
+                "ListResponse did not ignore invalid 'sortOrder' parameter when 'sortBy' parameter was not defined");
         });
         
         it("should expect 'sortOrder' parameter to be either 'ascending' or 'descending' if 'sortBy' parameter is defined", () => {
