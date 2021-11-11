@@ -66,8 +66,8 @@ export class User extends Types.Resource {
      * Instantiate a new SCIM User resource and parse any supplied parameters
      * @extends SCIMMY.Types.Resource
      */
-    constructor(params, ...rest) {
-        super(params, ...rest);
+    constructor(...params) {
+        super(...params);
     }
     
     /**
