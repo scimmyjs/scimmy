@@ -48,7 +48,7 @@ export class Filter extends Array {
             throw new TypeError("Expected 'expression' parameter to be a string, object, or array in Filter constructor");
         
         // Prepare underlying array and reset inheritance
-        super(...(Array.isArray(expression) ? expression : []));
+        super(...(Object(expression) === expression ? Array.isArray(expression) ? expression : [expression] : []));
         Object.setPrototypeOf(this, Filter.prototype);
         
         // Handle expression strings
@@ -77,6 +77,9 @@ export class Filter extends Array {
                 expected = (expected === "false" ? false : (expected === "true" ? true : expected));
                 
                 switch (comparator) {
+                    case "co":
+                        return String(value[attr]).includes(expected); 
+                    
                     case "pr":
                         return attr in value;
                     
