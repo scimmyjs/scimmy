@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: 16
       - run: |
-          npm install --ignore-scripts true
+          npm ci
           npm run test:ci
       - name: Test Report
         uses: dorny/test-reporter@v1
