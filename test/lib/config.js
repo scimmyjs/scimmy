@@ -62,7 +62,7 @@ export let ConfigSuite = (SCIMMY) => {
             
             it("should not accept boolean value 'true' for 'authenticationSchemes' attribute", () => {
                 assert.throws(() => SCIMMY.Config.set("authenticationSchemes", true),
-                    {name: "TypeError", message: "Complex attribute 'authenticationSchemes' expected complex value but received 'boolean'"},
+                    {name: "TypeError", message: "Complex attribute 'authenticationSchemes' expected complex value but found type 'boolean'"},
                     "Static method 'set' accepted boolean value 'true' for 'authenticationSchemes' attribute");
             });
             
