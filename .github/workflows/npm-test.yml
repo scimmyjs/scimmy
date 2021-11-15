@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -13,5 +13,11 @@ jobs:
           node-version: 16
       - run: |
           npm install --ignore-scripts true
-          npm test
-          npm pack
+          npm test:ci
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Mocha Unit Tests
+          path: test/results-report.json
+          reporter: mocha-json
