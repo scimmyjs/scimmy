@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
   "description": "SCIMMY - SCIM m(ade eas)y",
-  "version": "0.9.11",
+  "version": "0.10.0",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -16,6 +16,7 @@
   },
   "scripts": {
     "test": "node packager.js -t test",
+    "test:ci": "node packager.js -t test:ci",
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",
     "prepare": "node packager.js -t prepack",

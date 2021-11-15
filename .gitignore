@@ -1,4 +1,5 @@
 package-lock.json
+test/results-report.json
 node_modules
 dist
 docs
