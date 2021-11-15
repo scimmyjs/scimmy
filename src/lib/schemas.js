@@ -32,18 +32,19 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
  * 
  * Each schema definition must be declared with a unique name, and each name can only be declared once.
  * Attempting to declare a new schema definition with a name that has already been declared will throw a TypeError with the
- * message `"Schema definition '<name>' already declared"`, where `<name>` is the name of the schema definition.
+ * message `"Schema definition '<name>' already declared with id '<id>'"`, where `<name>` and `<id>` are the name and id,
+ * respectively, of the existing schema definition.
+ * 
+ * Similarly, each schema definition can only be declared under one name.
+ * Attempting to declare an existing schema definition under a new name will throw a TypeError with the message 
+ * `"Schema definition '<id>' already declared with name '<name>'"`, where `<id>` and `<name>` are the id and name,
+ * respectively, of the existing schema definition.
  *
  * ```
  * // Declaring a schema definition under a different name
  * let definition = new SCIMMY.Types.SchemaDefinition("User", "urn:ietf:params:scim:schemas:MyOrg:CustomUser", "MyOrg Custom User");
  * SCIMMY.Schemas.declare(definition, "CustomUser");
  * ```
- *
- * > **Note:**  
- * > While it is technically possible to declare the same schema definition under multiple names, this is
- * > inadvisable, as having more than one name for a schema definition would be thoroughly confusing for consuming
- * > SCIM clients and service providers.
  *
  * ## Modifying Definitions
  * Not all SCIM clients and service providers support every attribute defined in the SCIM core schemas,
@@ -73,7 +74,8 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
  */
 export default class Schemas {
     // Store declared schema definitions for later retrieval
-    static #definitions = {};
+    static #definitions = new Map();
+    static #idsToNames = new Map();
     
     // Expose built-in schemas without "declaring" them
     static User = User;
@@ -85,64 +87,62 @@ export default class Schemas {
     /**
      * Register a SchemaDefinition implementation for exposure via Schemas HTTP endpoint
      * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition to register
-     * @param {String|Object} [config] - the configuration to feed to the schema being declared
-     * @returns {SCIMMY.Types.SchemaDefinition|Schemas} the Schemas class or declared schema class for chaining
+     * @param {String} [name] - the name of the definition being declared, if different from definition's name property 
+     * @returns {SCIMMY.Schemas} the Schemas class for chaining
      */
-    static declare(definition, config) {
-        // Source name from schema definition if config is an object
-        let name = (typeof config === "string" ? config : definition.name).replace(/\s+/g, "");
-        if (typeof config === "object") name = config.name ?? name;
-        
-        // Make sure the registering schema is valid
+    static declare(definition, name) {
+        // Make sure the registering schema definition is valid
         if (!definition || !(definition instanceof Types.SchemaDefinition))
             throw new TypeError("Registering schema definition must be of type 'SchemaDefinition'");
         
-        // Prevent registering a schema definition that already exists
-        if (!!Schemas.#definitions[name] && Schemas.#definitions[name] !== definition)
-            throw new TypeError(`Schema definition '${name}' already declared`);
-        else if (!Schemas.#definitions[name])
-            Schemas.#definitions[name] = definition;
+        // Source name from schema definition if config is an object
+        name = (typeof name === "string" ? name : (definition?.name ?? "")).replace(/\s+/g, "");
         
-        // If config was supplied, return Schemas, otherwise return the registered schema definition
-        return (typeof config === "object" ? Schemas : definition);
+        // Prevent registering a schema definition under a name that already exists
+        if (Schemas.#definitions.has(name) && Schemas.#definitions.get(name) !== definition)
+            throw new TypeError(`Schema definition '${name}' already declared with id '${Schemas.#definitions.get(name).id}'`);
+        // Prevent registering an existing schema definition under a different name
+        else if (Schemas.declared(definition) && Schemas.#definitions.get(name) !== definition)
+            throw new TypeError(`Schema definition '${definition.id}' already declared with name '${Schemas.#idsToNames.get(definition.id)}'`);
+        // All good, register the schema definition
+        else if (!Schemas.#definitions.has(name)) {
+            Schemas.#definitions.set(name, definition);
+            Schemas.#idsToNames.set(definition.id, name);
+        }
+        
+        // Always return self for chaining
+        return Schemas;
     }
     
     /**
-     * Get registration status of specific schema implementation, or get all registered schema definitions
-     * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema implementation or name to query registration status for
-     * @returns {Object|SCIMMY.Types.SchemaDefinition|Boolean}
-     * *   Object containing declared schema definitions for exposure via Schemas HTTP endpoint, if no arguments are supplied.
+     * Get registration status of specific schema definition, or get all registered schema definitions
+     * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema definition or name to query registration status for
+     * @returns {SCIMMY.Types.SchemaDefinition[]|SCIMMY.Types.SchemaDefinition|Boolean}
+     * *   Array containing declared schema definitions for exposure via Schemas HTTP endpoint, if no arguments are supplied.
      * *   The registered schema definition with matching name or ID, or undefined, if a string argument is supplied.
      * *   The registration status of the specified schema definition, if a class extending `SCIMMY.Types.SchemaDefinition` was supplied.
      */
     static declared(definition) {
         // If no definition specified, return declared schema definitions
         if (!definition) {
-            // Prepare to check if there are any undeclared extensions
-            let definitions = Object.entries(Schemas.#definitions).map(([,d]) => d);
+            // Check for any schema definition extensions
+            let extensions = [
+                ...new Set([...Schemas.#definitions.values()].map(function find(d) {
+                    let extensions = d.attributes.filter(a => a instanceof Types.SchemaDefinition);
+                    return [...extensions, ...extensions.map(find)];
+                })
+                .flat(Infinity).map(e => Object.getPrototypeOf(e)))
+            ];
             
-            // Get any undeclared schema definition extensions
-            for (let e of [...new Set(definitions.map(d => d.attributes.filter(a => a instanceof Types.SchemaDefinition))
-                .flat(Infinity).map(e => Object.getPrototypeOf(e)))].filter(e => !Schemas.declared(e))) {
-                // ...and declare them
-                Schemas.declare(e);
-            }
-            
-            // If there were any newly declared definitions, reevaluate declarations
-            if (definitions.length !== Object.keys(Schemas.#definitions).length)
-                return Schemas.declared();
-            // Otherwise just return the declared definitions
-            else return {...Schemas.#definitions};
+            return [...new Set([...Schemas.#definitions.values(), ...extensions])];
         }
         // If definition is a string, find and return the matching schema definition
-        else if (typeof definition === "string") {
+        else if (typeof definition === "string")
             // Try definition as declaration name, then try definition as declaration id or declared instance name
-            return Schemas.#definitions[definition] ?? Object.entries(Schemas.#definitions)
-                .map(([, d]) => d).find((d) => [d?.id, d?.name].includes(definition));
-        }
+            return Schemas.#definitions.get(definition) ?? Schemas.declared().find((d) => [d?.id, d?.name].includes(definition));
         // If the definition is an instance of SchemaDefinition, see if it is already declared
-        // TODO: need a better way to check if specific definitions are registered
-        else if (definition instanceof Types.SchemaDefinition) return Schemas.#definitions[definition.constructor.name] === definition;
+        else if (definition instanceof Types.SchemaDefinition)
+            return Schemas.declared().some((d) => d === definition);
         // Otherwise, the schema definition isn't declared...
         else return false;
     }

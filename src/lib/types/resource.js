@@ -160,7 +160,8 @@ export class Resource {
     
     /**
      * Instantiate a new SCIM resource and parse any supplied parameters
-     * @param {Object|String} [config={}] - the parameters of the resource instance if object, or the resource ID if string
+     * @param {String} [id] - the ID of the requested resource
+     * @param {Object} [config={}] - the parameters of the resource instance request
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
@@ -168,7 +169,6 @@ export class Resource {
      * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
      * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
      * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
-     * @param {any[]} rest - all other arguments supplied to the resource constructor
      * @property {String} [id] - ID of the resource instance being targeted
      * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
      * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
@@ -178,37 +178,47 @@ export class Resource {
      * @property {Number} [constraints.startIndex] - offset index that retrieved resources should start from
      * @property {Number} [constraints.count] - maximum number of retrieved resources that should be returned in one operation
      */
-    constructor(config = {}, ...rest) {
-        let params = config;
+    constructor(id, config) {
+        // Unwrap params from arguments
+        let params = (typeof id === "string" || config !== undefined ? config : id) ?? {};
+        
+        // Make sure params is a valid object
+        if (Object(params) !== params || Array.isArray(params))
+            throw new SCIMError(400, "invalidSyntax", "Expected query parameters to be a single complex object value");
+        // Make sure ID is valid
+        if ((id !== undefined && Object(id) !== params) && (String(id) !== id || !id.length))
+            throw new SCIMError(400, "invalidSyntax", "Expected 'id' parameter to be a non-empty string");
         
         // Handle case where ID is supplied as first argument
-        if (typeof config === "string") {
-            // Store the ID and get the real parameters
-            this.id = config;
-            params = rest.shift() ?? {};
+        if (typeof id === "string") {
+            // Store the ID and create a filter to match the ID 
+            this.id = id;
+            this.filter = new Filter(`id eq "${this.id}"`);
+        }
+        // Parse the filter if it exists, and wasn't set by ID above
+        else if ("filter" in params) {
+            // Bail out if attributes isn't a non-empty string
+            if (typeof params.filter !== "string" || !params.filter.trim().length)
+                throw new SCIMError(400, "invalidFilter", "Expected filter to be a non-empty string");
             
-            // Create a filter to match the ID
-            params.filter = `id eq "${this.id}"`;
+            this.filter = new Filter(params.filter);
         }
         
-        // Parse the filter if it exists
-        if (params.filter) this.filter = new Filter(params.filter);
-        
         // Handle excluded attributes
-        if (params.excludedAttributes) {
-            // Bail out if excludedAttributes isn't a string
-            if (typeof params.excludedAttributes !== "string")
-                throw new SCIMError(400, "invalidFilter", "Expected excludedAttributes to be a comma-separated string list");
+        if ("excludedAttributes" in params) {
+            // Bail out if excludedAttributes isn't a non-empty string
+            if (typeof params.excludedAttributes !== "string" || !params.excludedAttributes.trim().length)
+                throw new SCIMError(400, "invalidFilter", "Expected excludedAttributes to be a comma-separated list string");
             
             // Convert excludedAttributes into a filter string, and instantiate a new filter
             this.attributes = new Filter(params.excludedAttributes.split(",").map(a => `${a} np`).join(" and "));
         }
         
         // Handle attributes (overwrites excluded attributes if previously defined)
-        if (params.attributes) {
-            // Bail out if attributes isn't a string
-            if (typeof params.attributes !== "string")
-                throw new SCIMError(400, "invalidFilter", "Expected attributes to be a comma-separated string list");
+        if ("attributes" in params) {
+            // Bail out if attributes isn't a non-empty string
+            if (typeof params.attributes !== "string" || !params.attributes.trim().length)
+                throw new SCIMError(400, "invalidFilter", "Expected attributes to be a comma-separated list string");
             
             // Convert attributes into a filter string, and instantiate a new filter
             this.attributes = new Filter(params.attributes.split(",").map(a => `${a} pr`).join(" and "));

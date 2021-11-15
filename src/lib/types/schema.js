@@ -29,11 +29,10 @@ export class Schema {
     
     /**
      * Extend a schema by mixing in other schemas or attributes
-     * @param {Array<SCIMMY.Types.Schema|SCIMMY.Types.Attribute>} extension - the schema extensions or collection of attributes to register
+     * @param {SCIMMY.Types.Schema|Array<SCIMMY.Types.Attribute>} extension - the schema extensions or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      */
     static extend(extension, required = false) {
-        // TODO: SchemaDefinition instance, not Schema classes
         this.definition.extend((extension.prototype instanceof Schema ? extension.definition : extension), required);
     }
     

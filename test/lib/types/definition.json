@@ -1,0 +1,18 @@
+{
+  "describe": [
+    {
+      "source": {
+        "name": "Test", "id": "urn:ietf:params:scim:schemas:Test", "attributes": [{"type": "string", "name": "test", "uniqueness": null}]
+      },
+      "target": {
+        "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
+        "name": "Test", "id": "urn:ietf:params:scim:schemas:Test", "description": "",
+        "meta": {"resourceType": "Schema", "location": "/urn:ietf:params:scim:schemas:Test"},
+        "attributes": [{
+          "name": "test", "type": "string", "multiValued": false, "description": "", "required": false,
+          "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none"
+        }]
+      }
+    }
+  ]
+}

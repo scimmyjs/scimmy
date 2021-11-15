@@ -1,0 +1,157 @@
+{
+  "toJSON": [
+    {
+      "name": "preferredLanguage",
+      "type": "string",
+      "multiValued": false,
+      "description": "Indicates the User's preferred written or spoken language.  Generally used for selecting a localized user interface; e.g., 'en_US' specifies the language English and country US.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "active",
+      "type": "boolean",
+      "multiValued": false,
+      "description": "A Boolean value indicating the User's administrative status.",
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default"
+    },
+    {
+      "name": "password",
+      "type": "string",
+      "multiValued": false,
+      "description": "The User's cleartext password.  This attribute is intended to be used as a means to specify an initial password when creating a new User or to reset an existing User's password.",
+      "required": false,
+      "caseExact": false,
+      "mutability": "writeOnly",
+      "returned": "never",
+      "uniqueness": "none"
+    },
+    {
+      "name": "photos",
+      "type": "complex",
+      "multiValued": true,
+      "description": "URLs of photos of the User.",
+      "required": false,
+      "subAttributes": [
+        {
+          "name": "value",
+          "type": "reference",
+          "referenceTypes": [
+            "external"
+          ],
+          "multiValued": false,
+          "description": "URL of a photo of the User.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "display",
+          "type": "string",
+          "multiValued": false,
+          "description": "A human-readable name, primarily used for display purposes.  READ-ONLY.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "multiValued": false,
+          "description": "A label indicating the attribute's function, i.e., 'photo' or 'thumbnail'.",
+          "required": false,
+          "caseExact": false,
+          "canonicalValues": [
+            "photo",
+            "thumbnail"
+          ],
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "primary",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "A Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g., the preferred photo or thumbnail.  The primary attribute value 'true' MUST appear no more than once.",
+          "required": false,
+          "mutability": "readWrite",
+          "returned": "default"
+        }
+      ],
+      "mutability": "readWrite",
+      "returned": "default"
+    }
+  ],
+  "truncate": [
+    {
+      "name": "photos",
+      "type": "complex",
+      "multiValued": true,
+      "description": "URLs of photos of the User.",
+      "required": false,
+      "subAttributes": [
+        {
+          "name": "value",
+          "type": "reference",
+          "referenceTypes": [
+            "external"
+          ],
+          "multiValued": false,
+          "description": "URL of a photo of the User.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "display",
+          "type": "string",
+          "multiValued": false,
+          "description": "A human-readable name, primarily used for display purposes.  READ-ONLY.",
+          "required": false,
+          "caseExact": false,
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "multiValued": false,
+          "description": "A label indicating the attribute's function, i.e., 'photo' or 'thumbnail'.",
+          "required": false,
+          "caseExact": false,
+          "canonicalValues": [
+            "photo",
+            "thumbnail"
+          ],
+          "mutability": "readWrite",
+          "returned": "default",
+          "uniqueness": "none"
+        },
+        {
+          "name": "primary",
+          "type": "boolean",
+          "multiValued": false,
+          "description": "A Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g., the preferred photo or thumbnail.  The primary attribute value 'true' MUST appear no more than once.",
+          "required": false,
+          "mutability": "readWrite",
+          "returned": "default"
+        }
+      ],
+      "mutability": "readWrite",
+      "returned": "default"
+    }
+  ]
+}

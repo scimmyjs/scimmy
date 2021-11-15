@@ -20,7 +20,20 @@ export class SchemaDefinition {
      * @property {String} description - human-readable description of the schema
      * @property {SCIMMY.Types.Attribute[]} attributes - attributes that make up the schema
      */
-    constructor(name = "", id = "", description = "", attributes = []) {
+    constructor(name, id, description = "", attributes = []) {
+        // Make sure name, ID, and description values are supplied
+        for (let [param, value] of [["name", name], ["id", id], ["description", description]]) {
+            // Bail out if parameter value is empty
+            if (value === undefined)
+                throw new TypeError(`Required parameter '${param}' missing from SchemaDefinition instantiation`);
+            if (typeof value !== "string" || (param !== "description" && !value.length))
+                throw new TypeError(`Expected '${param}' to be a ${param !== "description" ? "non-empty string" : "string"} in SchemaDefinition instantiation`);
+        }
+        
+        // Make sure ID is a valid SCIM schema URN namespace
+        if (!id.startsWith("urn:ietf:params:scim:schemas:"))
+            throw new TypeError(`Invalid SCIM schema URN namespace '${id}' in SchemaDefinition instantiation`);
+        
         // Store the schema name, ID, and description
         this.name = name;
         this.id = id;
@@ -63,21 +76,25 @@ export class SchemaDefinition {
      * @returns {SCIMMY.Types.Attribute|SCIMMY.Types.SchemaDefinition} the Attribute or SchemaDefinition instance with matching name
      */
     attribute(name) {
-        if (name.startsWith("urn:")) {
+        if (name.toLowerCase().startsWith("urn:")) {
             // Handle namespaced attributes by looking for a matching extension
-            let extension = (name.toLowerCase().startsWith(this.id.toLowerCase()) ? this : this.attributes
-                    .find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))),
+            let extension = (this.attributes.find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))
+                ?? (name.toLowerCase().startsWith(`${this.id.toLowerCase()}:`) || name.toLowerCase() === this.id.toLowerCase() ? this : false)),
                 // Get the actual attribute name minus extension ID
-                attribute = name.toLowerCase().replace(extension.id.toLowerCase(), "").slice(1);
+                attribute = (extension ? name.substring(extension.id.length+1) : "");
+            
+            // Bail out if no schema extension found with matching ID 
+            if (!extension)
+                throw new TypeError(`Schema definition '${this.id}' does not declare schema extension for namespaced target '${name}'`);
             
             // If the actual name is empty, return the extension, otherwise search the extension
             return (!attribute.length ? extension : extension.attribute(attribute));
         } else {
             // Break name into path parts in case of search for sub-attributes
-            let path = name.toLowerCase().split("."),
+            let path = name.split("."),
                 // Find the first attribute in the path
                 target = path.shift(),
-                attribute = this.attributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target),
+                attribute = this.attributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target.toLowerCase()),
                 spent = [target];
             
             // If nothing was found, the attribute isn't declared by the schema definition
@@ -92,7 +109,7 @@ export class SchemaDefinition {
                 
                 // Find the next attribute in the path
                 target = path.shift();
-                attribute = attribute.subAttributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target);
+                attribute = attribute.subAttributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target.toLowerCase());
                 
                 // If nothing found, the attribute doesn't declare the target as a sub-attribute
                 if (attribute === undefined)
@@ -108,18 +125,22 @@ export class SchemaDefinition {
     
     /**
      * Extend a schema definition instance by mixing in other schemas or attributes
-     * @param {Array<SCIMMY.Types.Schema|SCIMMY.Types.Attribute>} extensions - the schema extensions or collection of attributes to register
+     * @param {SCIMMY.Types.SchemaDefinition|Array<SCIMMY.Types.Attribute>} extension - the schema extension or collection of attributes to register
      * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
-    extend(extensions = [], required) {
-        // Go through all extensions to register
-        // TODO: make sure extensions are unique
-        for (let extension of (Array.isArray(extensions) ? extensions : [extensions])) {
-            // If the extension is an attribute, add it to the schema definition instance
-            if (extension instanceof Attribute) this.attributes.push(extension);
-            // If the extension is a schema definition, add it to the schema definition instance
-            else if (extension instanceof SchemaDefinition) {
+    extend(extension = [], required) {
+        let attribs = this.attributes.map(a => a instanceof SchemaDefinition ? Object.getPrototypeOf(a) : a),
+            extensions = (Array.isArray(extension) ? extension : [extension]);
+        
+        // If the extension is a schema definition, add it to the schema definition instance
+        if (extension instanceof SchemaDefinition) {
+            // Make sure the extension isn't already included
+            if (!attribs.includes(extension)) {
+                // Make sure extension name is unique
+                if (attribs.filter(a => a instanceof SchemaDefinition).some(d => d.id === extension.id))
+                    throw new TypeError(`Schema definition '${this.id}' already declares extension '${extension.id}'`);
+                
                 // Proxy the schema definition for use in this schema definition
                 this.attributes.push(Object.create(extension, {
                     // Store whether the extension is required
@@ -127,14 +148,28 @@ export class SchemaDefinition {
                     // When queried, only return attributes that directly belong to the schema definition
                     attributes: {get: () => extension.attributes.filter(a => a instanceof Attribute && !a?.config?.shadow)}
                 }));
-                
-                // Go through the schema extension definition and directly register any nested schema definitions
-                let surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
-                for (let definition of surplusSchemas) this.extend(definition);
             }
-            // If something other than a schema definition or attribute is supplied, bail out!
-            else throw new TypeError("Expected 'definition' to be a collection of SchemaDefinition or Attribute instances");
+            
+            // Go through the schema extension definition and directly register any nested schema definitions
+            let surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
+            for (let definition of surplusSchemas) this.extend(definition);
         }
+        // If every extension is an attribute instance, add them to the schema definition
+        else if (extensions.every(e => e instanceof Attribute)) {
+            // Go through all extension attributes to register
+            for (let attribute of extensions) {
+                // Make sure the attribute isn't already included
+                if (!attribs.includes(attribute)) {
+                    // Make sure attribute name is unique
+                    if (this.attributes.some(a => a.name === attribute.name))
+                        throw new TypeError(`Schema definition '${this.id}' already declares attribute '${attribute.name}'`);
+                    
+                    this.attributes.push(attribute);
+                }
+            }
+        }
+        // If something other than a schema definition or attribute is supplied, bail out!
+        else throw new TypeError("Expected 'extension' to be a SchemaDefinition or collection of Attribute instances");
         
         return this;
     }
@@ -174,7 +209,8 @@ export class SchemaDefinition {
      */
     coerce(data, direction = "both", basepath, filters) {
         // Make sure there is data to coerce...
-        if (data === undefined) throw new Error("No data to coerce");
+        if (data === undefined || Array.isArray(data) || Object(data) !== data)
+            throw new TypeError("Expected 'data' parameter to be an object in SchemaDefinition instance");
         
         let filter = (filters ?? []).slice(0).shift(),
             target = {},

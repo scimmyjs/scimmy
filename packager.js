@@ -114,6 +114,13 @@ export class Packager {
             pre: `Cleaning target build directory ${chalk.blue(dest)}: `,
             action: async () => await Packager.clean(dest)
         }]);
+    
+        await step("Running Prebuild Tests", [{
+            pre: verbose ? false : "Running prebuild tests: ",
+            post: true,
+            failure: "Tests failed, aborting build!",
+            action: async () => await Packager.test()
+        }]);
         
         await step("Preparing JavaScript bundles", [{
             pre: `Writing built bundles to ${chalk.blue(dest)}: `,
@@ -135,6 +142,31 @@ export class Packager {
                 return bundles.map(file => file.replace(src, chalk.grey(src)));
             }
         }]);
+    }
+    
+    /**
+     * Run tests using Mocha
+     * @param {String} [filter] - the grep filter to pass to Mocha
+     * @param {String} [reporter] - the reporter to pass to Mocha
+     * @returns {Promise<Function>} a promise that resolves or rejects with a function to show test results
+     */
+    static async test(filter, reporter = "base") {
+        const {default: Mocha} = await import("mocha");
+        let mocha = new Mocha()
+            .reporter(...(typeof reporter === "object" ? [reporter.name, reporter.options] : [reporter]))
+            .addFile(`./${path.join(basepath, "./test/scimmy.js")}`)
+            .grep(`/${filter ?? ".*"}/i`);
+        
+        return new Promise((resolve, reject) => {
+            mocha.timeout("2m").loadFilesAsync().then(() => mocha.run()).then((runner) => {
+                if (reporter === "base") {
+                    let reporter = new Mocha.reporters.Base(runner),
+                        epilogue = reporter.epilogue.bind(reporter);
+                    
+                    runner.on("end", () => !!reporter.stats.failures ? reject(epilogue) : resolve(epilogue));
+                }
+            });
+        });
     }
     
     /**
@@ -213,7 +245,12 @@ export class Packager {
 }
 
 if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
-    const config = minimist(process.argv, {alias: {t: "target"}});
+    const config = minimist(process.argv, {
+        alias: {
+            t: "target",
+            f: "testFilter"
+        }
+    });
     
     switch (config.target) {
         case "clean":
@@ -225,7 +262,7 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
         case "build":
             await Packager.build(true);
             break;
-            
+        
         case "prepack":
             await Packager.build(false);
             break;
@@ -234,8 +271,16 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
             break;
         
         case "test":
+            await Packager.test(config.testFilter, "spec");
             break;
+        
+        case "test:ci":
+            Packager.test(config.testFilter, {name: "json", options: {output: "./test/results-report.json"}}).finally(() => {
+                process.exit(0);
+            });
             
+            break;
+        
         default:
             console.log("No target specified.");
     }

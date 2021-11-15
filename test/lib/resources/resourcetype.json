@@ -1,0 +1,12 @@
+{
+  "egress": [
+    {
+      "id": "User", "name": "User", "description": "User Account",
+      "endpoint": "/Users", "schema": "urn:ietf:params:scim:schemas:core:2.0:User"
+    },
+    {
+      "id": "Group", "name": "Group", "description": "Group",
+      "endpoint": "/Groups", "schema": "urn:ietf:params:scim:schemas:core:2.0:Group"
+    }
+  ]
+}

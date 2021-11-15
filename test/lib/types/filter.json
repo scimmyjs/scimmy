@@ -1,0 +1,56 @@
+{
+  "parse": {
+    "simple": [
+      {"source": "id pr", "target": [{"id": ["pr"]}]},
+      {"source": "userName eq \"Test\"", "target": [{"userName": ["eq", "Test"]}]},
+      {"source": "displayName co \"Bob\"", "target": [{"displayName": ["co", "Bob"]}]},
+      {"source": "name.formatted sw \"Bob\"", "target": [{"name": {"formatted": ["sw", "Bob"]}}]}
+    ],
+    "logical": [
+      {"source": "id pr and userName eq \"Test\"", "target": [{"id": ["pr"], "userName": ["eq", "Test"]}]},
+      {"source": "userName eq \"Test\" or displayName co \"Bob\"", "target": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"]}]},
+      {"source": "email.value ew \"@example.com\" and not userName eq \"Test\"", "target": [{"email": {"value": ["ew", "@example.com"]}, "!!": {"userName": ["eq", "Test"]}}]},
+      {"source": "email.type eq \"work\" or not userName ne \"Test\"", "target": [{"email": {"type": ["eq", "work"]}}, {"!!": {"userName": ["ne", "Test"]}}]},
+      {"source": "email.type eq \"work\" and not email.value ew \"@example.com\"", "target": [{"email": {"type": ["eq", "work"]}, "!!": {"email": {"value": ["ew", "@example.com"]}}}]},
+      {"source": "name.formatted sw \"Bob\" and name.honoraryPrefix eq \"Mr\"", "target": [{"name": {"formatted": ["sw", "Bob"], "honoraryPrefix": ["eq", "Mr"]}}]}
+    ],
+    "grouping": [
+      {
+        "source": "emails[type eq \"work\"]",
+        "target": [{"emails": {"type": ["eq", "work"]}}]
+      },
+      {
+        "source": "userType ne \"Employee\" and not (emails co \"example.com\" or emails.value co \"example.org\")",
+        "target": [{"userType": ["ne", "Employee"], "!!": [{"emails": ["co", "example.com"]}, {"emails": {"value": ["co", "example.org"]}}]}]
+      },
+      {
+        "source": "emails[type eq \"work\" and value co \"@example.com\"] or ims[type eq \"xmpp\" and value co \"@foo.com\"]",
+        "target": [{"emails": {"type": ["eq", "work"], "value": ["co", "@example.com"]}}, {"ims": {"type": ["eq", "xmpp"], "value": ["co", "@foo.com"]}}]
+      }
+    ],
+    "complex": [
+      {
+        "source": "(name.FamilyName eq \"Employee\" or name.FamilyName eq \"Manager\") and (emails.Value co \"example.com\" or emails.Value co \"example.org\")",
+        "target": [{"&&": [
+          [{"name": {"familyName": ["eq", "Employee"]}}, {"name": {"familyName": ["eq", "Manager"]}}],
+          [{"emails": {"value": ["co", "example.com"]}}, {"emails": {"value": ["co", "example.org"]}}]
+        ]}]
+      },
+      {
+        "source": "userType eq \"Employee\" and emails[type eq \"work\" or (primary eq true and value co \"@example.com\")]",
+        "target": [{"userType": ["eq", "Employee"], "emails": [{"type": ["eq", "work"]}, {"primary": ["eq", "true"], "value": ["co", "@example.com"]}]}]
+      }
+    ]
+  },
+  "match": {
+    "source": [
+      {"id": 1, "userName": "AdeleV", "name": {"formatted": "Adele Vance"}, "date": "2021-07-25T12:37:58.132Z", "number": 4},
+      {"id": 2, "userName": "GradyA", "name": {"formatted": "Grady Archie"}, "date": "2021-09-22T02:32:12.026Z", "number": 6},
+      {"id": 3, "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}, "date": "2021-08-05T10:11:57.910Z", "number": 14},
+      {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9}
+    ],
+    "targets": [
+      {"expression": {"userName": ["co", "A"]}, "expected": [1, 2]}
+    ]
+  }
+}

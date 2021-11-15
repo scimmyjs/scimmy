@@ -37,12 +37,12 @@ export class Schema extends Types.Resource {
      * Instantiate a new SCIM Schema resource and parse any supplied parameters
      * @extends SCIMMY.Types.Resource
      */
-    constructor(params, ...rest) {
+    constructor(id, config) {
         // Bail out if a resource is requested by filter
-        if (!!(typeof params === "string" ? rest[0] ?? {} : params ?? {}).filter)
+        if (!!((typeof id === "string" ? config : id) ?? {})?.filter)
             throw new Types.Error(403, null, "Schema does not support retrieval by filter");
         
-        super(params, ...rest);
+        super(id, config);
     }
     
     /**
@@ -51,8 +51,7 @@ export class Schema extends Types.Resource {
      */
     async read() {
         if (!this.id) {
-            return new Messages.ListResponse(Object.entries(Schemas.declared())
-                .map(([, S]) => S.describe(Schema.basepath())));
+            return new Messages.ListResponse(Schemas.declared().map((S) => S.describe(Schema.basepath())));
         } else {
             try {
                 return Schemas.declared(this.id).describe(Schema.basepath());

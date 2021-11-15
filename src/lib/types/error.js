@@ -3,7 +3,8 @@
  * @alias SCIMMY.Types.Error
  * @see SCIMMY.Messages.Error
  * @summary
- * *   Extends the native Error class and provides a way to express errors caused by SCIM protocol, schema conformity, filter expression, or other exceptions with details required by the SCIM protocol in [RFC7644§3.12](https://datatracker.ietf.org/doc/html/rfc7644#section-3.12).
+ * *   Extends the native Error class and provides a way to express errors caused by SCIM protocol, schema conformity, filter expression,
+ *     or other exceptions with details required by the SCIM protocol in [RFC7644§3.12](https://datatracker.ietf.org/doc/html/rfc7644#section-3.12).
  */
 export class SCIMError extends Error {
     /**
@@ -18,6 +19,7 @@ export class SCIMError extends Error {
     constructor(status, scimType, message) {
         super(message);
         
+        this.name = "SCIMError";
         this.status = status;
         this.scimType = scimType;
     }

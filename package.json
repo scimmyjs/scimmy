@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
   "description": "SCIMMY - SCIM m(ade eas)y",
-  "version": "0.9.10",
+  "version": "0.10.0",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -16,6 +16,7 @@
   },
   "scripts": {
     "test": "node packager.js -t test",
+    "test:ci": "node packager.js -t test:ci",
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",
     "prepare": "node packager.js -t prepack",
@@ -41,9 +42,10 @@
   },
   "devDependencies": {
     "chalk": "^4.1.2",
-    "jsdoc": "^3.6.7",
     "classy-template": "^1.0.1",
+    "jsdoc": "^3.6.7",
     "minimist": "^1.2.5",
+    "mocha": "^9.1.3",
     "rollup": "^2.57.0",
     "typescript": "^4.4.3"
   }

@@ -58,7 +58,7 @@ const validate = {
      * @param {*} value - the value being validated
      */
     canonical: (attrib, value) => {
-        if (Array.isArray(attrib.canonicalValues) && !attrib.canonicalValues.includes(value))
+        if (Array.isArray(attrib.config.canonicalValues) && !attrib.config.canonicalValues.includes(value))
             throw new TypeError(`Attribute '${attrib.name}' does not include canonical value '${value}'`);
     },
     
@@ -68,10 +68,12 @@ const validate = {
      * @param {*} value - the value being validated
      */
     string: (attrib, value) => {
-        if (typeof value === "object" && value !== null) {
+        if (typeof value !== "string" && value !== null) {
+            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
-                ? "single value of type 'string'" : "value type 'string' but found type 'complex'"));
+                ? "single value of type 'string'" : `value type 'string' but found type '${type}'`));
         }
     },
     
@@ -81,9 +83,15 @@ const validate = {
      * @param {*} value - the value being validated
      */
     date: (attrib, value) => {
-        let date = new Date(value);
+        let date = new Date(value),
+            type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+        
+        // Reject values that definitely aren't dates
+        if (["number", "complex", "boolean"].includes(type) || (type === "string" && date.toString() === "Invalid Date"))
+            throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
+                ? "single value of type 'dateTime'" : `value type 'dateTime' but found type '${type}'`));
         // Start with the simple date validity test
-        if (!(date.toString() !== "Invalid Date"
+        else if (!(date.toString() !== "Invalid Date"
             // Move on to the complex test, as for some reason strings like "Testing, 1, 2" parse as valid dates...
             && date.toISOString().match(/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])(T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?)?$/)))
             throw new TypeError(`Attribute '${attrib.name}' expected value to be a valid date`);
@@ -97,17 +105,18 @@ const validate = {
     number: (attrib, value) => {
         let {type, name} = attrib,
             isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/),
-            isInt = isNum && !String(value).includes(".");
+            isInt = isNum && !String(value).includes("."),
+            actual = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
         
         if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
             throw new TypeError(`Attribute '${name}' expected ` + (Array.isArray(value)
-                ? `single value of type '${type}'` : `value type '${type}' but found type 'complex'`));
+                ? `single value of type '${type}'` : `value type '${type}' but found type '${actual}'`));
         }
         
         // Not a number
         if (!isNum)
-            throw new TypeError(`Attribute '${name}' expected value type '${type}' but found type '${typeof value}'`);
+            throw new TypeError(`Attribute '${name}' expected value type '${type}' but found type '${actual}'`);
         // Expected decimal, got integer
         if (type === "decimal" && isInt)
             throw new TypeError(`Attribute '${name}' expected value type 'decimal' but found type 'integer'`);
@@ -125,9 +134,11 @@ const validate = {
         let message;
         
         if (typeof value === "object" && value !== null) {
+            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            
             // Catch case where value is an object or array
-            if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
-            else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
+            if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'binary'`;
+            else message = `Attribute '${attrib.name}' expected value type 'binary' but found type '${type}'`;
         } else {
             // Start by assuming value is not binary or base64
             message = `Attribute '${attrib.name}' expected value type 'binary' to be base64 encoded string or binary octet stream`;
@@ -144,22 +155,39 @@ const validate = {
     },
     
     /**
+     * If the attribute type is boolean, make sure value is a boolean
+     * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
+     * @param {*} value - the value being validated
+     */
+    boolean: (attrib, value) => {
+        if (typeof value !== "boolean" && value !== null) {
+            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            
+            // Catch array and object values as they will not cast to string as expected
+            throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
+                ? "single value of type 'boolean'" : `value type 'boolean' but found type '${type}'`));
+        }
+    },
+    
+    /**
      * If the attribute type is reference, make sure value is a reference
      * @param {SCIMMY.Types.Attribute} attrib - the attribute performing the validation
      * @param {*} value - the value being validated
      */
     reference: (attrib, value) => {
-        let listReferences = attrib.config.referenceTypes.map(t => `'${t}'`).join(", "),
-            coreReferences = attrib.config.referenceTypes.filter(t => ["uri", "external"].includes(t)),
-            typeReferences = attrib.config.referenceTypes.filter(t => !["uri", "external"].includes(t)),
+        let listReferences = (attrib.config.referenceTypes || []).map(t => `'${t}'`).join(", "),
+            coreReferences = (attrib.config.referenceTypes || []).filter(t => ["uri", "external"].includes(t)),
+            typeReferences = (attrib.config.referenceTypes || []).filter(t => !["uri", "external"].includes(t)),
             message;
         
         // If there's no value and the attribute isn't required, skip validation
         if (value === undefined && !attrib?.config?.required) return;
-        else if (typeof value === "object" && value !== null) {
+        else if (typeof value !== "string" && value !== null) {
+            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
-            else message = `Attribute '${attrib.name}' expected value type 'reference' but found type 'complex'`;
+            else message = `Attribute '${attrib.name}' expected value type 'reference' but found type '${type}'`;
         } else if (listReferences.length === 0) {
             // If the referenceTypes list is empty, no value can match
             message = `Attribute '${attrib.name}' with type 'reference' does not specify any referenceTypes`;
@@ -172,7 +200,7 @@ const validate = {
                 message = false;
             }
             // If reference types includes external, make sure value is a valid URL with hostname
-            else if (coreReferences.includes("external")) {
+            if (coreReferences.includes("external")) {
                 try {
                     message = (!!new URL(value).hostname ? false : message);
                 } catch {
@@ -180,7 +208,7 @@ const validate = {
                 }
             }
             // If reference types includes URI, make sure value can be instantiated as a URL
-            else if (coreReferences.includes("uri")) {
+            if (coreReferences.includes("uri")) {
                 try {
                     // See if it can be parsed as a URL
                     message = (new URL(value) ? false : message);
@@ -229,7 +257,7 @@ export class Attribute {
      * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        let errorSuffix = `in attribute definition '${name}'`,
+        let errorSuffix = `attribute definition '${name}'`,
             // Collect type and name values for validation
             safelyTyped = [["type", type], ["name", name]],
             // Collect canonicalValues and referenceTypes values for validation
@@ -239,44 +267,49 @@ export class Attribute {
                 ["mutability", config.mutable, mutability],
                 ["returned", config.returned, returned],
                 ["uniqueness", config.uniqueness, uniqueness]
-            ];
+            ],
+            // Make sure attribute name is valid
+            [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
         
         // Make sure name and type are supplied, and type is valid
         for (let [param, value] of safelyTyped) if (typeof value !== "string")
             throw new TypeError(`Required parameter '${param}' missing from Attribute instantiation`);
-        if (!types.includes(type)) {
-            throw new TypeError(`Type '${type}' not recognised ${errorSuffix}`);
-        }
+        if (!types.includes(type))
+            throw new TypeError(`Type '${type}' not recognised in ${errorSuffix}`);
+        if (!!invalidNameChar)
+            throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
         
         // Make sure mutability, returned, and uniqueness config values are valid
         for (let [key, value, values] of safelyConfigured) {
             if ((typeof value === "string" && !values.includes(value))) {
-                throw new TypeError(`Attribute '${key}' value '${value}' not recognised ${errorSuffix}`);
+                throw new TypeError(`Attribute '${key}' value '${value}' not recognised in ${errorSuffix}`);
             } else if (value !== undefined && !["string", "boolean"].includes(typeof value)) {
-                throw new TypeError(`Attribute '${key}' value must be either string or boolean ${errorSuffix}`);
+                throw new TypeError(`Attribute '${key}' value must be either string or boolean in ${errorSuffix}`);
             }
         }
         
         // Make sure canonicalValues and referenceTypes are valid if they are specified
         for (let [key, value] of safelyCollected) {
             if (value !== undefined && value !== false && !Array.isArray(value)) {
-                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' ${errorSuffix}`)
+                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`)
             }
         }
         
         // Make sure attribute type is 'complex' if subAttributes are defined
         if (subAttributes.length && type !== "complex") {
-            throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified ${errorSuffix}`);
+            throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified in ${errorSuffix}`);
         }
         
         // Attribute config is valid, proceed
         this.type = type;
         this.name = name;
-        this.config = {
+        // Prevent addition and removal of properties from config
+        // TODO: intercept values for validation
+        this.config = Object.seal({
             required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
             description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
             ...config
-        };
+        });
         
         if (type === "complex") this.subAttributes = [...subAttributes];
         
@@ -358,20 +391,20 @@ export class Attribute {
             let {required, multiValued, canonicalValues} = this.config;
             
             // If the attribute is required, make sure it has a value
-            if (required && source === undefined)
+            if ((source === undefined || source === null) && required)
                 throw new TypeError(`Required attribute '${this.name}' is missing`);
             // If the attribute is multi-valued, make sure its value is a collection
-            if (!isComplexMultiValue && multiValued && source !== undefined && !Array.isArray(source))
+            if (source !== undefined && !isComplexMultiValue && multiValued && !Array.isArray(source))
                 throw new TypeError(`Attribute '${this.name}' expected to be a collection`);
             // If the attribute is NOT multi-valued, make sure its value is NOT a collection
             if (!multiValued && Array.isArray(source))
                 throw new TypeError(`Attribute '${this.name}' is not multi-valued and must not be a collection`);
             // If the attribute specifies canonical values, make sure all values are valid
-            if (Array.isArray(canonicalValues) && (!(multiValued ? (source ?? []).every(v => canonicalValues.includes(v)) : canonicalValues.includes(source))))
+            if (source !== undefined && Array.isArray(canonicalValues) && (!(multiValued ? (source ?? []).every(v => canonicalValues.includes(v)) : canonicalValues.includes(source))))
                 throw new TypeError(`Attribute '${this.name}' contains non-canonical value`);
             
             // If the source has a value, parse it
-            if (source !== undefined) switch (this.type) {
+            if (source !== undefined && source !== null) switch (this.type) {
                 case "string":
                     // Throw error if all values can't be safely cast to strings
                     for (let value of (multiValued ? source : [source])) validate.string(this, value);
@@ -434,10 +467,14 @@ export class Attribute {
                     }));
                 
                 case "boolean":
+                    // Throw error if all values can't be safely cast to booleans
+                    for (let value of (multiValued ? source : [source])) validate.boolean(this, value);
+                    
                     // Cast supplied values into booleans
                     return (!multiValued ? !!source : new Proxy(source.map(v => !!v), {
                         // Wrap the resulting collection with coercion
-                        set: (target, key, value) => (target[key] = !!value)
+                        set: (target, key, value) => (!!(key in Object.getPrototypeOf([]) && key !== "length" ? false :
+                            (target[key] = (key === "length" ? value : validate.boolean(this, value) ?? !!value)) || true))
                     }));
                 
                 case "complex":
@@ -446,6 +483,12 @@ export class Attribute {
                     
                     // Evaluate complex attribute's sub-attributes
                     if (isComplexMultiValue) {
+                        // Make sure values are complex before proceeding
+                        if (Object(source) !== source || source instanceof Date) {
+                            throw new TypeError(`Complex attribute '${this.name}' expected complex value but found type `
+                                + `'${source instanceof Date ? "dateTime" : source === null ? "null" : typeof source}'`);
+                        }
+                        
                         let resource = {};
                         
                         // Go through each sub-attribute for coercion
@@ -491,12 +534,15 @@ export class Attribute {
                             if (ex instanceof TypeError && ex.message.endsWith("not extensible")) {
                                 ex.message = `Complex attribute '${this.name}' `
                                     + (typeof source !== "object" || Array.isArray(source)
-                                    ? `expected complex value but received '${source}'`
+                                    ? `expected complex value but found type '${typeof source}'`
                                     : `does not declare subAttribute '${key}'`);
                             }
                             
                             throw ex;
                         }
+                        
+                        // Reassign values to catch missing required sub-attributes
+                        for (let [key, value] of Object.entries(target)) target[key] = value;
                     } else {
                         // Go through each value and coerce their sub-attributes
                         for (let value of (multiValued ? source : [source])) {

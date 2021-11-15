@@ -66,8 +66,8 @@ export class Group extends Types.Resource {
      * Instantiate a new SCIM Group resource and parse any supplied parameters
      * @extends SCIMMY.Types.Resource
      */
-    constructor(params, ...rest) {
-        super(params, ...rest);
+    constructor(...params) {
+        super(...params);
     }
     
     /**
@@ -106,6 +106,11 @@ export class Group extends Types.Resource {
      * await (new SCIMMY.Resources.Group("1234")).write({members: [{value: "5678"}]});
      */
     async write(instance) {
+        if (instance === undefined)
+            throw new Types.Error(400, "invalidSyntax", `Missing request body payload for ${!!this.id ? "PUT" : "POST"} operation`);
+        if (Object(instance) !== instance || Array.isArray(instance))
+            throw new Types.Error(400, "invalidSyntax", `Operation ${!!this.id ? "PUT" : "POST"} expected request body payload to be single complex value`);
+        
         try {
             // TODO: handle incoming read-only and immutable attribute tests
             return new Schemas.Group(
@@ -121,15 +126,22 @@ export class Group extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource#patch}
+     * @see SCIMMY.Messages.PatchOp
      * @returns {SCIMMY.Schemas.Group}
      * @example
-     * // Add member to group with ID "1234" with a patch operation (see {@link SCIMMY.Messages.PatchOp})
+     * // Add member to group with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
      * await (new SCIMMY.Resources.Group("1234")).patch({Operations: [{op: "add", path: "members", value: {value: "5678"}}]});
      */
     async patch(message) {
+        if (message === undefined)
+            throw new Types.Error(400, "invalidSyntax", "Missing message body from PatchOp request");
+        if (Object(message) !== message || Array.isArray(message))
+            throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
+        
         try {
-            return await new Messages.PatchOp(message, new Schemas.Group((await Group.#egress(this)).shift(), "out"))
-                .apply(async (instance) => await Group.#ingress(this, instance))
+            return await new Messages.PatchOp(message)
+                .apply(new Schemas.Group((await Group.#egress(this)).shift(), "out"), 
+                    async (instance) => await Group.#ingress(this, instance))
                 .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
@@ -146,6 +158,6 @@ export class Group extends Types.Resource {
      */
     async dispose() {
         if (!!this.id) await Group.#degress(this);
-        else throw new Types.Error(404, null, `Resource ${this.id} not found`);
+        else throw new Types.Error(404, null, "DELETE operation must target a specific resource");
     }
 }

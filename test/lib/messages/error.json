@@ -1,0 +1,42 @@
+{
+  "inbound": [
+    {
+      "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:Error"
+      ],
+      "status": "402",
+      "scimType": "invalidSyntax",
+      "detail": "Something went wrong"
+    },
+    {
+      "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:Error"
+      ],
+      "status": "409",
+      "scimType": "uniqueness",
+      "detail": "A uniqueness constraint failed"
+    }
+  ],
+  "outbound": {
+    "valid": [
+      {
+        "status": "409",
+        "scimType": "uniqueness"
+      },
+      {
+        "status": "413",
+        "scimType": "tooMany"
+      }
+    ],
+    "invalid": [
+      {
+        "status": "409",
+        "scimType": "invalidSyntax"
+      },
+      {
+        "status": "500",
+        "scimType": "invalidSyntax"
+      }
+    ]
+  }
+}

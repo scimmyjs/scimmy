@@ -15,15 +15,15 @@ export class EnterpriseUser extends Types.Schema {
     
     /** @private */
     static #definition = new Types.SchemaDefinition("EnterpriseUser", "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", "Enterprise User", [
-        new Types.Attribute("string", "employeeNumber"),
-        new Types.Attribute("string", "costCenter"),
-        new Types.Attribute("string", "organization"),
-        new Types.Attribute("string", "division"),
-        new Types.Attribute("string", "department"),
-        new Types.Attribute("complex", "manager", {uniqueness: false}, [
-            new Types.Attribute("string", "value", {required: true}),
-            new Types.Attribute("reference", "$ref", {referenceTypes: ["User"]}),
-            new Types.Attribute("string", "displayName", {mutable: false})
+        new Types.Attribute("string", "employeeNumber", {description: "Numeric or alphanumeric identifier assigned to a person, typically based on order of hire or association with an organization."}),
+        new Types.Attribute("string", "costCenter", {description: "Identifies the name of a cost center."}),
+        new Types.Attribute("string", "organization", {description: "Identifies the name of an organization."}),
+        new Types.Attribute("string", "division", {description: "Identifies the name of a division."}),
+        new Types.Attribute("string", "department", {description: "Identifies the name of a department."}),
+        new Types.Attribute("complex", "manager", {uniqueness: false, description: "The User's manager.  A complex type that optionally allows service providers to represent organizational hierarchy by referencing the 'id' attribute of another User."}, [
+            new Types.Attribute("string", "value", {required: true, description: "The id of the SCIM resource representing the User's manager.  REQUIRED."}),
+            new Types.Attribute("reference", "$ref", {referenceTypes: ["User"], description: "The URI of the SCIM resource representing the User's manager.  REQUIRED."}),
+            new Types.Attribute("string", "displayName", {mutable: false, description: "The displayName of the User's manager. OPTIONAL and READ-ONLY."})
         ])
     ]);
     

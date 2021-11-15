@@ -35,16 +35,16 @@ import Schemas from "./schemas.js";
  * Attempting to declare a resource type with a name that has already been declared will throw a TypeError with the 
  * message `"Resource '<name>' already declared"`, where `<name>` is the name of the resource type.
  * 
+ * Similarly, each resource type implementation can only be declared under one name.
+ * Attempting to declare an existing resource type under a new name will throw a TypeError with the message
+ * `"Resource '<name>' already declared with name '<existing>'"`, where `<name>` and `<existing>` are the targeted name
+ * and existing name, respectively, of the resource type.
+ * 
  * ```
  * // Declaring a resource type under a different name
  * class User extends SCIMMY.Types.Resource {/ Your resource type implementation /}
  * SCIMMY.Resources.declare(User, "CustomUser");
  * ```
- * 
- * > **Note:**  
- * > While it is technically possible to declare the same resource type implementation under multiple names, this is 
- * > inadvisable, as having more than one name for a resource type would be thoroughly confusing for consuming 
- * > SCIM clients and service providers.
  * 
  * ### Extending Resource Types
  * With the exception of the `ResourceType`, `Schema`, and `ServiceProviderConfig` resources, resource type implementations
@@ -109,8 +109,15 @@ import Schemas from "./schemas.js";
  * });
 */
 export default class Resources {
-    // Store declared resources for later retrieval
-    /** @private */
+    /**
+     * Store internal resources to prevent declaration
+     * @private
+     */
+    static #internals = [Schema, ResourceType, ServiceProviderConfig];
+    /**
+     * Store declared resources for later retrieval 
+     * @private 
+     */
     static #declared = {};
     
     // Expose built-in resources without "declaring" them
@@ -127,17 +134,29 @@ export default class Resources {
      * @returns {SCIMMY.Resources|SCIMMY.Types.Resource} the Resources class or registered resource type class for chaining
      */
     static declare(resource, config) {
-        // Source name from resource if config is an object
-        let name = (typeof config === "string" ? config : resource.name);
-        if (typeof config === "object") name = config.name ?? name;
-        
         // Make sure the registering resource is valid
         if (!resource || !(resource.prototype instanceof Types.Resource))
             throw new TypeError("Registering resource must be of type 'Resource'");
+        // Make sure config is valid, if supplied
+        if (config !== undefined && (typeof config !== "string" && (typeof config !== "object" || Array.isArray(config))))
+            throw new TypeError("Resource declaration expected 'config' parameter to be either a name string or configuration object");
+        // Refuse to declare internal resources
+        if (Resources.#internals.includes(resource))
+            throw new TypeError(`Refusing to declare internal resource implementation '${resource.name}'`);
         
-        // Prevent registering a resource implementation that already exists
-        if (!!Resources.#declared[name]) throw new TypeError(`Resource '${name}' already declared`);
-        else Resources[name] = Resources.#declared[name] = resource;
+        // Source name from resource if config is an object
+        let name = (typeof config === "string" ? config : resource?.name);
+        if (typeof config === "object") name = config.name ?? name;
+        
+        // Prevent registering a resource implementation under a name that already exists
+        if (!!Resources.#declared[name] && Resources.#declared[name] !== resource)
+            throw new TypeError(`Resource '${name}' already declared`);
+        // Prevent registering an existing resource implementation under a different name
+        else if (Object.values(Resources.#declared).some(r => r === resource) && Resources.#declared[name] !== resource)
+            throw new TypeError(`Resource '${name}' already declared with name '${Object.entries(Resources.#declared).find(([n, r]) => r === resource).shift()}'`);
+        // All good, register the resource implementation
+        else if (!Resources.#declared[name])
+            Resources.#declared[name] = resource;
         
         // Set up the resource if a config object was supplied
         if (typeof config === "object") {
@@ -155,7 +174,6 @@ export default class Resources {
             
             // Register any supplied schema extensions
             if (Array.isArray(config.extensions)) {
-                // TODO: don't support attributes here?
                 for (let {schema, attributes, required} of config.extensions) {
                     Resources.#declared[name].extend(schema ?? attributes, required);
                 }

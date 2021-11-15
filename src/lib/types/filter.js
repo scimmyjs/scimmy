@@ -1,8 +1,26 @@
 import {SCIMError} from "./error.js";
 
-// Logic Operators
+/**
+ * Collection of valid logical operator strings in a filter expression
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidLogicStrings
+ * @memberOf SCIMMY.Types.Filter
+ * @default
+ */
 const operators = ["and", "or", "not"];
-// Comparison Operations
+/**
+ * Collection of valid comparison operator strings in a filter expression
+ * @enum
+ * @inner
+ * @constant
+ * @type {String[]}
+ * @alias ValidComparisonStrings
+ * @memberOf SCIMMY.Types.Filter
+ * @default
+ */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
 const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
@@ -14,14 +32,35 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)
  * *   Parses SCIM [filter expressions](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) into object representations of the filter expression, for use in resource retrieval.
  */
 export class Filter extends Array {
+    // Make sure derivatives return native arrays
+    static get [Symbol.species]() {
+        return Array;
+    }
+    
     /**
      * Instantiate and parse a new SCIM filter string or expression
-     * @param {String|Object[]} [query] - the query string to parse, or an existing set of filter expressions
+     * @param {String|Object[]} [expression] - the query string to parse, or an existing set of filter expressions
+     * @property {String} [expression] - the raw string that was parsed by the filter
      */
-    constructor(query = "") {
-        super(...(Array.isArray(query) ? query : []));
+    constructor(expression = []) {
+        // Make sure expression is a string, an object, or an array
+        if (!["string", "object"].includes(typeof expression))
+            throw new TypeError("Expected 'expression' parameter to be a string, object, or array in Filter constructor");
+        
+        // Prepare underlying array and reset inheritance
+        super(...(Object(expression) === expression ? Array.isArray(expression) ? expression : [expression] : []));
         Object.setPrototypeOf(this, Filter.prototype);
-        if (typeof query === "string" && query.length) this.splice(0, 0, ...Filter.#parse(String(query)));
+        
+        // Handle expression strings
+        if (typeof expression === "string") {
+            // Make sure the expression string isn't empty
+            if (!expression.trim().length)
+                throw new TypeError("Expected 'expression' parameter string value to not be empty in Filter constructor");
+            
+            // Save and parse the expression
+            this.expression = expression;
+            this.splice(0, 0, ...Filter.#parse(String(expression)));
+        }
     }
     
     /**
@@ -31,12 +70,16 @@ export class Filter extends Array {
      */
     match(values) {
         // Match against any of the filters in the set
-        return values.filter(value => [...this]
-            .some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, [comparator, expected]]) => {
+        // TODO: finish comparators and handle nesting
+        return values.filter(value => 
+            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, [comparator, expected]]) => {
                 // Cast true and false strings to boolean values
                 expected = (expected === "false" ? false : (expected === "true" ? true : expected));
                 
                 switch (comparator) {
+                    case "co":
+                        return String(value[attr]).includes(expected); 
+                    
                     case "pr":
                         return attr in value;
                     
