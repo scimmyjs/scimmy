@@ -276,7 +276,6 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
         
         case "test:ci":
             await Packager.test(config.testFilter, {name: "json", options: {output: "./test/results-report.json"}});
-            process.exit(0);
             break;
         
         default:

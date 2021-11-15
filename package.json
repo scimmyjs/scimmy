@@ -16,7 +16,7 @@
   },
   "scripts": {
     "test": "node packager.js -t test",
-    "test:ci": "node packager.js -t test:ci",
+    "test:ci": "node packager.js -t test:ci && exit 0",
     "clean": "node packager.js -t clean",
     "build": "node packager.js -t build",
     "prepare": "node packager.js -t prepack",
