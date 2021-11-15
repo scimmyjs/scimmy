@@ -38,9 +38,9 @@ export class ResourceType extends Types.Resource {
      * Instantiate a new SCIM ResourceType resource and parse any supplied parameters
      * @extends SCIMMY.Types.Resource
      */
-    constructor(id, config = {}) {
+    constructor(id, config) {
         // Bail out if a resource is requested by filter
-        if (!!(typeof id === "string" ? config : id ?? config)?.filter)
+        if (!!((typeof id === "string" ? config : id) ?? {})?.filter)
             throw new Types.Error(403, null, "ResourceType does not support retrieval by filter");
         
         super(id, config);
