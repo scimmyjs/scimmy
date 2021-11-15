@@ -340,10 +340,59 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
                     "Instance method 'coerce' did not fail with 'data' argument array value");
             });
             
-            // TODO: verify common attributes are set by coerce method
-            // TODO: verify coerce is called on directly included attributes
-            // TODO: verify namespaced attributes or extensions are coerced correctly
-            // TODO: verify attribute filter is applied to coerced result
+            it("should expect common attributes to be defined on coerced result", () => {
+                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
+                    result = definition.coerce({});
+                
+                assert.ok(Array.isArray(result.schemas) && result.schemas.includes(params.id),
+                    "Instance method 'coerce' did not set common attribute 'schemas' on coerced result");
+                assert.strictEqual(result?.meta?.resourceType, params.name,
+                    "Instance method 'coerce' did not set common attribute 'meta.resourceType' on coerced result");
+            });
+            
+            it("should expect coerce to be called on directly included attributes", () => {
+                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
+                    new SCIMMY.Types.Attribute("string", "test", {required: true})
+                ]);
+                
+                assert.throws(() => definition.coerce({}),
+                    {name: "TypeError", message: "Required attribute 'test' is missing"},
+                    "Instance method 'coerce' did not attempt to coerce required attribute 'test'");
+                assert.throws(() => definition.coerce({test: false}),
+                    {name: "TypeError", message: "Attribute 'test' expected value type 'string' but found type 'boolean'"},
+                    "Instance method 'coerce' did not reject boolean value 'false' for string attribute 'test'");
+            });
+            
+            it("should expect namespaced attributes or extensions to be coerced", () => {
+                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params))
+                    .extend(SCIMMY.Schemas.EnterpriseUser.definition, true);
+                
+                assert.throws(() => definition.coerce({}),
+                    {name: "TypeError", message: `Missing values for required schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
+                    "Instance method 'coerce' did not attempt to coerce required schema extension");
+                assert.throws(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id]: {}}),
+                    {name: "TypeError", message: `Missing values for required schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
+                    "Instance method 'coerce' did not attempt to coerce required schema extension");
+                assert.doesNotThrow(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id]: {employeeNumber: "1234"}}),
+                    "Instance method 'coerce' failed to coerce required schema extension value");
+                assert.doesNotThrow(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id + ":employeeNumber"]: "1234"}),
+                    "Instance method 'coerce' failed to coerce required schema extension value");
+                assert.throws(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id + ":employeeNumber"]: false}),
+                    {name: "TypeError", message: `Attribute 'employeeNumber' expected value type 'string' but found type 'boolean' in schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
+                    "Instance method 'coerce' did not attempt to coerce required schema extension's invalid value");
+            });
+            
+            it("should expect the supplied filter to be applied to coerced result", () => {
+                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
+                        new SCIMMY.Types.Attribute("string", "testName"), new SCIMMY.Types.Attribute("string", "testValue")
+                    ]),
+                    result = definition.coerce({testName: "a string", testValue: "another string"}, undefined, undefined, new SCIMMY.Types.Filter("testName pr"));
+                
+                assert.ok(Object.keys(result).includes("testName"),
+                    "Instance method 'coerce' did not include attributes for filter 'testName pr'");
+                assert.ok(!Object.keys(result).includes("testValue"),
+                    "Instance method 'coerce' included attributes not specified for filter 'testName pr'");
+            });
         });
     });
 }
