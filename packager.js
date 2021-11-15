@@ -262,7 +262,7 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
         case "build":
             await Packager.build(true);
             break;
-            
+        
         case "prepack":
             await Packager.build(false);
             break;
@@ -273,11 +273,12 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
         case "test":
             await Packager.test(config.testFilter, "spec");
             break;
-    
+        
         case "test:ci":
             await Packager.test(config.testFilter, {name: "json", options: {output: "./test/results-report.json"}});
+            process.exit();
             break;
-            
+        
         default:
             console.log("No target specified.");
     }
