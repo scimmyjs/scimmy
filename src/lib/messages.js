@@ -1,6 +1,7 @@
 import {Error} from "./messages/error.js";
 import {ListResponse} from "./messages/listresponse.js";
 import {PatchOp} from "./messages/patchop.js";
+import {BulkOp} from "./messages/bulkop.js";
 
 /**
  * SCIMMY Messages Container Class
@@ -13,4 +14,5 @@ export default class Messages {
     static Error = Error;
     static ListResponse = ListResponse;
     static PatchOp = PatchOp;
+    static BulkOp = BulkOp;
 }
