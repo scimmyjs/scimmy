@@ -2,6 +2,7 @@ import assert from "assert";
 import {ErrorSuite} from "./messages/error.js";
 import {ListResponseSuite} from "./messages/listresponse.js";
 import {PatchOpSuite} from "./messages/patchop.js";
+import {BulkOpSuite} from "./messages/bulkop.js";
 
 export let MessagesSuite = (SCIMMY) => {
     it("should include static class 'Messages'", () => 
@@ -11,5 +12,6 @@ export let MessagesSuite = (SCIMMY) => {
         ErrorSuite(SCIMMY);
         ListResponseSuite(SCIMMY);
         PatchOpSuite(SCIMMY);
+        BulkOpSuite(SCIMMY);
     });
 }
