@@ -104,7 +104,7 @@ export class BulkOp {
         this.#bulkOperations = operations;
         this.#bulkIds = new Map(postOps.map(({bulkId}) => {
             // Establish who waits on what, and provide a way for that to happen
-            let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
+            let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
                 value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject}));
             
             return [bulkId, Object.assign(value, handlers)];
@@ -131,11 +131,11 @@ export class BulkOp {
             // Unwrap useful information from the operation
             let {method, bulkId, path = "", data} = op,
                 // Evaluate endpoint and resource ID, and thus what kind of resource we're targeting 
-                [endpoint, id] = path.substring(1).split("/"),
-                    TargetResource = (endpoint ? typeMap.get(`/${endpoint}`) : false),
+                [endpoint, id] = (typeof path === "string" ? path : "").substring(1).split("/"),
+                TargetResource = (endpoint ? typeMap.get(`/${endpoint}`) : false),
                 // Construct a location for the response, and prepare common aspects of the result
-                location = (TargetResource ? [TargetResource.basepath() ?? TargetResource.endpoint, id].filter(v => v).join("/") : path),
-                result = {method: method, bulkId: bulkId, location: location},
+                location = (TargetResource ? [TargetResource.basepath() ?? TargetResource.endpoint, id].filter(v => v).join("/") : path || undefined),
+                result = {method: method, bulkId: (typeof bulkId === "string" ? bulkId : undefined), location: (typeof location === "string" ? location : undefined)},
                 // Find out if this op waits on any other operations 
                 jsonData = (!!data ? JSON.stringify(data) : ""),
                 waitingOn = (!jsonData.includes("bulkId:") ? [] : [...new Set([...jsonData.matchAll(/"bulkId:(.+?)"/g)].map(([, id]) => id))]),
@@ -145,7 +145,7 @@ export class BulkOp {
                 error = false;
             
             // Ignore the bulkId unless method is POST
-            bulkId = (String(method).toUpperCase() === "POST" ? bulkId : false);
+            bulkId = (String(method).toUpperCase() === "POST" ? bulkId : undefined);
             
             // If not the first operation, and there's no circular references, wait on all prior operations
             if (index > 1 && (!bulkId || !waitingOn.length || !waitingOn.some(id => this.#bulkIds.get(bulkId).referencedBy.includes(id)))) {
@@ -268,7 +268,7 @@ export class BulkOp {
                 this.#errorCount++;
                 
                 // Also reject the pending bulkId promise as no resource ID can exist
-                if (bulkId) this.#bulkIds.get(bulkId).reject(error);
+                if (bulkId && this.#bulkIds.has(bulkId)) this.#bulkIds.get(bulkId).reject(error);
             }
             
             return result;
