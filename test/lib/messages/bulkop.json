@@ -1,0 +1,74 @@
+{
+  "inbound": {
+    "failOnErrors": [
+      {
+        "source": {"failOnErrors": 1, "Operations": [
+          {"method": "DELETE", "path": "/Test"}, {"method": "DELETE", "path": "/Test"}
+        ]},
+        "target": ["404"]
+      },
+      {
+        "source": {"failOnErrors": 1, "Operations": [
+          {"method": "POST", "path": "/Test", "bulkId": "asdf", "data": {}}, 
+          {"method": "DELETE", "path": "/Test"}, {"method": "DELETE", "path": "/Test/1"}
+        ]},
+        "target": ["201", "404"]
+      },
+      {
+        "source": {"failOnErrors": 2, "Operations": [
+          {"method": "POST", "path": "/Test", "bulkId": "asdf", "data": {}}, 
+          {"method": "DELETE", "path": "/Test"}, {"method": "DELETE", "path": "/Test/1"}
+        ]},
+        "target": ["201", "404", "204"]
+      },
+      {
+        "source": {"failOnErrors": 2, "Operations": [
+          {"method": "POST", "path": "/Test"}, {"method": "DELETE", "path": "/Test"}, {"method": "DELETE", "path": "/Test/1"}
+        ]},
+        "target": ["400", "404"]
+      },
+      {
+        "source": {"failOnErrors": 2, "Operations": [
+          {"method": "POST", "path": "/Test", "bulkId": "asdf", "data": {}}, {"method": "DELETE", "path": "/Test"},
+          {"method": "POST", "path": "/Test"}, {"method": "DELETE", "path": "/Test/1"}
+        ]},
+        "target": ["201", "404", "400"]
+      },
+      {
+        "source": {"failOnErrors": 3, "Operations": [
+          {"method": "POST", "path": "/Test", "bulkId": "asdf", "data": {}}, {"method": "DELETE", "path": "/Test"},
+          {"method": "POST", "path": "/Test"}, {"method": "DELETE", "path": "/Test/1"}
+        ]},
+        "target": ["201", "404", "400", "204"]
+      }
+    ],
+    "bulkId": {
+      "unordered": [
+        {
+          "source": {"Operations": [
+            {"method": "POST", "path": "/Test", "bulkId": "ytrewq", "data": {"displayName": "Group B", "members": [{"value": "bulkId:qwerty"}]}},
+            {"method": "POST", "path": "/Test", "bulkId": "qwerty", "data": {"displayName": "Group A", "members": [{"value": "bulkId:ytrewq"}]}}
+          ]},
+          "target": ["201", "201"]
+        }
+      ],
+      "circular": [
+        {
+          "source": {"Operations": [
+            {"method": "POST", "path": "/Test", "bulkId": "qwerty", "data": {"displayName": "Group A", "members": [{"value": "bulkId:asdfgh"}]}},
+            {"method": "POST", "path": "/Test", "bulkId": "asdfgh", "data": {"displayName": "Group B", "members": [{"value": "bulkId:qwerty"}]}}
+          ]},
+          "target": ["201", "201"]
+        },
+        {
+          "source": {"Operations": [
+            {"method": "POST", "path": "/Test", "bulkId": "ytrewq", "data": {"displayName": "Group C", "members": [{"value": "bulkId:asdfgh"}]}},
+            {"method": "POST", "path": "/Test", "bulkId": "asdfgh", "data": {"displayName": "Group B", "members": [{"value": "bulkId:qwerty"}]}},
+            {"method": "POST", "path": "/Test", "bulkId": "qwerty", "data": {"displayName": "Group A", "members": [{"value": "bulkId:ytrewq"}, {"value": "bulkId:asdfgh"}]}}
+          ]},
+          "target": ["201", "201", "201"]
+        }
+      ]
+    }
+  }
+}
