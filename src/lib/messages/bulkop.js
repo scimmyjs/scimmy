@@ -17,6 +17,7 @@ const validMethods = ["POST", "PUT", "PATCH", "DELETE"];
 /**
  * SCIM Bulk Request and Response Message Type
  * @alias SCIMMY.Messages.BulkOp
+ * @since 1.0.0
  * @summary
  * *   Parses [BulkRequest messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.7), making sure "Operations" have been specified, and conform with the SCIM protocol.
  * *   Provides a method to apply BulkRequest operations and return the results as a BulkResponse.
@@ -67,6 +68,7 @@ export class BulkOp {
      * Instantiate a new SCIM BulkResponse message from the supplied BulkRequest
      * @param {Object} request - contents of the BulkRequest operation being performed
      * @param {Object[]} request.Operations - list of SCIM-compliant bulk operations to apply
+     * @param {Number} [request.failOnErrors] - number of error results to encounter before aborting any following operations
      * @param {Number} [maxOperations] - maximum number of operations supported in the request
      * @property {Object[]} Operations - list of BulkResponse operation results
      */
