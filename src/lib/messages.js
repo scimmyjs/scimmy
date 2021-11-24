@@ -1,7 +1,7 @@
 import {Error} from "./messages/error.js";
 import {ListResponse} from "./messages/listresponse.js";
 import {PatchOp} from "./messages/patchop.js";
-import {BulkRequest} from "./messages/bulkop.js";
+import {BulkRequest} from "./messages/bulkrequest.js";
 import {BulkResponse} from "./messages/bulkresponse.js";
 
 /**

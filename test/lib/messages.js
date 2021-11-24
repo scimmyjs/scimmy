@@ -2,7 +2,7 @@ import assert from "assert";
 import {ErrorSuite} from "./messages/error.js";
 import {ListResponseSuite} from "./messages/listresponse.js";
 import {PatchOpSuite} from "./messages/patchop.js";
-import {BulkRequestSuite} from "./messages/bulkop.js";
+import {BulkRequestSuite} from "./messages/bulkrequest.js";
 
 export let MessagesSuite = (SCIMMY) => {
     it("should include static class 'Messages'", () => 
