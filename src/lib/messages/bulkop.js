@@ -1,6 +1,7 @@
+import {Error as ErrorMessage} from "./error.js";
+import {BulkResponse} from "./bulkresponse.js";
 import Types from "../types.js";
 import Resources from "../resources.js";
-import {Error as ErrorMessage} from "./error.js";
 
 /**
  * List of valid HTTP methods in a SCIM bulk request operation
@@ -9,60 +10,33 @@ import {Error as ErrorMessage} from "./error.js";
  * @constant
  * @type {String[]}
  * @alias ValidBulkMethods
- * @memberOf SCIMMY.Messages.BulkOp
+ * @memberOf SCIMMY.Messages.BulkRequest
  * @default
  */
 const validMethods = ["POST", "PUT", "PATCH", "DELETE"];
 
 /**
- * SCIM Bulk Request and Response Message Type
- * @alias SCIMMY.Messages.BulkOp
+ * SCIM Bulk Request Message Type
+ * @alias SCIMMY.Messages.BulkRequest
  * @since 1.0.0
  * @summary
  * *   Parses [BulkRequest messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.7), making sure "Operations" have been specified, and conform with the SCIM protocol.
  * *   Provides a method to apply BulkRequest operations and return the results as a BulkResponse.
  */
-export class BulkOp {
+export class BulkRequest {
     /**
-     * SCIM Bulk Request Message Schema ID
+     * SCIM BulkRequest Message Schema ID
      * @type {String}
      * @private
      */
-    static #requestId = "urn:ietf:params:scim:api:messages:2.0:BulkRequest";
-    /**
-     * SCIM Bulk Response Message Schema ID
-     * @type {String}
-     * @private
-     */
-    static #responseId = "urn:ietf:params:scim:api:messages:2.0:BulkResponse";
+    static #id = "urn:ietf:params:scim:api:messages:2.0:BulkRequest";
     
     /**
-     * Number of errors to accept before the operation is terminated and an error response is returned
-     * @type {Number}
+     * Whether or not the incoming BulkRequest has been applied 
+     * @type {Boolean}
      * @private
      */
-    #errorLimit;
-    
-    /**
-     * Current number of errors encountered when applying operations in a BulkRequest
-     * @type {Number}
-     * @private
-     */
-    #errorCount = 0;
-    
-    /**
-     * Operations to perform specified by the BulkRequest
-     * @type {Object[]}
-     * @private
-     */
-    #bulkOperations;
-    
-    /**
-     * POST operations that will have their bulkId resolved into a real ID
-     * @type {Map<String, Object>}
-     * @private
-     */
-    #bulkIds;
+    #dispatched = false;
     
     /**
      * Instantiate a new SCIM BulkResponse message from the supplied BulkRequest
@@ -76,16 +50,14 @@ export class BulkOp {
         let {schemas = [], Operations: operations = [], failOnErrors = 0} = request ?? {};
         
         // Make sure specified schema is valid
-        if (schemas.length !== 1 || !schemas.includes(BulkOp.#requestId))
-            throw new Types.Error(400, "invalidSyntax", `BulkRequest request body messages must exclusively specify schema as '${BulkOp.#requestId}'`);
-        
+        if (schemas.length !== 1 || !schemas.includes(BulkRequest.#id))
+            throw new Types.Error(400, "invalidSyntax", `BulkRequest request body messages must exclusively specify schema as '${BulkRequest.#id}'`);
         // Make sure failOnErrors is a valid integer
         if (typeof failOnErrors !== "number" || !Number.isInteger(failOnErrors) || failOnErrors < 0)
             throw new Types.Error(400, "invalidSyntax", "BulkRequest expected 'failOnErrors' attribute of 'request' parameter to be a positive integer");
         // Make sure maxOperations is a valid integer
         if (typeof maxOperations !== "number" || !Number.isInteger(maxOperations) || maxOperations < 0)
             throw new Types.Error(400, "invalidSyntax", "BulkRequest expected 'maxOperations' parameter to be a positive integer");
-        
         // Make sure request body contains valid operations to perform
         if (!Array.isArray(operations))
             throw new Types.Error(400, "invalidValue", "BulkRequest expected 'Operations' attribute of 'request' parameter to be an array");
@@ -94,42 +66,47 @@ export class BulkOp {
         if (maxOperations > 0 && operations.length > maxOperations)
             throw new Types.Error(413, null, `Number of operations in BulkRequest exceeds maxOperations limit (${maxOperations})`);
         
-        // All seems ok, prepare the BulkResponse
-        this.schemas = [BulkOp.#responseId];
-        this.Operations = [];
-        
-        // Get a list of POST ops with bulkIds for direct and circular reference resolution
-        let postOps = operations.filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string");
-        
-        // Store details of BulkRequest to be applied
-        this.#errorLimit = failOnErrors;
-        this.#bulkOperations = operations;
-        this.#bulkIds = new Map(postOps.map(({bulkId}) => {
-            // Establish who waits on what, and provide a way for that to happen
-            let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
-                value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject}));
-            
-            return [bulkId, Object.assign(value, handlers)];
-        }));
+        // All seems ok, prepare the BulkRequest body
+        this.schemas = [BulkRequest.#id];
+        this.Operations = [...operations];
+        if (failOnErrors) this.failOnErrors = failOnErrors;
     }
     
     /**
      * Apply the operations specified by the supplied BulkRequest 
      * @param {SCIMMY.Types.Resource[]|*} [resourceTypes] - resource type classes to be used while processing bulk operations
-     * @return {SCIMMY.Messages.BulkOp} this BulkOp instance for chaining
+     * @returns {SCIMMY.Messages.BulkResponse} a new BulkResponse Message instance with results of the requested operations 
      */
     async apply(resourceTypes = Object.values(Resources.declared())) {
+        // Bail out if BulkRequest message has already been applied
+        if (this.#dispatched) 
+            throw new TypeError("BulkRequest 'apply' method must not be called more than once");
         // Make sure all specified resource types extend the Resource type class so operations can be processed correctly 
-        if (!resourceTypes.every(r => r.prototype instanceof Types.Resource))
-            throw new TypeError("Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of BulkOp");
+        else if (!resourceTypes.every(r => r.prototype instanceof Types.Resource))
+            throw new TypeError("Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of BulkRequest");
+        // Seems OK, mark the BulkRequest as dispatched so apply can't be called again
+        else this.#dispatched = true;
         
         // Set up easy access to resource types by endpoint, and store pending results
         let typeMap = new Map(resourceTypes.map((r) => [r.endpoint, r])),
-            bulkIdTransients = [...this.#bulkIds.keys()],
-            lastErrorIndex = this.#bulkOperations.length + 1,
-            results = [];
+            results = [],
+            // Get a list of POST ops with bulkIds for direct and circular reference resolution
+            bulkIds = new Map(this.Operations
+                .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
+                .map(({bulkId}, index, postOps) => {
+                    // Establish who waits on what, and provide a way for that to happen
+                    let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
+                        value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject}));
+                    
+                    return [bulkId, Object.assign(value, handlers)];
+                })
+            ),
+            bulkIdTransients = [...bulkIds.keys()],
+            // Establish error handling for the entire list of operations
+            errorCount = 0, errorLimit = this.failOnErrors,
+            lastErrorIndex = this.Operations.length + 1;
         
-        for (let op of this.#bulkOperations) results.push((async () => {
+        for (let op of this.Operations) results.push((async () => {
             // Unwrap useful information from the operation
             let {method, bulkId, path = "", data} = op,
                 // Evaluate endpoint and resource ID, and thus what kind of resource we're targeting 
@@ -141,8 +118,8 @@ export class BulkOp {
                 // Find out if this op waits on any other operations 
                 jsonData = (!!data ? JSON.stringify(data) : ""),
                 waitingOn = (!jsonData.includes("bulkId:") ? [] : [...new Set([...jsonData.matchAll(/"bulkId:(.+?)"/g)].map(([, id]) => id))]),
-                // Establish error handling
-                index = this.#bulkOperations.indexOf(op) + 1,
+                // Establish error handling for this operation
+                index = this.Operations.indexOf(op) + 1,
                 errorSuffix = `in BulkRequest operation #${index}`,
                 error = false;
             
@@ -150,11 +127,11 @@ export class BulkOp {
             bulkId = (String(method).toUpperCase() === "POST" ? bulkId : undefined);
             
             // If not the first operation, and there's no circular references, wait on all prior operations
-            if (index > 1 && (!bulkId || !waitingOn.length || !waitingOn.some(id => this.#bulkIds.get(bulkId).referencedBy.includes(id)))) {
+            if (index > 1 && (!bulkId || !waitingOn.length || !waitingOn.some(id => bulkIds.get(bulkId).referencedBy.includes(id)))) {
                 let lastOp = (await Promise.all(results.slice(0, index - 1))).pop();
                 
                 // If the last operation failed, and error limit reached, bail out here
-                if (!lastOp || (lastOp.response instanceof ErrorMessage && !(!this.#errorLimit || (this.#errorCount < this.#errorLimit))))
+                if (!lastOp || (lastOp.response instanceof ErrorMessage && !(!errorLimit || (errorCount < errorLimit))))
                     return;
             }
             
@@ -192,15 +169,15 @@ export class BulkOp {
             else if (method.toUpperCase() !== "DELETE" && (Object(data) !== data || Array.isArray(data)))
                 error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Expected 'data' to be a single complex value ${errorSuffix}`))
             // Make sure any bulkIds referenced in data can eventually be resolved
-            else if (!waitingOn.every((id) => this.#bulkIds.has(id)))
-                error = new ErrorMessage(new Types.Error(400, "invalidValue", `No POST operation found matching bulkId '${waitingOn.find((id) => !this.#bulkIds.has(id))}'`));
+            else if (!waitingOn.every((id) => bulkIds.has(id)))
+                error = new ErrorMessage(new Types.Error(400, "invalidValue", `No POST operation found matching bulkId '${waitingOn.find((id) => !bulkIds.has(id))}'`));
             // If things look OK, attempt to apply the operation
             else {
                 try {
                     // Go through and wait on any referenced POST bulkIds
                     for (let referenceId of waitingOn) {
                         // Find the referenced operation to wait for
-                        let reference = this.#bulkIds.get(referenceId),
+                        let reference = bulkIds.get(referenceId),
                             referenceIndex = bulkIdTransients.indexOf(referenceId);
                         
                         // If the reference is also waiting on us, we have ourselves a circular reference!
@@ -213,7 +190,7 @@ export class BulkOp {
                             
                             // Set the ID for future use and resolve pending references
                             jsonData = JSON.stringify(Object.assign(data, {id: id}));
-                            this.#bulkIds.get(bulkId).resolve(id);
+                            bulkIds.get(bulkId).resolve(id);
                         }
                         
                         try {
@@ -225,7 +202,7 @@ export class BulkOp {
                             if (bulkId && id) await new TargetResource(id).dispose();
                             
                             // If we're following on from a prior failure, no need to explain why, otherwise, explain the failure
-                            if (ex instanceof ErrorMessage && (!!this.#errorLimit && this.#errorCount >= this.#errorLimit && index > lastErrorIndex)) return;
+                            if (ex instanceof ErrorMessage && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
                             else throw new Types.Error(412, null, `Referenced POST operation with bulkId '${referenceId}' was not successful`);
                         }
                     }
@@ -239,7 +216,7 @@ export class BulkOp {
                         case "POST":
                         case "PUT":
                             value = await resource.write(data);
-                            if (bulkId && !resource.id && value.id) this.#bulkIds.get(bulkId).resolve(value.id); 
+                            if (bulkId && !resource.id && value.id) bulkIds.get(bulkId).resolve(value.id); 
                             Object.assign(result, {status: (!bulkId ? "200" : "201"), location: value?.meta?.location});
                             break;
                             
@@ -267,17 +244,16 @@ export class BulkOp {
             if (error instanceof ErrorMessage) {
                 Object.assign(result, {status: error.status, response: error, location: (String(method).toUpperCase() !== "POST" ? result.location : undefined)});
                 lastErrorIndex = (index < lastErrorIndex ? index : lastErrorIndex);
-                this.#errorCount++;
+                errorCount++;
                 
                 // Also reject the pending bulkId promise as no resource ID can exist
-                if (bulkId && this.#bulkIds.has(bulkId)) this.#bulkIds.get(bulkId).reject(error);
+                if (bulkId && bulkIds.has(bulkId)) bulkIds.get(bulkId).reject(error);
             }
             
             return result;
         })());
         
-        // Store the results and return the BulkOp for chaining
-        this.Operations.push(...(await Promise.all(results)).filter(r => r));
-        return this;
+        // Await the results and return a new BulkResponse
+        return new BulkResponse((await Promise.all(results)).filter(r => r));
     }
 }
