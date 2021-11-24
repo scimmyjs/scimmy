@@ -20,18 +20,31 @@ export class BulkResponse {
      * @param {Object[]} [request.Operations] - list of applied SCIM-compliant bulk operation results, if request is an object
      * @property {Object[]} Operations - list of BulkResponse operation results
      */
-    constructor(request) {
+    constructor(request = []) {
         let outbound = Array.isArray(request),
             operations = (outbound ? request : request?.Operations ?? []);
         
         // Verify the BulkResponse contents are valid
-        if (!outbound && Array.isArray(request.schemas) && (!request.schemas.includes(BulkResponse.#id) || request.schemas.length > 1))
+        if (!outbound && Array.isArray(request?.schemas) && (!request.schemas.includes(BulkResponse.#id) || request.schemas.length > 1))
             throw new TypeError(`BulkResponse request body messages must exclusively specify schema as '${BulkResponse.#id}'`);
         if (!Array.isArray(operations))
-            throw new TypeError("Expected 'Operations' property of 'request' parameter to be an array in BulkResponse constructor");
+            throw new TypeError("BulkResponse constructor expected 'Operations' property of 'request' parameter to be an array");
+        if (!outbound && !operations.length)
+            throw new TypeError("BulkResponse request body must contain 'Operations' attribute with at least one operation");
         
         // All seems ok, prepare the BulkResponse
         this.schemas = [BulkResponse.#id];
         this.Operations = [...operations];
+    }
+    
+    /**
+     * Resolve bulkIds of POST operations into new resource IDs  
+     * @returns {Map<String, String|Boolean>} map of bulkIds to resource IDs if operation was successful, or false if not
+     */
+    resolve() {
+        return new Map(this.Operations
+            // Only target POST operations with valid bulkIds
+            .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
+            .map(o => ([o.bulkId, (typeof o.location === "string" && !!o.location ? o.location.split("/").pop() : false)])));
     }
 }
