@@ -43,8 +43,9 @@ export class BulkRequest {
      * @param {Object} request - contents of the BulkRequest operation being performed
      * @param {Object[]} request.Operations - list of SCIM-compliant bulk operations to apply
      * @param {Number} [request.failOnErrors] - number of error results to encounter before aborting any following operations
-     * @param {Number} [maxOperations] - maximum number of operations supported in the request
-     * @property {Object[]} Operations - list of BulkResponse operation results
+     * @param {Number} [maxOperations] - maximum number of operations supported in the request, as specified by the service provider
+     * @property {Object[]} Operations - list of operations in this BulkRequest instance
+     * @property {Number} [failOnErrors] - number of error results a service provider should tolerate before aborting any following operations
      */
     constructor(request, maxOperations = 0) {
         let {schemas = [], Operations: operations = [], failOnErrors = 0} = request ?? {};
@@ -74,7 +75,7 @@ export class BulkRequest {
     
     /**
      * Apply the operations specified by the supplied BulkRequest 
-     * @param {SCIMMY.Types.Resource[]|*} [resourceTypes] - resource type classes to be used while processing bulk operations
+     * @param {SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing bulk operations, defaults to declared resources
      * @returns {SCIMMY.Messages.BulkResponse} a new BulkResponse Message instance with results of the requested operations 
      */
     async apply(resourceTypes = Object.values(Resources.declared())) {
