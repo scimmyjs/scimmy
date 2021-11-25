@@ -13,9 +13,9 @@ import Types from "../types.js";
  */
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
-const pathSeparator = /(?!((?<!\w)\d)|(\[.*?))\.(?!(\d(?!\w))|(.*?\]))/g;
+const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
-const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
+const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/g;
 
 /**
  * SCIM Patch Operation Message Type
@@ -148,18 +148,8 @@ export class PatchOp {
                     break;
                     
                 case "replace":
-                    try {
-                        // Call remove, then call add!
-                        if (path !== undefined) this.#remove(index, path);
-                        // TODO: complex multi-value paths no longer have targets after they're removed...
-                        this.#add(index, path, value);
-                        break;
-                    } catch (ex) {
-                        // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
-                        let forReplaceOp = "for 'replace' op";
-                        ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
-                        throw ex;
-                    }
+                    this.#replace(index, path, value);
+                    break;
                     
                 default:
                     // I don't know how we made it to here, as this should have been checked earlier, but just in case!
@@ -359,6 +349,38 @@ export class PatchOp {
             
             // Remove targeted values from parent attributes
             this.#remove(index, parentPath, targets);
+        }
+    }
+    
+    /**
+     * Perform the "replace" operation on the resource
+     * @param {Number} index - the operation's location in the list of operations, for use in error messages
+     * @param {String} path - specifies path to the attribute being replaced
+     * @param {any|any[]} value - value being replaced from the resource or attribute specified by path
+     * @private
+     */
+    #replace(index, path, value) {
+        try {
+            // Call remove, then call add!
+            try {
+                if (path !== undefined) this.#remove(index, path);
+            } catch {
+                // Do nothing, remove target doesn't exist
+            }
+            
+            try {
+                // Try set the value at the path
+                this.#add(index, path, value);
+            } catch {
+                // If it's a multi-value target that doesn't exist, add to the collection instead
+                this.#add(index, path.split(pathSeparator).filter(p => p)
+                    .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+            }
+        } catch (ex) {
+            // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
+            let forReplaceOp = "for 'replace' op";
+            ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
+            throw ex;
         }
     }
 }
