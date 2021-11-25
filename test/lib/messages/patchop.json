@@ -37,6 +37,21 @@
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
         "ops": [{"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}, {"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"].value", "value": "test@example.com"}]
       }
     ]
   }
