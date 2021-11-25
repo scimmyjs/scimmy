@@ -97,7 +97,7 @@ export class BulkRequest {
                 .map(({bulkId}, index, postOps) => {
                     // Establish who waits on what, and provide a way for that to happen
                     let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
-                        value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject}));
+                        value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject})).catch((e) => e);
                     
                     return [bulkId, Object.assign(value, handlers)];
                 })
