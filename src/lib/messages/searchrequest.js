@@ -20,7 +20,7 @@ export class SearchRequest {
     
     /**
      * Instantiate a new SCIM SearchRequest message from the supplied request
-     * @param {Object} request - contents of the SearchRequest received by the service provider
+     * @param {Object} [request] - contents of the SearchRequest received by the service provider
      * @param {String} [request.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String[]} [request.excludedAttributes] - the string list of attributes or filters to exclude on egress
      * @param {String[]} [request.attributes] - the string list of attributes or filters to include on egress
@@ -37,23 +37,60 @@ export class SearchRequest {
      * @property {Number} [count] - maximum number of retrieved resources that should be returned in one operation
      */
     constructor(request) {
-        let {schemas = [], filter, excludedAttributes = [], attributes = [], sortBy, sortOrder, startIndex, count} = request ?? {};
+        let {schemas} = request ?? {};
         
-        // Verify the BulkResponse contents are valid
-        if (Array.isArray(schemas) && ((schemas.length === 1 && !schemas.includes(SearchRequest.#id) || schemas.length > 1)))
-            throw new TypeError(`SearchRequest request body messages must exclusively specify schema as '${SearchRequest.#id}'`);
-        // Bail out if filter isn't a non-empty string
+        // Verify the SearchRequest contents are valid
+        if (request !== undefined && (!Array.isArray(schemas) || ((schemas.length === 1 && !schemas.includes(SearchRequest.#id)) || schemas.length > 1)))
+            throw new Types.Error(400, "invalidSyntax", `SearchRequest request body messages must exclusively specify schema as '${SearchRequest.#id}'`);
+        
+        try {
+            // All seems ok, prepare the SearchRequest
+            this.schemas = [SearchRequest.#id];
+            this.prepare(request);
+        } catch (ex) {
+            // Rethrow TypeErrors from prepare as SCIM Errors
+            throw new Types.Error(400, "invalidValue", ex.message.replace(" in 'prepare' method of SearchRequest", ""));
+        }
+    }
+    
+    /**
+     * Prepare a new search request for transmission to a service provider
+     * @param {Object} [params] - details of the search request to be sent to a service provider
+     * @param {String} [params.filter] - the filter to be applied on ingress/egress by implementing resource
+     * @param {String[]} [params.excludedAttributes] - the string list of attributes or filters to exclude on egress
+     * @param {String[]} [params.attributes] - the string list of attributes or filters to include on egress
+     * @param {String} [params.sortBy] - the attribute retrieved resources should be sorted by
+     * @param {String} [params.sortOrder] - the direction retrieved resources should be sorted in
+     * @param {Number} [params.startIndex] - offset index that retrieved resources should start from
+     * @param {Number} [params.count] - maximum number of retrieved resources that should be returned in one operation
+     * @returns {SCIMMY.Messages.SearchRequest} this SearchRequest instance for chaining
+     */
+    prepare(params = {}) {
+        let {filter, excludedAttributes = [], attributes = [], sortBy, sortOrder, startIndex, count} = params;
+        
+        // Make sure filter is a non-empty string, if specified
         if (filter !== undefined && (typeof filter !== "string" || !filter.trim().length))
-            throw new Types.Error(400, "invalidFilter", "Expected filter to be a non-empty string");
-        // Bail out if excludedAttributes isn't an array of non-empty strings
+            throw new TypeError("Expected 'filter' parameter to be a non-empty string in 'prepare' method of SearchRequest");
+        // Make sure excludedAttributes is an array of non-empty strings
         if (!Array.isArray(excludedAttributes) || !excludedAttributes.every((a) => (typeof a === "string" && !!a.trim().length)))
-            throw new Types.Error(400, "invalidFilter", "Expected excludedAttributes to be an array of non-empty strings");
-        // Bail out if attributes isn't an array of non-empty strings
+            throw new TypeError("Expected 'excludedAttributes' parameter to be an array of non-empty strings in 'prepare' method of SearchRequest");
+        // Make sure attributes is an array of non-empty strings
         if (!Array.isArray(attributes) || !attributes.every((a) => (typeof a === "string" && !!a.trim().length)))
-            throw new Types.Error(400, "invalidFilter", "Expected attributes to be an array of non-empty strings");
+            throw new TypeError("Expected 'attributes' parameter to be an array of non-empty strings in 'prepare' method of SearchRequest");
+        // Make sure sortBy is a non-empty string, if specified
+        if (sortBy !== undefined && (typeof sortBy !== "string" || !sortBy.trim().length))
+            throw new TypeError("Expected 'sortBy' parameter to be a non-empty string in 'prepare' method of SearchRequest");
+        // Make sure sortOrder is a non-empty string, if specified
+        if (sortOrder !== undefined && !["ascending", "descending"].includes(sortOrder))
+            throw new TypeError("Expected 'sortOrder' parameter to be either 'ascending' or 'descending' in 'prepare' method of SearchRequest");
+        // Make sure startIndex is a positive integer, if specified
+        if (startIndex !== undefined && (typeof startIndex !== "number" || !Number.isInteger(startIndex) || startIndex < 1))
+            throw new TypeError("Expected 'startIndex' parameter to be a positive integer in 'prepare' method of SearchRequest");
+        // Make sure count is a positive integer, if specified
+        if (count !== undefined && (typeof count !== "number" || !Number.isInteger(count) || count < 1))
+            throw new TypeError("Expected 'count' parameter to be a positive integer in 'prepare' method of SearchRequest");
         
-        // All seems ok, prepare the SearchRequest
-        this.schemas = [SearchRequest.#id];
+        // Sanity checks have passed, assign values
         if (!!filter) this.filter = filter;
         if (excludedAttributes.length) this.excludedAttributes = [...excludedAttributes];
         if (attributes.length) this.attributes = [...attributes];
@@ -61,6 +98,8 @@ export class SearchRequest {
         if (["ascending", "descending"].includes(sortOrder)) this.sortOrder = sortOrder;
         if (startIndex !== undefined) this.startIndex = startIndex;
         if (count !== undefined) this.count = count;
+        
+        return this;
     }
     
     /**
