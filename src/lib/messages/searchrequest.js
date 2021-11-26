@@ -1,4 +1,6 @@
+import {ListResponse} from "./listresponse.js";
 import Types from "../types.js";
+import Resources from "../resources.js";
 
 /**
  * SCIM Search Request Message Type
@@ -44,10 +46,10 @@ export class SearchRequest {
         if (filter !== undefined && (typeof filter !== "string" || !filter.trim().length))
             throw new Types.Error(400, "invalidFilter", "Expected filter to be a non-empty string");
         // Bail out if excludedAttributes isn't an array of non-empty strings
-        if (!Array.isArray(excludedAttributes) || !excludedAttributes.every((a) => (typeof a !== "string" || !a.trim().length)))
+        if (!Array.isArray(excludedAttributes) || !excludedAttributes.every((a) => (typeof a === "string" && !!a.trim().length)))
             throw new Types.Error(400, "invalidFilter", "Expected excludedAttributes to be an array of non-empty strings");
         // Bail out if attributes isn't an array of non-empty strings
-        if (!Array.isArray(attributes) || !attributes.every((a) => (typeof a !== "string" || !a.trim().length)))
+        if (!Array.isArray(attributes) || !attributes.every((a) => (typeof a === "string" && !!a.trim().length)))
             throw new Types.Error(400, "invalidFilter", "Expected attributes to be an array of non-empty strings");
         
         // All seems ok, prepare the SearchRequest
@@ -59,5 +61,42 @@ export class SearchRequest {
         if (["ascending", "descending"].includes(sortOrder)) this.sortOrder = sortOrder;
         if (startIndex !== undefined) this.startIndex = startIndex;
         if (count !== undefined) this.count = count;
+    }
+    
+    /**
+     * Apply a search request operation, retrieving results from specified resource types
+     * @param {SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing the search request, defaults to declared resources
+     * @returns {SCIMMY.Messages.ListResponse} a ListResponse message with results of the search request 
+     */
+    async apply(resourceTypes = Object.values(Resources.declared())) {
+        // Make sure all specified resource types extend the Resource type class so operations can be processed correctly 
+        if (!Array.isArray(resourceTypes) || !resourceTypes.every(r => r.prototype instanceof Types.Resource))
+            throw new TypeError("Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of SearchRequest");
+        
+        // Build the common request template
+        let request = {
+            ...(!!this.filter ? {filter: this.filter} : {}),
+            ...(!!this.excludedAttributes ? {excludedAttributes: this.excludedAttributes.join(",")} : {}),
+            ...(!!this.attributes ? {attributes: this.attributes.join(",")} : {})
+        }
+        
+        // If only one resource type, just read from it
+        if (resourceTypes.length === 1) {
+            let [Resource] = resourceTypes;
+            return new Resource({...this, ...request}).read();
+        }
+        // Otherwise, read from all resources and return collected results
+        else {
+            // Read from, and unwrap results for, supplied resource types
+            let results = await Promise.all(resourceTypes.map((Resource) => new Resource(request).read()))
+                .then((r) => r.map((l) => l.Resources));
+            
+            // Collect the results in a list response with specified constraints
+            return new ListResponse(results.flat(Infinity), {
+                sortBy: this.sortBy, sortOrder: this.sortOrder,
+                ...(!!this.startIndex ? {startIndex: Number(this.startIndex)} : {}),
+                ...(!!this.count ? {itemsPerPage: Number(this.count)} : {})
+            });
+        }
     }
 }
