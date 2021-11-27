@@ -82,11 +82,11 @@ export class User extends Types.Resource {
      */
     async read() {
         if (!this.id) {
-            return new Messages.ListResponse((await User.#egress(this))
+            return new Messages.ListResponse((await User.#egress(this) ?? [])
                 .map(u => new Schemas.User(u, "out", User.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new Schemas.User((await User.#egress(this)).shift(), "out", User.basepath(), this.attributes);
+                return new Schemas.User((await User.#egress(this) ?? []).shift(), "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
                 else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -140,7 +140,7 @@ export class User extends Types.Resource {
         
         try {
             return await new Messages.PatchOp(message)
-                .apply(new Schemas.User((await User.#egress(this)).shift(), "out"), 
+                .apply(new Schemas.User((await User.#egress(this) ?? []).shift(), "out"), 
                     async (instance) => await User.#ingress(this, instance))
                 .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
         } catch (ex) {
