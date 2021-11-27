@@ -197,7 +197,7 @@ export class Resource {
         }
         // Parse the filter if it exists, and wasn't set by ID above
         else if ("filter" in params) {
-            // Bail out if attributes isn't a non-empty string
+            // Bail out if filter isn't a non-empty string
             if (typeof params.filter !== "string" || !params.filter.trim().length)
                 throw new SCIMError(400, "invalidFilter", "Expected filter to be a non-empty string");
             
