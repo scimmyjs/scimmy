@@ -226,6 +226,17 @@ export let SearchRequestSuite = (SCIMMY) => {
                 assert.ok(typeof (new SCIMMY.Messages.SearchRequest()).apply === "function",
                     "Instance method 'apply' not defined");
             });
+            
+            it("should expect 'resourceTypes' argument to be an array of Resource type classes", async () => {
+                await assert.rejects(() => new SCIMMY.Messages.SearchRequest().apply([{}]),
+                    {name: "TypeError", message: "Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of SearchRequest"},
+                    "Instance method 'apply' did not expect 'resourceTypes' parameter to be an array of Resource type classes");
+            });
+            
+            it("should return a ListResponse message instance", async () => {
+                assert.ok(await (new SCIMMY.Messages.SearchRequest()).apply() instanceof SCIMMY.Messages.ListResponse,
+                    "Instance method 'apply' did not return an instance of ListResponse");
+            });
         });
     });
 }
