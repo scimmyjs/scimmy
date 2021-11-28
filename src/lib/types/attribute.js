@@ -1,50 +1,112 @@
 /**
- * Collection of valid attribute type characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidAttributeTypes
- * @memberOf SCIMMY.Types.Attribute
- * @default
+ * Base Attribute configuration, and proxied configuration validation trap handler
+ * @type {{target: SCIMMY.Types.Attribute~AttributeConfig, handler: ProxiedConfigHandler}}
+ * @private
  */
-const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
+const BaseConfiguration = {
+    /**
+     * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
+     * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
+     * @property {String} [description=""] - a human-readable description of the attribute
+     * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
+     * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
+     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case sensitive
+     * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
+     * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
+     * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
+     * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
+     * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
+     */
+    target: {
+        required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
+        description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both"
+    },
+    
+    /**
+     * Proxied configuration validation trap handler
+     * @alias ProxiedConfigHandler
+     * @param {String} errorSuffix - the suffix to use in thrown type errors
+     * @returns {{set: (function(Object, String, *): boolean)}} the handler trap definition to use in the config proxy
+     * @private
+     */
+    handler: (errorSuffix) => ({
+        set: (target, key, value) => {
+            // Make sure required, multiValued, and caseExact are booleans
+            if (["required", "multiValued", "caseExact"].includes(key) && (value !== undefined && typeof value !== "boolean"))
+                throw new TypeError(`Attribute '${key}' value must be either 'true' or 'false' in ${errorSuffix}`);
+            // Make sure canonicalValues and referenceTypes are valid if they are specified
+            if (["canonicalValues", "referenceTypes"].includes(key) && (value !== undefined && value !== false && !Array.isArray(value)))
+                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`);
+            // Make sure mutability, returned, and uniqueness config values are valid
+            if (["mutable", "returned", "uniqueness"].includes(key)) {
+                let label = (key === "mutable" ? "mutability" : key);
+            
+                if ((typeof value === "string" && !CharacteristicValidity[label].includes(value)))
+                    throw new TypeError(`Attribute '${label}' value '${value}' not recognised in ${errorSuffix}`);
+                else if (value !== undefined && !["string", "boolean"].includes(typeof value))
+                    throw new TypeError(`Attribute '${label}' value must be either string or boolean in ${errorSuffix}`);
+            }
+        
+            // Set the value!
+            return (target[key] = value) || true;
+        }
+    })
+};
 
 /**
- * Collection of valid attribute mutability characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidMutabilityValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
+ * Valid values for various Attribute characteristics
+ * @type {{types: ValidAttributeTypes, mutability: ValidMutabilityValues, returned: ValidReturnedValues, uniqueness: ValidUniquenessValues}}
+ * @private
  */
-const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
-
-/**
- * Collection of valid attribute returned characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidReturnedValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
- */
-const returned = ["always", "never", "default", "request"];
-
-/**
- * Collection of valid attribute uniqueness characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidUniquenessValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
- */
-const uniqueness = ["none", "server", "global"];
+const CharacteristicValidity = {
+    /**
+     * Collection of valid attribute type characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidAttributeTypes
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    types: ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"],
+    
+    /**
+     * Collection of valid attribute mutability characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidMutabilityValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    mutability: ["readOnly", "readWrite", "immutable", "writeOnly"],
+    
+    /**
+     * Collection of valid attribute returned characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidReturnedValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    returned: ["always", "never", "default", "request"],
+    
+    /**
+     * Collection of valid attribute uniqueness characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidUniquenessValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    uniqueness: ["none", "server", "global"]
+};
 
 /**
  * Attribute value validation method container
@@ -232,20 +294,6 @@ const validate = {
  */
 export class Attribute {
     /**
-     * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
-     * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
-     * @property {String} [description=""] - a human-readable description of the attribute
-     * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
-     * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
-     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case sensitive
-     * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
-     * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
-     * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
-     * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
-     * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
-     */
-    
-    /**
      * Constructs an instance of a full SCIM attribute definition
      * @param {String} type - the data type of the attribute
      * @param {String} name - the actual name of the attribute
@@ -258,59 +306,34 @@ export class Attribute {
      */
     constructor(type, name, config = {}, subAttributes = []) {
         let errorSuffix = `attribute definition '${name}'`,
-            // Collect type and name values for validation
-            safelyTyped = [["type", type], ["name", name]],
-            // Collect canonicalValues and referenceTypes values for validation
-            safelyCollected = [["canonicalValues", config.canonicalValues], ["referenceTypes", config.referenceTypes]],
-            // Collect mutability, returned, and uniqueness values for validation
-            safelyConfigured = [
-                ["mutability", config.mutable, mutability],
-                ["returned", config.returned, returned],
-                ["uniqueness", config.uniqueness, uniqueness]
-            ],
-            // Make sure attribute name is valid
+            // Check for invalid characters in attribute name
             [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
         
-        // Make sure name and type are supplied, and type is valid
-        for (let [param, value] of safelyTyped) if (typeof value !== "string")
+        // Make sure name and type are supplied as strings
+        for (let [param, value] of [["type", type], ["name", name]]) if (typeof value !== "string")
             throw new TypeError(`Required parameter '${param}' missing from Attribute instantiation`);
-        if (!types.includes(type))
+        // Make sure type is valid
+        if (!CharacteristicValidity.types.includes(type))
             throw new TypeError(`Type '${type}' not recognised in ${errorSuffix}`);
+        // Make sure name is valid
         if (!!invalidNameChar)
             throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
-        
-        // Make sure mutability, returned, and uniqueness config values are valid
-        for (let [key, value, values] of safelyConfigured) {
-            if ((typeof value === "string" && !values.includes(value))) {
-                throw new TypeError(`Attribute '${key}' value '${value}' not recognised in ${errorSuffix}`);
-            } else if (value !== undefined && !["string", "boolean"].includes(typeof value)) {
-                throw new TypeError(`Attribute '${key}' value must be either string or boolean in ${errorSuffix}`);
-            }
-        }
-        
-        // Make sure canonicalValues and referenceTypes are valid if they are specified
-        for (let [key, value] of safelyCollected) {
-            if (value !== undefined && value !== false && !Array.isArray(value)) {
-                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`)
-            }
-        }
-        
         // Make sure attribute type is 'complex' if subAttributes are defined
-        if (subAttributes.length && type !== "complex") {
+        if (subAttributes.length && type !== "complex")
             throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified in ${errorSuffix}`);
-        }
+        // Make sure subAttributes are all instances of Attribute
+        if (type === "complex" && !subAttributes.every(a => a instanceof Attribute))
+            throw new TypeError(`Expected 'subAttributes' to be an array of Attribute instances in ${errorSuffix}`);
         
         // Attribute config is valid, proceed
         this.type = type;
         this.name = name;
-        // Prevent addition and removal of properties from config
-        // TODO: intercept values for validation
-        this.config = Object.seal({
-            required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
-            description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
-            ...config
-        });
         
+        // Prevent addition and removal of properties from config
+        this.config = Object.seal(Object
+            .assign(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix)), config));
+        
+        // Store subAttributes
         if (type === "complex") this.subAttributes = [...subAttributes];
         
         // Prevent this attribute definition from changing!
@@ -347,6 +370,8 @@ export class Attribute {
     toJSON() {
         /**
          * @typedef {Object} SCIMMY.Types.Attribute~AttributeDefinition
+         * @alias AttributeDefinition
+         * @memberOf SCIMMY.Types.Attribute
          * @property {String} name - the attribute's name
          * @property {String} type - the attribute's data type
          * @property {String[]} [referenceTypes] - specifies a SCIM resourceType that a reference attribute may refer to
