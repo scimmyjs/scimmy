@@ -24,6 +24,8 @@ const operators = ["and", "or", "not"];
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
 const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
+// Split a path by fullstops when they aren't in a filter group or decimal
+const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 
 /**
  * SCIM Filter Type
@@ -201,7 +203,7 @@ export class Filter extends Array {
                 if (operator !== "not" && !Array.isArray(literal)) results.push(result);
                 
                 // Convert literal name into proper camelCase and expand into individual property names
-                let literals = literal.split(".").map(l => `${l[0].toLowerCase()}${l.slice(1)}`),
+                let literals = literal.split(pathSeparator).map(l => `${l[0].toLowerCase()}${l.slice(1)}`),
                     target;
                 
                 // Peek at the next token to see if it's a comparator
