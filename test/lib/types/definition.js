@@ -393,6 +393,25 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
                 assert.ok(!Object.keys(result).includes("testValue"),
                     "Instance method 'coerce' included attributes not specified for filter 'testName pr'");
             });
+            
+            it("should expect namespaced attributes in the supplied filter to be applied to coerced result", () => {
+                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
+                        new SCIMMY.Types.Attribute("string", "employeeNumber")]).extend(SCIMMY.Schemas.EnterpriseUser.definition),
+                    result = definition.coerce(
+                        {
+                            employeeNumber: "Test",
+                            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber": "1234",
+                            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter": "Test",
+                        },
+                        undefined, undefined,
+                        new SCIMMY.Types.Filter("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber pr")
+                    );
+                
+                assert.strictEqual(result["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].employeeNumber, "1234",
+                    "Instance method 'coerce' did not include namespaced attributes for filter");
+                assert.ok(!Object.keys(result).includes("testName"),
+                    "Instance method 'coerce' included namespaced attributes not specified for filter");
+            });
         });
     });
 }
