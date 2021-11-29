@@ -283,8 +283,11 @@ export class SchemaDefinition {
                     throw new TypeError(`Missing values for required schema extension '${name}'`);
                 } else if (required || Object.keys(mixedSource).length) {
                     try {
-                        // Coerce the mixed value
-                        target[name] = attribute.coerce(mixedSource, direction, basepath, filter);
+                        // Coerce the mixed value, using only namespaced attributes for this extension
+                        target[name] = attribute.coerce(mixedSource, direction, basepath, [Object.keys(filter ?? {})
+                            .filter(k => k.startsWith(`${name}:`))
+                            .reduce((res, key) => (((res[key.replace(`${name}:`, "")] = filter[key]) || true) && res), {})
+                        ]);
                     } catch (ex) {
                         // Rethrow exception with added context
                         ex.message += ` in schema extension '${name}'`;
@@ -332,25 +335,30 @@ export class SchemaDefinition {
                 
                 // Go through every value in the data and filter attributes
                 for (let key in data) {
-                    // TODO: namespaced attributes and extensions
-                    // Get the matching attribute definition and some relevant config values
-                    let attribute = attributes.find(a => a.name === key) ?? {},
-                        {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
-                    
-                    // If the attribute is always returned, add it to the result
-                    if (returned === "always") target[key] = data[key];
-                    // Otherwise, if the attribute ~can~ be returned, process it
-                    else if (returned === true) {
-                        // If the filter is simply based on presence, assign the result
-                        if (Array.isArray(filter[key]) && filter[key][0] === "pr")
+                    if (key.toLowerCase().startsWith("urn:")) {
+                        // If there is data in a namespaced key, and a filter for it, include it
+                        if (Object.keys(data[key]).length && Object.keys(filter).some(k => k.toLowerCase().startsWith(`${key.toLowerCase()}:`)))
                             target[key] = data[key];
-                        // Otherwise if the filter is defined and the attribute is complex, evaluate it
-                        else if (key in filter && type === "complex") {
-                            let value = SchemaDefinition.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
-                            
-                            // Only set the value if it isn't empty
-                            if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
-                                target[key] = value;
+                    } else {
+                        // Get the matching attribute definition and some relevant config values
+                        let attribute = attributes.find(a => a.name === key) ?? {},
+                            {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
+                        
+                        // If the attribute is always returned, add it to the result
+                        if (returned === "always") target[key] = data[key];
+                        // Otherwise, if the attribute ~can~ be returned, process it
+                        else if (returned === true) {
+                            // If the filter is simply based on presence, assign the result
+                            if (Array.isArray(filter[key]) && filter[key][0] === "pr")
+                                target[key] = data[key];
+                            // Otherwise if the filter is defined and the attribute is complex, evaluate it
+                            else if (key in filter && type === "complex") {
+                                let value = SchemaDefinition.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                                
+                                // Only set the value if it isn't empty
+                                if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
+                                    target[key] = value;
+                            }
                         }
                     }
                 }
