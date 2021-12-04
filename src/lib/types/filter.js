@@ -23,9 +23,11 @@ const operators = ["and", "or", "not"];
  */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
-const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\[(?:.*?)\]|\((?:.*?)\))|(\w[-\w\._:\/%]*))/;
+const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)\])|(\w[-\w\._:\/%]*))/;
 // Split a path by fullstops when they aren't in a filter group or decimal
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
+// Extract attributes and filter strings from path parts
+const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/;
 
 /**
  * SCIM Filter Type
@@ -96,20 +98,22 @@ export class Filter extends Array {
     }
     
     /**
-     * Parse a SCIM filter string into an array of objects representing the query filter
-     * @param {String} [query=""] - the filter parameter of a request as per [RFC7644§3.4.2.2]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2}
-     * @returns {Object[]} parsed object representation of the queried filter
-     * @private
+     * Extract a list of tokens representing the supplied expression 
+     * @param {String} query - the expression to generate the token list for
+     * @returns {Object[]} a set of token objects representing the expression, with details on the token kinds 
      */
-    static #parse(query = "") {
-        let results = [],
-            tokens = [],
+    static #tokenise(query = "") {
+        let tokens = [],
             token;
+        
+        // Strip grouping characters from start and end, if necessary
+        if ((query.startsWith("[") && query.endsWith("]")) || (query.startsWith("(") && query.endsWith(")")))
+            query = query.substring(1, query.length - 1);
         
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
             // Extract the different matches from the token
-            let [literal, space, number, string, grouping, word] = token;
+            let [literal, space, number, string, grouping, attribute, word] = token;
             
             // If the token isn't whitespace, handle it!
             if (!space) {
@@ -117,10 +121,11 @@ export class Filter extends Array {
                 if (number !== undefined) tokens.push({type: "Number", value: Number(number)});
                 if (string !== undefined) tokens.push({type: "Value", value: String(string.substring(1, string.length-1))});
                 
-                // Handle grouped filters recursively
-                if (grouping !== undefined) tokens.push({
-                    type: "Group", value: Filter.#parse(grouping.substring(1, grouping.length - 1))
-                });
+                // Handle grouped filters
+                if (grouping !== undefined) tokens.push({type: "Group", value: grouping.substring(1, grouping.length - 1)});
+                
+                // Handle attribute filters inline
+                if (attribute !== undefined) word = tokens.pop().value + attribute;
                 
                 // Handle operators, comparators, and attribute names
                 if (word !== undefined) tokens.push({
@@ -146,92 +151,138 @@ export class Filter extends Array {
             throw new SCIMError(400, "invalidFilter", reason);
         }
         
-        // Go through the tokens and collapse the wave function!
-        while (tokens.length > 0) {
-            // Get the next token
-            let {value: literal, type} = tokens.shift(),
-                result = {},
-                operator;
+        return tokens;
+    }
+    
+    /**
+     * Divide a list of tokens into sets split by a given logical operator for parsing
+     * @param {Object[]} tokens - list of token objects in a query to divide by the given logical operation 
+     * @param {String} operator - the logical operator to divide the tokens by 
+     * @returns {Array<Object[]>} the supplied list of tokens split wherever the given operator occurred  
+     */
+    static #operations(tokens, operator) {
+        let operations = [];
+        
+        for (let token of [...tokens]) {
+            // Found the target operator token, push preceding tokens as an operation
+            if (token.type === "Operator" && token.value === operator)
+                operations.push(tokens.splice(0, tokens.indexOf(token) + 1).slice(0, -1));
+            // Reached the end, add the remaining tokens as an operation
+            else if (tokens.indexOf(token) === tokens.length - 1)
+                operations.push(tokens.splice(0));
+        }
+        
+        return operations;
+    }
+    
+    /**
+     * Translate a given set of expressions into their object representation
+     * @param {Array<String[]>} expressions - list of expressions to combine into their object representation
+     * @returns {Object} translated representation of the given set of expressions
+     */
+    static #objectify(expressions = []) {
+        let result = {};
+        
+        // Go through every expression in the list, or handle a singular expression if that's what was given  
+        for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
+            // Check if first token is negative for later evaluation
+            let negative = expression[0] === "not" ? expression.shift() : false,
+                // Extract expression parts and derive object path
+                [path, comparator, value] = expression,
+                parts = path.split(pathSeparator).filter(p => p),
+                target = result;
             
-            // Handle group tokens
-            if (type === "Group" && Array.isArray(literal)) {
-                // Unwrap the group if it only contains one statement, otherwise wrap it
-                // TODO: what if the group is empty or contains empty statements?
-                results.push(literal.length === 1 ? literal.pop() ?? {} : {"&&": literal});
+            // Construct the object
+            for (let part of parts) {
+                // Check for filters in the path and fix the attribute name
+                let [, key = part, filter] = multiValuedFilter.exec(part) ?? [],
+                    name = `${key[0].toLowerCase()}${key.slice(1)}`;
+                
+                // If we have a nested filter, handle it
+                if (filter !== undefined) {
+                    let values = Filter.#parse(filter.substring(1, filter.length - 1));
+                    if (values.length === 1) {
+                        target[name] = Object.assign(target[name] ?? {}, values.pop());
+                    } else {
+                        console.log(values);
+                    }
+                }
+                // If there's more path to follow, keep digging
+                else if (parts.indexOf(part) < parts.length - 1) {
+                    target = (target[name] = target[name] ?? {});
+                }
+                // Otherwise, we've reached our destination
+                else {
+                    // Store the translated expression
+                    target[name] = [negative, comparator, value].filter(v => v);
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Parse a SCIM filter string into an array of objects representing the query filter
+     * @param {String|Object[]} [query=""] - the filter parameter of a request as per [RFC7644§3.4.2.2]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2}
+     * @returns {Object[]} parsed object representation of the queried filter
+     * @private
+     */
+    static #parse(query = "") {
+        let tokens = (Array.isArray(query) ? query : Filter.#tokenise(query)),
+            results = [];
+        
+        // If there's no operators or groups, assume the expression is complete
+        if (!tokens.some(t => ["Operator", "Group"].includes(t.type))) {
+            results.push(Array.isArray(query) ? tokens.map(t => t.value) : Filter.#objectify(tokens.splice(0).map(t => t.value)));
+        }
+        // Otherwise, logic and groups need to be evaluated
+        else {
+            let expressions = [];
+            
+            // Go through every "or" branch in the expression
+            for (let branch of Filter.#operations(tokens, "or")) {
+                // Find all "and" joins in the branch
+                let joins = Filter.#operations(branch, "and"),
+                    // Find all complete expressions, and groups that need evaluating
+                    expression = joins.filter(e => !e.some(t => t.type === "Group")),
+                    groups = joins.filter(e => !expression.includes(e));
+                
+                // Evaluate the groups
+                for (let group of groups.splice(0)) {
+                    // Check for negative and extract the group token
+                    let [negate, token = negate] = group,
+                        // Parse the group token, negating and stripping double negatives if necessary
+                        tokens = Filter.#tokenise(token === negate ? token.value : `not ${token.value
+                            .replaceAll(" and ", " and not ").replaceAll(" or ", " or not ")
+                            .replaceAll(" and not not ", " and ").replaceAll(" or not not ", " or ")}`),
+                        // Find all "or" branches in this group
+                        branches = Filter.#operations(tokens, "or");
+                    
+                    // Cross all existing groups with this branch
+                    for (let group of (groups.length ? groups.splice(0) : [[]])) {
+                        // Taking into consideration any complete expressions in the block
+                        for (let token of (expression.length ? expression : [[]])) {
+                            for (let branch of branches) {
+                                groups.push([
+                                    ...(token.length ? [token.map(t => t.value)] : []),
+                                    ...(group.length ? group : []),
+                                    ...Filter.#parse(branch)
+                                ]);
+                            }
+                        }
+                    }
+                }
+                
+                // Consider each group its own expression
+                if (groups.length) expressions.push(...groups);
+                // Otherwise, collapse the expression for potential objectification
+                else expressions.push(expression.map(e => e.map(t => t.value)));
             }
             
-            // Handle joining operators
-            if (type === "Operator") {
-                // Cache the current operator
-                operator = literal;
-                
-                // If operator is "and", get the last result to write the next statement to
-                if (operator === "and" && results.length > 0) result = results.pop();
-                
-                // If the next token is a "not" operator, handle negation of statement
-                if (tokens[0]?.type === "Operator" && tokens[0]?.value === "not") {
-                    // Update the cached operator and put the result back on the stack
-                    ({value: operator} = tokens.shift());
-                    results.push(result);
-                    
-                    // Continue evaluating the stack but on the special negative ("!!") property
-                    result = result["!!"] = Array.isArray(tokens[0]?.value) ? [] : {};
-                }
-                
-                // Move to the next token
-                ({value: literal, type} = tokens.shift());
-                
-                // Poorly written filters sometimes unnecessarily include groups...
-                if (Array.isArray(literal)) {
-                    // Put the result back on the stack (unless "not" already put it there)
-                    if (operator !== "not") results.push(result);
-                    // If the group only contains one statement, unwrap it
-                    if (literal.length === 1) Object.assign(result, literal.pop() ?? {});
-                    // If the group follows a negation operator, add it to the negative ("!!") property
-                    else if (operator === "not") result.splice(0, 0, ...literal);
-                    // If a joining operator ("&&") group already exists here, add the new statements to it
-                    else if (Array.isArray(result["&&"]))
-                        result["&&"] = [...(!Array.isArray(result["&&"][0]) ? [result["&&"]] : result["&&"]), literal];
-                    // Otherwise, define a new joining operator ("&&") property with literal's statements in it
-                    else result["&&"] = [literal];
-                }
-            }
-            
-            // Handle "words" in the filter (a.k.a. attributes)
-            if (type === "Word") {
-                // Put the result back on the stack if it's not already there
-                if (operator !== "not" && !Array.isArray(literal)) results.push(result);
-                
-                // Convert literal name into proper camelCase and expand into individual property names
-                let literals = literal.split(pathSeparator).map(l => `${l[0].toLowerCase()}${l.slice(1)}`),
-                    target;
-                
-                // Peek at the next token to see if it's a comparator
-                if (tokens[0]?.type === "Comparator") {
-                    // If so, get the comparator (the next token)
-                    let {value: comparator} = tokens.shift(),
-                        // If the comparator expects a value to compare against, get it
-                        {value} = (!["pr", "np"].includes(comparator) ? tokens.shift() : {});
-                    
-                    // Save the comparator and value to the attribute
-                    target = [comparator, ...(value !== undefined ? [value] : [])];
-                    
-                // Peek at the next token's value to see if the word opens a group
-                } else if (Array.isArray(tokens[0]?.value)) {
-                    // If so, get the group, and collapse or store it in the result
-                    let {value} = tokens.shift();
-                    target = (value.length === 1 ? value.pop() ?? {} : value);
-                }
-                
-                // Go through all nested attribute names
-                while (literals.length > 1) {
-                    // TODO: what if there's a collision?
-                    let key = literals.shift();
-                    result = (result[key] = result[key] ?? {});
-                }
-                
-                // Then assign the targeted value to the nested location
-                result[literals.shift()] = target;
+            // Push all expressions to results, objectifying if necessary
+            for (let expression of expressions) {
+                results.push(...(Array.isArray(query) ? expression : [Filter.#objectify(expression)]));
             }
         }
         
