@@ -206,7 +206,7 @@ export class PatchOp {
                 if (target !== undefined) try {
                     if (filter !== undefined) {
                         // If a filter is specified, apply it to the target and add results back to targets
-                        targets.push(...(new Types.Filter(filter).match(target[key])));
+                        targets.push(...(new Types.Filter(filter.substring(1, filter.length - 1)).match(target[key])));
                     } else {
                         // Add the traversed value to targets, or back out if already arrived
                         targets.push(paths.length === 0 ? target : target[key] ?? (op === "add" ? ((target[key] = target[key] ?? {}) && target[key]) : undefined));

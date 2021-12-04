@@ -106,10 +106,6 @@ export class Filter extends Array {
         let tokens = [],
             token;
         
-        // Strip grouping characters from start and end, if necessary
-        if ((query.startsWith("[") && query.endsWith("]")) || (query.startsWith("(") && query.endsWith(")")))
-            query = query.substring(1, query.length - 1);
-        
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
             // Extract the different matches from the token
