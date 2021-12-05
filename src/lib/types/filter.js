@@ -23,7 +23,7 @@ const operators = ["and", "or", "not"];
  */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
-const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)\])|(\w[-\w\._:\/%]*))/;
+const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(false|true)+|(null)+|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)][.]?)|(\w[-\w._:\/%]*))/;
 // Split a path by fullstops when they aren't in a filter group or decimal
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
@@ -109,13 +109,15 @@ export class Filter extends Array {
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
             // Extract the different matches from the token
-            let [literal, space, number, string, grouping, attribute, word] = token;
+            let [literal, space, number, boolean, empty, string, grouping, attribute, word] = token;
             
             // If the token isn't whitespace, handle it!
             if (!space) {
-                // Handle number and string values
+                // Handle number, string, boolean, and null values
                 if (number !== undefined) tokens.push({type: "Number", value: Number(number)});
-                if (string !== undefined) tokens.push({type: "Value", value: String(string.substring(1, string.length-1))});
+                if (string !== undefined) tokens.push({type: "Value", value: `"${String(string.substring(1, string.length-1))}"`});
+                if (boolean !== undefined) tokens.push({type: "Boolean", value: boolean === "true"});
+                if (empty !== undefined) tokens.push({type: "Empty", value: "null"});
                 
                 // Handle grouped filters
                 if (grouping !== undefined) tokens.push({type: "Group", value: grouping.substring(1, grouping.length - 1)});
@@ -124,10 +126,14 @@ export class Filter extends Array {
                 if (attribute !== undefined) word = tokens.pop().value + attribute;
                 
                 // Handle operators, comparators, and attribute names
-                if (word !== undefined) tokens.push({
-                    type: (operators.includes(word) ? "Operator" : (comparators.includes(word) ? "Comparator" : "Word")),
-                    value: word
-                });
+                if (word !== undefined) {
+                    // Compound words when last token was a word ending with "."
+                    if (tokens.length && tokens[tokens.length-1].type === "Word" && tokens[tokens.length-1].value.endsWith("."))
+                        word = tokens.pop().value + word;
+                    
+                    // Store the token, deriving token type by matching against known operators and comparators
+                    tokens.push({type: (operators.includes(word) ? "Operator" : (comparators.includes(word) ? "Comparator" : "Word")), value: word});
+                }
             }
             
             // Move on to the next token in the query
@@ -182,35 +188,24 @@ export class Filter extends Array {
         // Go through every expression in the list, or handle a singular expression if that's what was given  
         for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
             // Check if first token is negative for later evaluation
-            let negative = expression[0] === "not" ? expression.shift() : false,
+            let negative = expression[0] === "not" ? expression.shift() : undefined,
                 // Extract expression parts and derive object path
                 [path, comparator, value] = expression,
                 parts = path.split(pathSeparator).filter(p => p),
                 target = result;
             
             // Construct the object
-            for (let part of parts) {
-                // Check for filters in the path and fix the attribute name
-                let [, key = part, filter] = multiValuedFilter.exec(part) ?? [],
-                    name = `${key[0].toLowerCase()}${key.slice(1)}`;
+            for (let key of parts) {
+                // Fix the attribute name
+                let name = `${key[0].toLowerCase()}${key.slice(1)}`;
                 
-                // If we have a nested filter, handle it
-                if (filter !== undefined) {
-                    let values = Filter.#parse(filter.substring(1, filter.length - 1));
-                    if (values.length === 1) {
-                        target[name] = Object.assign(target[name] ?? {}, values.pop());
-                    } else {
-                        console.log(values);
-                    }
-                }
                 // If there's more path to follow, keep digging
-                else if (parts.indexOf(part) < parts.length - 1) {
-                    target = (target[name] = target[name] ?? {});
-                }
+                if (parts.indexOf(key) < parts.length - 1) target = (target[name] = target[name] ?? {});
                 // Otherwise, we've reached our destination
                 else {
-                    // Store the translated expression
-                    target[name] = [negative, comparator, value].filter(v => v);
+                    // Unwrap string and null values, and store the translated expression
+                    value = (value === "null" ? null : (String(value).match(/^["].*["]$/) ? value.substring(1, value.length - 1) : value));
+                    target[name] = [negative, comparator, value].filter(v => v !== undefined);
                 }
             }
         }
@@ -226,11 +221,16 @@ export class Filter extends Array {
      */
     static #parse(query = "") {
         let tokens = (Array.isArray(query) ? query : Filter.#tokenise(query)),
+            // Initial pass to check for complexities 
+            simple = !tokens.some(t => ["Operator", "Group"].includes(t.type)),
+            // Closer inspection in case word tokens contain nested attribute filters
+            reallySimple = simple && (tokens[0]?.value ?? tokens[0] ?? "")
+                .split(pathSeparator).every(t => t === multiValuedFilter.exec(t).slice(1).shift()),
             results = [];
         
-        // If there's no operators or groups, assume the expression is complete
-        if (!tokens.some(t => ["Operator", "Group"].includes(t.type))) {
-            results.push(Array.isArray(query) ? tokens.map(t => t.value) : Filter.#objectify(tokens.splice(0).map(t => t.value)));
+        // If there's no operators or groups, and no nested attribute filters, assume the expression is complete
+        if (reallySimple) {
+            results.push(Array.isArray(query) ? tokens.map(t => t.value ?? t) : Filter.#objectify(tokens.splice(0).map(t => t.value ?? t)));
         }
         // Otherwise, logic and groups need to be evaluated
         else {
@@ -244,6 +244,73 @@ export class Filter extends Array {
                     expression = joins.filter(e => !e.some(t => t.type === "Group")),
                     groups = joins.filter(e => !expression.includes(e));
                 
+                // Go through every expression and check for nested attribute filters
+                for (let e of expression.splice(0)) {
+                    // Check if first token is negative for later evaluation
+                    let negative = e[0].value === "not" ? e.shift() : undefined,
+                        // Extract expression parts and derive object path
+                        [path, comparator, value] = e;
+                    
+                    // If none of the path parts have multi-value filters, put the expression back on the stack
+                    if (path.value.split(pathSeparator).filter(p => p).every(t => t === multiValuedFilter.exec(t).slice(1).shift())) {
+                        expression.push([negative, path, comparator, value].filter(v => v !== undefined));
+                    }
+                    // Otherwise, delve into the path parts for complexities
+                    else {
+                        let parts = path.value.split(pathSeparator).filter(p => p),
+                            // Store results and spent path parts
+                            results = [],
+                            spent = [];
+                        
+                        for (let part of parts) {
+                            // Check for filters in the path part
+                            let [, key = part, filter] = multiValuedFilter.exec(part) ?? [];
+                            
+                            // Store the spent path part
+                            spent.push(key);
+                            
+                            // If we have a nested filter, handle it
+                            if (filter !== undefined) {
+                                let branches = Filter
+                                    // Get any branches in the nested filter, parse them for joins, and properly wrap them
+                                    .#operations(Filter.#tokenise(filter.substring(1, filter.length - 1)), "or")
+                                    .map(b => Filter.#parse(b))
+                                    .map(b => b.every(b => b.every(b => Array.isArray(b))) ? b.flat(1) : b)
+                                    // Prefix any attribute paths with spent parts
+                                    .map((branch) => branch.map(join => {
+                                        let negative = (join[0] === "not" ? join.shift() : undefined),
+                                            [path, comparator, value] = join;
+                                        
+                                        return [negative, `${spent.join(".")}.${path}`, comparator, value].filter(v => v !== undefined);
+                                    }));
+                                
+                                if (!results.length) {
+                                    // Extract results from the filter
+                                    results.push(...branches);
+                                } else {
+                                    branches = branches.flat(1);
+                                    
+                                    // If only one branch, add it to existing results
+                                    if (branches.length === 1) for (let result of results) result.push(...branches);
+                                    // Otherwise, cross existing results with new branches
+                                    else for (let result of results.splice(0)) {
+                                        for (let branch of branches) results.push([...result, branch]);
+                                    }
+                                }
+                            }
+                            // No filter, but if we're at the end of the chain, join the last expression with the results
+                            else if (parts.indexOf(part) === parts.length - 1) {
+                                for (let result of results) result.push([negative?.value, spent.join("."), comparator?.value, value?.value].filter(v => v !== undefined));
+                            }
+                        }
+                        
+                        // If there's only one result, it wasn't a very complex expression
+                        if (results.length === 1) expression.push(...results.pop());
+                        // Otherwise, turn the result back into a string and let groups handle it
+                        else groups.push([{value: results.map(r => r.map(e => e.join(" ")).join(" and ")).join(" or ")}]);
+                    }
+                }
+                
                 // Evaluate the groups
                 for (let group of groups.splice(0)) {
                     // Check for negative and extract the group token
@@ -255,16 +322,21 @@ export class Filter extends Array {
                         // Find all "or" branches in this group
                         branches = Filter.#operations(tokens, "or");
                     
-                    // Cross all existing groups with this branch
-                    for (let group of (groups.length ? groups.splice(0) : [[]])) {
-                        // Taking into consideration any complete expressions in the block
-                        for (let token of (expression.length ? expression : [[]])) {
-                            for (let branch of branches) {
-                                groups.push([
-                                    ...(token.length ? [token.map(t => t.value)] : []),
-                                    ...(group.length ? group : []),
-                                    ...Filter.#parse(branch)
-                                ]);
+                    if (branches.length === 1) {
+                        // No real branches, so it's probably a simple expression
+                        expression.push(...Filter.#parse([...branches.pop()]));
+                    } else {
+                        // Cross all existing groups with this branch
+                        for (let group of (groups.length ? groups.splice(0) : [[]])) {
+                            // Taking into consideration any complete expressions in the block
+                            for (let token of (expression.length ? expression : [[]])) {
+                                for (let branch of branches) {
+                                    groups.push([
+                                        ...(token.length ? [token.map(t => t.value ?? t)] : []),
+                                        ...(group.length ? group : []),
+                                        ...Filter.#parse(branch)
+                                    ]);
+                                }
                             }
                         }
                     }
@@ -273,12 +345,12 @@ export class Filter extends Array {
                 // Consider each group its own expression
                 if (groups.length) expressions.push(...groups);
                 // Otherwise, collapse the expression for potential objectification
-                else expressions.push(expression.map(e => e.map(t => t.value)));
+                else expressions.push(expression.map(e => e.map(t => t.value ?? t)));
             }
             
             // Push all expressions to results, objectifying if necessary
             for (let expression of expressions) {
-                results.push(...(Array.isArray(query) ? expression : [Filter.#objectify(expression)]));
+                results.push(...(Array.isArray(query) ? (expression.every(t => Array.isArray(t)) ? expression : [expression]) : [Filter.#objectify(expression)]));
             }
         }
         
