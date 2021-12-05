@@ -98,9 +98,10 @@ export class Filter extends Array {
     }
     
     /**
-     * Extract a list of tokens representing the supplied expression 
+     * Extract a list of tokens representing the supplied expression
      * @param {String} query - the expression to generate the token list for
-     * @returns {Object[]} a set of token objects representing the expression, with details on the token kinds 
+     * @returns {Object[]} a set of token objects representing the expression, with details on the token kinds
+     * @private
      */
     static #tokenise(query = "") {
         let tokens = [],
@@ -158,9 +159,10 @@ export class Filter extends Array {
     
     /**
      * Divide a list of tokens into sets split by a given logical operator for parsing
-     * @param {Object[]} tokens - list of token objects in a query to divide by the given logical operation 
-     * @param {String} operator - the logical operator to divide the tokens by 
-     * @returns {Array<Object[]>} the supplied list of tokens split wherever the given operator occurred  
+     * @param {Object[]} tokens - list of token objects in a query to divide by the given logical operation
+     * @param {String} operator - the logical operator to divide the tokens by
+     * @returns {Array<Object[]>} the supplied list of tokens split wherever the given operator occurred
+     * @private
      */
     static #operations(tokens, operator) {
         let operations = [];
@@ -181,6 +183,7 @@ export class Filter extends Array {
      * Translate a given set of expressions into their object representation
      * @param {Array<String[]>} expressions - list of expressions to combine into their object representation
      * @returns {Object} translated representation of the given set of expressions
+     * @private
      */
     static #objectify(expressions = []) {
         let result = {};
