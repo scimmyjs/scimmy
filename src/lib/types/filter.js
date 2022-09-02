@@ -74,24 +74,63 @@ export class Filter extends Array {
      */
     match(values) {
         // Match against any of the filters in the set
-        // TODO: finish comparators and handle nesting
         return values.filter(value => 
-            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, [comparator, expected]]) => {
-                // Cast true and false strings to boolean values
-                expected = (expected === "false" ? false : (expected === "true" ? true : expected));
+            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, expression]) => {
+                let [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
                 
-                switch (comparator) {
-                    case "co":
-                        return String(value[attr]).includes(expected); 
+                if (!Array.isArray(expression)) {
+                    return !!(new Filter([expression]).match([actual]).length);
+                } else {
+                    let negate = (expression[0] === "not" ? !!expression.shift() : false),
+                        [comparator, expected] = expression,
+                        result;
                     
-                    case "pr":
-                        return attr in value;
+                    // Cast true and false strings to boolean values
+                    expected = (expected === "false" ? false : (expected === "true" ? true : expected));
                     
-                    case "eq":
-                        return value[attr] === expected;
+                    switch (comparator) {
+                        case "eq":
+                            result = (actual === expected);
+                            break;
+                        
+                        case "ne":
+                            result = (actual !== expected);
+                            break;
+                        
+                        case "co":
+                            result = String(actual).includes(expected);
+                            break;
+                        
+                        case "sw":
+                            result = String(actual).startsWith(expected);
+                            break;
+                        
+                        case "ew":
+                            result = String(actual).endsWith(expected);
+                            break;
+                        
+                        case "gt":
+                            result = (actual > expected);
+                            break;
+                        
+                        case "lt":
+                            result = (actual < expected);
+                            break;
+                        
+                        case "ge":
+                            result = (actual >= expected);
+                            break;
+                        
+                        case "le":
+                            result = (actual <= expected);
+                            break;
+                        
+                        case "pr":
+                            result = (attr in value);
+                            break;
+                    }
                     
-                    case "ne":
-                        return value[attr] !== expected;
+                    return (negate ? !result : result);
                 }
             })))
         );

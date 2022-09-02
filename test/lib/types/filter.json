@@ -137,7 +137,11 @@
       {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9}
     ],
     "targets": [
-      {"expression": {"userName": ["co", "A"]}, "expected": [1, 2]}
+      {"expression": {"userName": ["co", "A"]}, "expected": [1, 2]},
+      {"expression": {"username": ["sw", "A"]}, "expected": [1]},
+      {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
+      {"expression": {"Name": {"fOrmaTTed": ["co", "a"]}}, "expected": [1, 2, 4]},
+      {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]}
     ]
   }
 }
