@@ -28,6 +28,8 @@ const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(false|true)+|(nu
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
 const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/;
+// Match ISO 8601 formatted datetime stamps in strings
+const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])(T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?)?$/;
 
 /**
  * SCIM Filter Type
@@ -77,12 +79,13 @@ export class Filter extends Array {
         return values.filter(value => 
             this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, expression]) => {
                 let [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
+                const isActualDate = (actual instanceof Date || (new Date(actual).toString() !== "Invalid Date" && String(actual).match(isoDate)));
                 
                 if (!Array.isArray(expression)) {
                     return !!(new Filter([expression]).match([actual]).length);
                 } else {
-                    let negate = (expression[0] === "not" ? !!expression.shift() : false),
-                        [comparator, expected] = expression,
+                    let negate = (expression[0] === "not"),
+                        [comparator, expected] = expression.slice(((+negate) - expression.length)),
                         result;
                     
                     // Cast true and false strings to boolean values
@@ -110,23 +113,23 @@ export class Filter extends Array {
                             break;
                         
                         case "gt":
-                            result = (actual > expected);
+                            result = (isActualDate ? (new Date(actual) > new Date(expected)) : actual > expected);
                             break;
                         
                         case "lt":
-                            result = (actual < expected);
+                            result = (isActualDate ? (new Date(actual) < new Date(expected)) : actual < expected);
                             break;
                         
                         case "ge":
-                            result = (actual >= expected);
+                            result = (isActualDate ? (new Date(actual) >= new Date(expected)) : actual >= expected);
                             break;
                         
                         case "le":
-                            result = (actual <= expected);
+                            result = (isActualDate ? (new Date(actual) <= new Date(expected)) : actual <= expected);
                             break;
                         
                         case "pr":
-                            result = (attr in value);
+                            result = actual !== undefined;
                             break;
                     }
                     

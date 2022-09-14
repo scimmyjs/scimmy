@@ -141,7 +141,14 @@
       {"expression": {"username": ["sw", "A"]}, "expected": [1]},
       {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
       {"expression": {"Name": {"fOrmaTTed": ["co", "a"]}}, "expected": [1, 2, 4]},
-      {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]}
+      {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]},
+      {"expression": {"date": ["gt", "2021-08-05"]}, "expected": [2, 3, 4]},
+      {"expression": {"date": ["lt", "2021-09"]}, "expected": [1, 3]},
+      {"expression": {"date": ["co", "2021-09"]}, "expected": [2, 4]},
+      {"expression": {"date": ["not", "co", "2021-09"]}, "expected": [1, 3]},
+      {"expression": {"date": ["gt", "2021-08-05T12:00:00Z"]}, "expected": [2, 4]},
+      {"expression": {"date": ["ge", "2021-09-08T23:02:28.986Z"]}, "expected": [2, 4]},
+      {"expression": {"date": ["le", "2021-09-08T23:02:28.986Z"]}, "expected": [1, 3, 4]}
     ]
   }
 }
