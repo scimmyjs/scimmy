@@ -81,7 +81,9 @@ export class Filter extends Array {
                 let [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
                 const isActualDate = (actual instanceof Date || (new Date(actual).toString() !== "Invalid Date" && String(actual).match(isoDate)));
                 
-                if (!Array.isArray(expression)) {
+                if (Array.isArray(actual)) {
+                    return !!(new Filter(expression).match(actual).length);
+                } else if (!Array.isArray(expression)) {
                     return !!(new Filter([expression]).match([actual]).length);
                 } else {
                     let negate = (expression[0] === "not"),
@@ -113,19 +115,19 @@ export class Filter extends Array {
                             break;
                         
                         case "gt":
-                            result = (isActualDate ? (new Date(actual) > new Date(expected)) : actual > expected);
+                            result = (isActualDate ? (new Date(actual) > new Date(expected)) : (typeof actual === typeof expected && actual > expected));
                             break;
                         
                         case "lt":
-                            result = (isActualDate ? (new Date(actual) < new Date(expected)) : actual < expected);
+                            result = (isActualDate ? (new Date(actual) < new Date(expected)) : (typeof actual === typeof expected && actual < expected));
                             break;
                         
                         case "ge":
-                            result = (isActualDate ? (new Date(actual) >= new Date(expected)) : actual >= expected);
+                            result = (isActualDate ? (new Date(actual) >= new Date(expected)) : (typeof actual === typeof expected && actual >= expected));
                             break;
                         
                         case "le":
-                            result = (isActualDate ? (new Date(actual) <= new Date(expected)) : actual <= expected);
+                            result = (isActualDate ? (new Date(actual) <= new Date(expected)) : (typeof actual === typeof expected && actual <= expected));
                             break;
                         
                         case "pr":

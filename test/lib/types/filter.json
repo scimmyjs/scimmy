@@ -131,24 +131,92 @@
   },
   "match": {
     "source": [
-      {"id": 1, "userName": "AdeleV", "name": {"formatted": "Adele Vance"}, "date": "2021-07-25T12:37:58.132Z", "number": 4},
-      {"id": 2, "userName": "GradyA", "name": {"formatted": "Grady Archie"}, "date": "2021-09-22T02:32:12.026Z", "number": 6},
-      {"id": 3, "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}, "date": "2021-08-05T10:11:57.910Z", "number": 14},
-      {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9}
+      {
+        "id": 1, "userName": "AdeleV", "date": "2021-07-25T12:37:58.132Z", "number": 4, "exists": true,
+        "name": {"formatted": "Adele Vance", "givenName": "Adele", "familyName": "Vance"},
+        "emails": [
+          {"type": "work", "value": "AdeleV@example.net", "primary": true}
+        ]
+      },
+      {
+        "id": 2, "userName": "GradyA", "date": "2021-09-22T02:32:12.026Z", "number": 6,
+        "name": {"formatted": "Grady Archie", "givenName": "Grady", "familyName": "Archie"},
+        "emails": [
+          {"type": "home", "value": "GradyA@example.com", "primary": true}
+        ]
+      },
+      {
+        "id": 3, "userName": "LynneR", "date": "2021-08-05T10:11:57.910Z", "number": 14, "exists": false,
+        "name": {"formatted": "Lynne Robbins", "givenName": "Lynne", "familyName": "Robbins"},
+        "emails": [
+          {"type": "work", "value": "LynneR@example.org", "primary": true}
+        ]
+      },
+      {
+        "id": 4, "userName": "MeganB", "date": "2021-09-08T23:02:28.986Z", "number": 9,
+        "name": {"formatted": "Megan Bowen", "givenName": "Megan", "familyName": "Bowen"},
+        "emails": [
+          {"type": "work", "value": "MeganB@example.org", "primary": true},
+          {"type": "home", "value": "MeganB@example.net", "primary": false}
+        ]
+      }
     ],
-    "targets": [
-      {"expression": {"userName": ["co", "A"]}, "expected": [1, 2]},
-      {"expression": {"username": ["sw", "A"]}, "expected": [1]},
-      {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
-      {"expression": {"Name": {"fOrmaTTed": ["co", "a"]}}, "expected": [1, 2, 4]},
-      {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]},
-      {"expression": {"date": ["gt", "2021-08-05"]}, "expected": [2, 3, 4]},
-      {"expression": {"date": ["lt", "2021-09"]}, "expected": [1, 3]},
-      {"expression": {"date": ["co", "2021-09"]}, "expected": [2, 4]},
-      {"expression": {"date": ["not", "co", "2021-09"]}, "expected": [1, 3]},
-      {"expression": {"date": ["gt", "2021-08-05T12:00:00Z"]}, "expected": [2, 4]},
-      {"expression": {"date": ["ge", "2021-09-08T23:02:28.986Z"]}, "expected": [2, 4]},
-      {"expression": {"date": ["le", "2021-09-08T23:02:28.986Z"]}, "expected": [1, 3, 4]}
-    ]
+    "targets": {
+      "comparators": [
+        {"expression": {"userName": ["eq", "AdeleV"]}, "expected": [1]},
+        {"expression": {"userName": ["ne", "AdeleV"]}, "expected": [2, 3, 4]},
+        {"expression": {"userName": ["co", "A"]}, "expected": [1, 2]},
+        {"expression": {"userName": ["sw", "A"]}, "expected": [1]},
+        {"expression": {"userName": ["ew", "A"]}, "expected": [2]},
+        {"expression": {"number": ["gt", 9]}, "expected": [3]},
+        {"expression": {"number": ["ge", 9]}, "expected": [3, 4]},
+        {"expression": {"number": ["lt", 6]}, "expected": [1]},
+        {"expression": {"number": ["le", 6]}, "expected": [1, 2]},
+        {"expression": {"userName": ["pr"]}, "expected": [1, 2, 3, 4]},
+        {"expression": {"exists": ["pr"]}, "expected": [1, 3]}
+      ],
+      "nesting": [
+        {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
+        {"expression": {"name": {"formatted": ["ew", "e"]}}, "expected": [1, 2]},
+        {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]},
+        {"expression": {"emails": {"type": ["eq", "work"]}}, "expected": [1, 3, 4]},
+        {"expression": {"emails": {"value": ["ew", "example.net"]}}, "expected": [1, 4]},
+        {"expression": {"emails": {"type": ["eq", "work"], "value": ["ew", "example.net"]}}, "expected": [1]}
+      ],
+      "cases": [
+        {"expression": {"username": ["sw", "A"]}, "expected": [1]},
+        {"expression": {"Name": {"fOrmaTTed": ["co", "a"]}}, "expected": [1, 2, 4]},
+        {"expression": {"Name": {"fOrmaTTed": ["co", "a"]}, "emaILs": {"VALUe": ["ew", "example.net"]}}, "expected": [1, 4]}
+      ],
+      "numbers": [
+        {"expression": {"number": ["eq", 6]}, "expected": [2]},
+        {"expression": {"number": ["eq", "6"]}, "expected": []},
+        {"expression": {"number": ["ne", 6]}, "expected": [1, 3, 4]},
+        {"expression": {"number": ["ne", "6"]}, "expected": [1, 2, 3, 4]},
+        {"expression": {"number": ["gt", 9]}, "expected": [3]},
+        {"expression": {"number": ["gt", "9"]}, "expected": []},
+        {"expression": {"number": ["ge", 9]}, "expected": [3, 4]},
+        {"expression": {"number": ["ge", "9"]}, "expected": []},
+        {"expression": {"number": ["lt", 6]}, "expected": [1]},
+        {"expression": {"number": ["lt", "6"]}, "expected": []},
+        {"expression": {"number": ["le", 6]}, "expected": [1, 2]},
+        {"expression": {"number": ["le", "6"]}, "expected": []}
+      ],
+      "dates": [
+        {"expression": {"date": ["gt", "2021-08-05"]}, "expected": [2, 3, 4]},
+        {"expression": {"date": ["lt", "2021-09"]}, "expected": [1, 3]},
+        {"expression": {"date": ["co", "2021-09"]}, "expected": [2, 4]},
+        {"expression": {"date": ["gt", "2021-08-05T12:00:00Z"]}, "expected": [2, 4]},
+        {"expression": {"date": ["ge", "2021-09-08T23:02:28.986Z"]}, "expected": [2, 4]},
+        {"expression": {"date": ["le", "2021-09-08T23:02:28.986Z"]}, "expected": [1, 3, 4]}
+      ],
+      "negations": [
+        {"expression": {"userName": ["not", "pr"]}, "expected": []},
+        {"expression": {"userName": ["not", "sw", "A"]}, "expected": [2, 3, 4]},
+        {"expression": {"exists": ["not", "pr"]}, "expected": [2, 4]},
+        {"expression": {"date": ["not", "co", "2021-09"]}, "expected": [1, 3]},
+        {"expression": {"date": ["not", "le", "2021-09-08T23:02:28.986Z"]}, "expected": [2]}
+      ]
+    }
   }
 }

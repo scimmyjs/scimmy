@@ -107,14 +107,25 @@ export let FilterSuite = (SCIMMY) => {
                     "Instance method 'match' not defined");
             });
             
-            it("should match values for a given filter expression", async () => {
-                let {match: {source, targets: suite}} = await fixtures;
-                
-                for (let fixture of suite) {
-                    assert.deepStrictEqual(new SCIMMY.Types.Filter(fixture.expression).match(source).map((v) => v.id), fixture.expected,
-                        `Filter type class failed to match expression fixture #${suite.indexOf(fixture)+1}`);
-                }
-            });
+            const targets = [
+                ["comparators", "handle matches for known comparison expressions"],
+                ["nesting", "handle matching of nested attributes"],
+                ["cases", "match attribute names in a case-insensitive manner"],
+                ["negations", "handle matches with negation expressions"],
+                ["numbers", "correctly compare numeric attribute values"],
+                ["dates", "correctly compare ISO 8601 datetime string attribute values"]
+            ];
+            
+            for (let [key, label] of targets) {
+                it(`should ${label}`, async () => {
+                    let {match: {source, targets: {[key]: suite}}} = await fixtures;
+                    
+                    for (let fixture of suite) {
+                        assert.deepStrictEqual(new SCIMMY.Types.Filter(fixture.expression).match(source).map((v) => v.id), fixture.expected,
+                            `Unexpected matches in '${key}' fixture #${suite.indexOf(fixture) + 1} with expression '${JSON.stringify(fixture.expression)}'`);
+                    }
+                });
+            }
         });
     });
 }
