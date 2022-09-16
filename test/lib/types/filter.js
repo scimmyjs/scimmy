@@ -113,7 +113,9 @@ export let FilterSuite = (SCIMMY) => {
                 ["cases", "match attribute names in a case-insensitive manner"],
                 ["negations", "handle matches with negation expressions"],
                 ["numbers", "correctly compare numeric attribute values"],
-                ["dates", "correctly compare ISO 8601 datetime string attribute values"]
+                ["dates", "correctly compare ISO 8601 datetime string attribute values"],
+                ["logicalAnd", "match values against all expressions in a group of logical 'and' expressions for a single attribute"],
+                ["logicalOr", "match values against any one expression in a group of logical 'or' expressions"]
             ];
             
             for (let [key, label] of targets) {

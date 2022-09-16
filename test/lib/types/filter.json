@@ -16,7 +16,9 @@
       {"source": "email.value ew \"@example.com\" and not userName eq \"Test\"", "target": [{"email": {"value": ["ew", "@example.com"]}, "userName": ["not", "eq", "Test"]}]},
       {"source": "email.type eq \"work\" or not userName ne \"Test\"", "target": [{"email": {"type": ["eq", "work"]}}, {"userName": ["not", "ne", "Test"]}]},
       {"source": "email.type eq \"work\" and not email.value ew \"@example.com\"", "target": [{"email": {"type": ["eq", "work"], "value": ["not", "ew", "@example.com"]}}]},
-      {"source": "name.formatted sw \"Bob\" and name.honoraryPrefix eq \"Mr\"", "target": [{"name": {"formatted": ["sw", "Bob"], "honoraryPrefix": ["eq", "Mr"]}}]}
+      {"source": "name.formatted sw \"Bob\" and name.honoraryPrefix eq \"Mr\"", "target": [{"name": {"formatted": ["sw", "Bob"], "honoraryPrefix": ["eq", "Mr"]}}]},
+      {"source": "quota gt 1.5 and quota lt 2", "target": [{"quota": [["gt", 1.5], ["lt", 2]]}]},
+      {"source": "userName sw \"A\" and userName ew \"Z\" and userName co \"m\"", "target": [{"userName": [["sw", "A"], ["ew", "Z"], ["co", "m"]]}]}
     ],
     "grouping": [
       {
@@ -173,7 +175,9 @@
         {"expression": {"number": ["lt", 6]}, "expected": [1]},
         {"expression": {"number": ["le", 6]}, "expected": [1, 2]},
         {"expression": {"userName": ["pr"]}, "expected": [1, 2, 3, 4]},
-        {"expression": {"exists": ["pr"]}, "expected": [1, 3]}
+        {"expression": {"exists": ["pr"]}, "expected": [1, 3]},
+        {"expression": {"userName": ["np"]}, "expected": []},
+        {"expression": {"exists": ["np"]}, "expected": [2, 4]}
       ],
       "nesting": [
         {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
@@ -216,6 +220,16 @@
         {"expression": {"exists": ["not", "pr"]}, "expected": [2, 4]},
         {"expression": {"date": ["not", "co", "2021-09"]}, "expected": [1, 3]},
         {"expression": {"date": ["not", "le", "2021-09-08T23:02:28.986Z"]}, "expected": [2]}
+      ],
+      "logicalAnd": [
+        {"expression": {"userName": [["co", "e"], ["ew", "V"]]}, "expected": [1]},
+        {"expression": {"userName": [["eq", "GradyA"], ["co", "e"], ["ew", "V"]]}, "expected": []},
+        {"expression": {"number": [["ge", 6], ["le", 9]]}, "expected": [2, 4]},
+        {"expression": {"date": [["ge", "2021-09"], ["lt", "2021-09-20"]]}, "expected": [4]}
+      ],
+      "logicalOr": [
+        {"expression": [{"name": {"formatted": ["co", "an"]}}, {"userName": ["co", "ad"]}], "expected": [1, 2, 4]},
+        {"expression": [{"date": ["gt", "2021-09-08"]}, {"userName": ["co", "a"]}], "expected": [2, 4]}
       ]
     }
   }

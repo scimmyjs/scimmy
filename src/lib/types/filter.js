@@ -77,65 +77,85 @@ export class Filter extends Array {
     match(values) {
         // Match against any of the filters in the set
         return values.filter(value => 
-            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, expression]) => {
+            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, expressions]) => {
                 let [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
                 const isActualDate = (actual instanceof Date || (new Date(actual).toString() !== "Invalid Date" && String(actual).match(isoDate)));
                 
                 if (Array.isArray(actual)) {
-                    return !!(new Filter(expression).match(actual).length);
-                } else if (!Array.isArray(expression)) {
-                    return !!(new Filter([expression]).match([actual]).length);
+                    // Handle multivalued attributes by diving into them
+                    return !!(new Filter(expressions).match(actual).length);
+                } else if (!Array.isArray(expressions)) {
+                    // Handle complex attributes by diving into them
+                    return !!(new Filter([expressions]).match([actual]).length);
                 } else {
-                    let negate = (expression[0] === "not"),
-                        [comparator, expected] = expression.slice(((+negate) - expression.length)),
-                        result;
+                    let result = null;
                     
-                    // Cast true and false strings to boolean values
-                    expected = (expected === "false" ? false : (expected === "true" ? true : expected));
-                    
-                    switch (comparator) {
-                        case "eq":
-                            result = (actual === expected);
-                            break;
+                    // Go through the list of expressions for the attribute to see if the value matches
+                    for (let expression of (expressions.every(Array.isArray) ? expressions : [expressions])) {
+                        // Bail out if the value didn't match the last expression
+                        if (result === false) break;
                         
-                        case "ne":
-                            result = (actual !== expected);
-                            break;
+                        // Check for negation and extract the comparator and expected values
+                        const negate = (expression[0] === "not");
+                        let [comparator, expected] = expression.slice(((+negate) - expression.length));
                         
-                        case "co":
-                            result = String(actual).includes(expected);
-                            break;
+                        // Cast true and false strings to boolean values
+                        expected = (expected === "false" ? false : (expected === "true" ? true : expected));
                         
-                        case "sw":
-                            result = String(actual).startsWith(expected);
-                            break;
+                        switch (comparator) {
+                            default:
+                                result = false;
+                                break;
+                            
+                            case "eq":
+                                result = (actual === expected);
+                                break;
+                            
+                            case "ne":
+                                result = (actual !== expected);
+                                break;
+                            
+                            case "co":
+                                result = String(actual).includes(expected);
+                                break;
+                            
+                            case "sw":
+                                result = String(actual).startsWith(expected);
+                                break;
+                            
+                            case "ew":
+                                result = String(actual).endsWith(expected);
+                                break;
+                            
+                            case "gt":
+                                result = (isActualDate ? (new Date(actual) > new Date(expected)) : (typeof actual === typeof expected && actual > expected));
+                                break;
+                            
+                            case "lt":
+                                result = (isActualDate ? (new Date(actual) < new Date(expected)) : (typeof actual === typeof expected && actual < expected));
+                                break;
+                            
+                            case "ge":
+                                result = (isActualDate ? (new Date(actual) >= new Date(expected)) : (typeof actual === typeof expected && actual >= expected));
+                                break;
+                            
+                            case "le":
+                                result = (isActualDate ? (new Date(actual) <= new Date(expected)) : (typeof actual === typeof expected && actual <= expected));
+                                break;
+                            
+                            case "pr":
+                                result = actual !== undefined;
+                                break;
+                            
+                            case "np":
+                                result = actual === undefined;
+                                break;
+                        }
                         
-                        case "ew":
-                            result = String(actual).endsWith(expected);
-                            break;
-                        
-                        case "gt":
-                            result = (isActualDate ? (new Date(actual) > new Date(expected)) : (typeof actual === typeof expected && actual > expected));
-                            break;
-                        
-                        case "lt":
-                            result = (isActualDate ? (new Date(actual) < new Date(expected)) : (typeof actual === typeof expected && actual < expected));
-                            break;
-                        
-                        case "ge":
-                            result = (isActualDate ? (new Date(actual) >= new Date(expected)) : (typeof actual === typeof expected && actual >= expected));
-                            break;
-                        
-                        case "le":
-                            result = (isActualDate ? (new Date(actual) <= new Date(expected)) : (typeof actual === typeof expected && actual <= expected));
-                            break;
-                        
-                        case "pr":
-                            result = actual !== undefined;
-                            break;
+                        result = (negate ? !result : result);
                     }
                     
-                    return (negate ? !result : result);
+                    return result;
                 }
             })))
         );
@@ -252,7 +272,10 @@ export class Filter extends Array {
                 else {
                     // Unwrap string and null values, and store the translated expression
                     value = (value === "null" ? null : (String(value).match(/^["].*["]$/) ? value.substring(1, value.length - 1) : value));
-                    target[name] = [negative, comparator, value].filter(v => v !== undefined);
+                    const expression = [negative, comparator, value].filter(v => v !== undefined);
+                    
+                    // Either store the single expression, or convert to array if attribute already has an expression defined
+                    target[name] = (!Array.isArray(target[name]) ? expression : [...(target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
                 }
             }
         }
