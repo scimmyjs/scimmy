@@ -18,7 +18,7 @@ const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/g;
 
 /**
- * SCIM Patch Operation Message Type
+ * SCIM Patch Operation Message
  * @alias SCIMMY.Messages.PatchOp
  * @summary
  * *   Parses [PatchOp messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2), making sure all specified "Operations" are valid and conform with the SCIM protocol.
@@ -33,8 +33,8 @@ export class PatchOp {
     static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
     
     /**
-     * Whether or not the PatchOp message has been fully formed
-     * Fully formed inbound requests will be considered to have been dispatched
+     * Whether the PatchOp message has been fully formed.
+     * Fully formed inbound requests will be considered to have been dispatched.
      * @type {Boolean}
      * @private
      */

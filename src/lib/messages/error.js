@@ -31,7 +31,7 @@ const validScimTypes = [
 const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: ["tooMany"]};
 
 /**
- * SCIM Error Message Type
+ * SCIM Error Message
  * @alias SCIMMY.Messages.Error
  * @summary
  * *   Formats exceptions to conform to the [HTTP Status and Error Response Handling](https://datatracker.ietf.org/doc/html/rfc7644#section-3.12) section of the SCIM protocol, ensuring HTTP status codes and scimType error detail keyword pairs are valid.

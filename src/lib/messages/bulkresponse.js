@@ -1,5 +1,5 @@
 /**
- * SCIM Bulk Response Message Type
+ * SCIM Bulk Response Message
  * @alias SCIMMY.Messages.BulkResponse
  * @since 1.0.0
  * @summary
@@ -32,7 +32,7 @@ export class BulkResponse {
         if (!outbound && !operations.length)
             throw new TypeError("BulkResponse request body must contain 'Operations' attribute with at least one operation");
         
-        // All seems ok, prepare the BulkResponse
+        // All seems OK, prepare the BulkResponse
         this.schemas = [BulkResponse.#id];
         this.Operations = [...operations];
     }

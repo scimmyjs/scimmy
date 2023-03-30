@@ -16,7 +16,7 @@ import Resources from "../resources.js";
 const validMethods = ["POST", "PUT", "PATCH", "DELETE"];
 
 /**
- * SCIM Bulk Request Message Type
+ * SCIM Bulk Request Message
  * @alias SCIMMY.Messages.BulkRequest
  * @since 1.0.0
  * @summary
@@ -32,7 +32,7 @@ export class BulkRequest {
     static #id = "urn:ietf:params:scim:api:messages:2.0:BulkRequest";
     
     /**
-     * Whether or not the incoming BulkRequest has been applied 
+     * Whether the incoming BulkRequest has been applied 
      * @type {Boolean}
      * @private
      */

@@ -3,7 +3,7 @@ import Types from "../types.js";
 import Resources from "../resources.js";
 
 /**
- * SCIM Search Request Message Type
+ * SCIM Search Request Message
  * @alias SCIMMY.Messages.SearchRequest
  * @since 1.0.0
  * @summary
