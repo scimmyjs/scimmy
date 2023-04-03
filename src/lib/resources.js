@@ -7,7 +7,7 @@ import Types from "./types.js";
 import Schemas from "./schemas.js";
 
 /**
- * SCIM Resources Container Class
+ * SCIMMY Resources Container Class
  * @namespace SCIMMY.Resources
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Resources`, that is used to declare resource types implemented by a SCIM Service Provider.

@@ -6,7 +6,7 @@ import {ResourceType} from "./schemas/resourcetype.js";
 import {ServiceProviderConfig} from "./schemas/spconfig.js";
 
 /**
- * SCIM Schemas Container Class
+ * SCIMMY Schemas Container Class
  * @namespace SCIMMY.Schemas
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Schemas`, that is used to declare schema definitions implemented by a SCIM Service Provider.

@@ -5,7 +5,7 @@ const catchAll = () => {throw new TypeError("SCIM Configuration can only be chan
 const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: catchAll};
 
 /**
- * SCIM Service Provider Configuration Container Class
+ * SCIMMY Service Provider Configuration Class
  * @namespace SCIMMY.Config
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Config`, that acts as a central store for a SCIM Service Provider's configuration.  
