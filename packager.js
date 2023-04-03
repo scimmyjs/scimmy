@@ -40,7 +40,7 @@ export class Packager {
     
     /**
      * Create a step function to consistently log action's results
-     * @param {Boolean} verbose - whether or not to show extended info about action's results
+     * @param {Boolean} verbose - whether to show extended info about action's results
      * @returns {Function} step function
      */
     static action(verbose = true) {
@@ -103,7 +103,7 @@ export class Packager {
     
     /**
      * Build the SCIMMY library
-     * @param {Boolean} [verbose=false] - whether or not to show extended output from each step of the build
+     * @param {Boolean} [verbose=false] - whether to show extended output from each step of the build
      * @returns {Promise<void>} a promise that resolves when the build has completed
      */
     static async build(verbose = false) {
@@ -186,10 +186,12 @@ export class Packager {
         const output = [];
         const config = {
             exports: "auto",
-            preferConst: true,
+            manualChunks: chunks,
             minifyInternalExports: false,
             hoistTransitiveImports: false,
-            manualChunks: chunks
+            generatedCode: {
+                constBindings: true
+            }
         };
         
         // Prepare RollupJS bundle with supplied entry point
