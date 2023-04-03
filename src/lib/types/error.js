@@ -1,5 +1,5 @@
 /**
- * SCIM Error
+ * SCIM Error Type
  * @alias SCIMMY.Types.Error
  * @see SCIMMY.Messages.Error
  * @summary

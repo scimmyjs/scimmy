@@ -2,7 +2,7 @@ import {Attribute} from "./attribute.js";
 import {Filter} from "./filter.js";
 
 /**
- * SCIM Schema Definition
+ * SCIM Schema Definition Type
  * @alias SCIMMY.Types.SchemaDefinition
  * @summary
  * *   Defines an underlying SCIM schema definition, containing the schema's URN namespace, friendly name, description, and collection of attributes that make up the schema.
@@ -126,7 +126,7 @@ export class SchemaDefinition {
     /**
      * Extend a schema definition instance by mixing in other schemas or attributes
      * @param {SCIMMY.Types.SchemaDefinition|Array<SCIMMY.Types.Attribute>} extension - the schema extension or collection of attributes to register
-     * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
+     * @param {Boolean} [required=false] - if the extension is a schema, whether the extension is required
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
     extend(extension = [], required) {

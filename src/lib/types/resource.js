@@ -3,7 +3,7 @@ import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
- * SCIM Resource
+ * SCIM Resource Type
  * @alias SCIMMY.Types.Resource
  * @summary
  * *   Extendable class representing a SCIM Resource Type, which acts as an interface between a SCIM resource type schema, and an app's internal data model.
@@ -64,7 +64,7 @@ export class Resource {
     /**
      * Register an extension to the resource's core schema
      * @param {SCIMMY.Types.Schema} extension - the schema extension to register
-     * @param {Boolean} required - whether or not the extension is required
+     * @param {Boolean} required - whether the extension is required
      * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
@@ -147,7 +147,7 @@ export class Resource {
          * @property {String} description - human-readable description of the resource
          * @property {Object} [schemaExtensions] - schema extensions that augment the resource
          * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
-         * @property {Boolean} schemaExtensions[].required - whether or not resource instances must include the schema extension
+         * @property {Boolean} schemaExtensions[].required - whether resource instances must include the schema extension
          */
         return {
             id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,

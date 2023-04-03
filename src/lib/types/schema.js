@@ -3,7 +3,7 @@ import {Attribute} from "./attribute.js";
 import {SCIMError} from "./error.js";
 
 /**
- * SCIM Schema
+ * SCIM Schema Type
  * @alias SCIMMY.Types.Schema
  * @summary
  * *   Extendable class which provides the ability to construct resource instances with automated validation of conformity to a resource's schema definition.
@@ -30,7 +30,7 @@ export class Schema {
     /**
      * Extend a schema by mixing in other schemas or attributes
      * @param {SCIMMY.Types.Schema|Array<SCIMMY.Types.Attribute>} extension - the schema extensions or collection of attributes to register
-     * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
+     * @param {Boolean} [required=false] - if the extension is a schema, whether the extension is required
      */
     static extend(extension, required = false) {
         this.definition.extend((extension.prototype instanceof Schema ? extension.definition : extension), required);

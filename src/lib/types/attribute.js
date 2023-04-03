@@ -10,7 +10,7 @@ const BaseConfiguration = {
      * @property {String} [description=""] - a human-readable description of the attribute
      * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
      * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
-     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case sensitive
+     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case-sensitive
      * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
      * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
      * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
@@ -46,7 +46,7 @@ const BaseConfiguration = {
                 else if (value !== undefined && !["string", "boolean"].includes(typeof value))
                     throw new TypeError(`Attribute '${label}' value must be either string or boolean in ${errorSuffix}`);
             }
-        
+            
             // Set the value!
             return (target[key] = value) || true;
         }
@@ -287,7 +287,7 @@ const validate = {
 }
 
 /**
- * SCIM Attribute
+ * SCIM Attribute Type
  * @alias SCIMMY.Types.Attribute
  * @summary
  * *   Defines a SCIM schema attribute, and is used to ensure a given resource's value conforms to the attribute definition.
@@ -377,11 +377,11 @@ export class Attribute {
          * @property {String[]} [referenceTypes] - specifies a SCIM resourceType that a reference attribute may refer to
          * @property {Boolean} multiValued - boolean value indicating an attribute's plurality
          * @property {String} description - a human-readable description of the attribute
-         * @property {Boolean} required - boolean value indicating whether or not the attribute is required
+         * @property {Boolean} required - boolean value indicating whether the attribute is required
          * @property {SCIMMY.Types.Attribute~AttributeDefinition[]} [subAttributes] - defines the sub-attributes of a complex attribute
-         * @property {Boolean} [caseExact] - boolean value indicating whether or not a string attribute is case sensitive
+         * @property {Boolean} [caseExact] - boolean value indicating whether a string attribute is case-sensitive
          * @property {String[]} [canonicalValues] - collection of canonical values
-         * @property {String} mutability - indicates whether or not an attribute is modifiable
+         * @property {String} mutability - indicates whether an attribute is modifiable
          * @property {String} returned - indicates when an attribute is returned in a response
          * @property {String} [uniqueness] - indicates how unique a value must be
          */
