@@ -67,14 +67,14 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             assert.strictEqual((new SCIMMY.Types.SchemaDefinition(...Object.values(params)))?.id, params.id,
                 "SchemaDefinition did not include instance member 'id'");
         });
-    
+        
         it("should have instance member 'description'", () => {
             assert.ok("description" in (new SCIMMY.Types.SchemaDefinition(...Object.values(params))),
                 "SchemaDefinition did not include instance member 'description'");
         });
         
         it("should have instance member 'attributes' that is an array", () => {
-            let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+            const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
             
             assert.ok("attributes" in definition,
                 "SchemaDefinition did not include instance member 'attributes'");
@@ -89,10 +89,10 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should produce valid SCIM schema definition objects", async () => {
-                let {describe: suite} = await fixtures;
+                const {describe: suite} = await fixtures;
                 
                 for (let fixture of suite) {
-                    let definition = new SCIMMY.Types.SchemaDefinition(
+                    const definition = new SCIMMY.Types.SchemaDefinition(
                         fixture.source.name, fixture.source.id, fixture.source.description, 
                         fixture.source.attributes.map((a) => instantiateFromFixture(SCIMMY, a))
                     );
@@ -110,8 +110,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should find attributes by name", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute("id");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute("id");
                 
                 assert.ok(attribute !== undefined, 
                     "Instance method 'attribute' did not return anything");
@@ -128,16 +128,16 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should ignore case of 'name' argument when finding attributes", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute("id");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute("id");
                 
                 assert.strictEqual(definition.attribute("ID"), attribute,
                     "Instance method 'attribute' did not ignore case of 'name' argument when finding attributes");
             });
             
             it("should find sub-attributes by name", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute("meta.resourceType");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute("meta.resourceType");
                 
                 assert.ok(attribute !== undefined,
                     "Instance method 'attribute' did not return anything");
@@ -148,7 +148,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect sub-attributes to exist", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.attribute("id.test"),
                     {name: "TypeError", message: `Attribute 'id' of schema '${params.id}' is not of type 'complex' and does not define any subAttributes`},
@@ -159,16 +159,16 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should ignore case of 'name' argument when finding sub-attributes", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute("meta.resourceType");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute("meta.resourceType");
                 
                 assert.strictEqual(definition.attribute("Meta.ResourceType"), attribute,
                     "Instance method 'attribute' did not ignore case of 'name' argument when finding sub-attributes");
             });
             
             it("should find namespaced attributes", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute(`${params.id}:id`);
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute(`${params.id}:id`);
                 
                 assert.ok(attribute !== undefined,
                     "Instance method 'attribute' did not return anything");
@@ -179,7 +179,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect namespaced attributes to exist", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.attribute(`${params.id}:test`),
                     {name: "TypeError", message: `Schema definition '${params.id}' does not declare attribute 'test'`},
@@ -196,8 +196,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should ignore case of 'name' argument when finding namespaced attributes", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    attribute = definition.attribute(`${params.id}:id`);
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const attribute = definition.attribute(`${params.id}:id`);
                 
                 assert.strictEqual(definition.attribute(String(`${params.id}:id`).toUpperCase()), attribute,
                     "Instance method 'attribute' did not ignore case of 'name' argument when finding namespaced attributes");
@@ -211,7 +211,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect 'extension' argument to be an instance of SchemaDefinition or collection of Attribute instances", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.extend({}),
                     {name: "TypeError", message: "Expected 'extension' to be a SchemaDefinition or collection of Attribute instances"},
@@ -225,7 +225,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect all attribute extensions to have unique names", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.extend(new SCIMMY.Types.Attribute("string", "id")),
                     {name: "TypeError", message: `Schema definition '${params.id}' already declares attribute 'id'`},
@@ -233,9 +233,9 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should do nothing when Attribute instance extensions are already included in the schema definition", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    extension = new SCIMMY.Types.Attribute("string", "test"),
-                    attribute = definition.attribute("id");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const extension = new SCIMMY.Types.Attribute("string", "test");
+                const attribute = definition.attribute("id");
                 
                 assert.strictEqual(definition.extend([attribute, extension]).attribute("id"), attribute,
                     "Instance method 'extend' did not ignore already included Attribute instance extension");
@@ -244,8 +244,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect all schema definition extensions to have unique IDs", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    extension = new SCIMMY.Types.SchemaDefinition("ExtensionTest", SCIMMY.Schemas.User.definition.id);
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const extension = new SCIMMY.Types.SchemaDefinition("ExtensionTest", SCIMMY.Schemas.User.definition.id);
                 
                 assert.throws(() => definition.extend(SCIMMY.Schemas.User.definition).extend(extension),
                     {name: "TypeError", message: `Schema definition '${params.id}' already declares extension '${SCIMMY.Schemas.User.definition.id}'`},
@@ -253,8 +253,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should do nothing when SchemaDefinition instances are already declared as extensions to the schema definition", () => {
-                let extension = new SCIMMY.Types.SchemaDefinition(`${params.name}Extension`, `${params.id}Extension`),
-                    definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)).extend(extension);
+                const extension = new SCIMMY.Types.SchemaDefinition(`${params.name}Extension`, `${params.id}Extension`);
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)).extend(extension);
                 
                 assert.strictEqual(Object.getPrototypeOf(definition.extend(extension).attribute(extension.id)), extension,
                     "Instance method 'extend' did not ignore already declared SchemaDefinition extension");
@@ -267,46 +267,46 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
                     "Instance method 'truncate' not defined");
             });
             
-            it("should do nothing without arguments", async () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    expected = JSON.parse(JSON.stringify(definition.describe())),
-                    actual = JSON.parse(JSON.stringify(definition.truncate().describe()));
+            it("should do nothing without arguments", () => {
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const expected = JSON.parse(JSON.stringify(definition.describe()));
+                const actual = JSON.parse(JSON.stringify(definition.truncate().describe()));
                 
                 assert.deepStrictEqual(actual, expected,
                     "Instance method 'truncate' modified attributes without arguments");
             });
             
             it("should do nothing when definition does not directly include Attribute instances in 'attributes' argument", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    expected = JSON.parse(JSON.stringify(definition.describe())),
-                    attribute = new SCIMMY.Types.Attribute("string", "id"),
-                    actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const expected = JSON.parse(JSON.stringify(definition.describe()));
+                const attribute = new SCIMMY.Types.Attribute("string", "id");
+                const actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
                 
                 assert.deepStrictEqual(actual, expected,
                     "Instance method 'truncate' did not do nothing when foreign Attribute instance supplied in 'attributes' parameter");
             });
             
             it("should remove Attribute instances directly included in the definition", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test"),
-                    definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "", [attribute]),
-                    expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []})),
-                    actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
+                const attribute = new SCIMMY.Types.Attribute("string", "test");
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "", [attribute]);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
                 
                 assert.deepStrictEqual(actual, expected,
                     "Instance method 'truncate' did not remove Attribute instances directly included in the definition's attributes");
             });
             
             it("should remove named attributes directly included in the definition", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "", [new SCIMMY.Types.Attribute("string", "test")]),
-                    expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []})),
-                    actual = JSON.parse(JSON.stringify(definition.truncate("test").describe()));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "", [new SCIMMY.Types.Attribute("string", "test")]);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate("test").describe()));
                 
                 assert.deepStrictEqual(actual, expected,
                     "Instance method 'truncate' did not remove named attribute directly included in the definition");
             });
             
             it("should expect named attributes and sub-attributes to exist", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.truncate("test"),
                     {name: "TypeError", message: `Schema definition '${params.id}' does not declare attribute 'test'`},
@@ -327,7 +327,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect 'data' argument to be an object", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
                 
                 assert.throws(() => definition.coerce(),
                     {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
@@ -341,8 +341,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect common attributes to be defined on coerced result", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params)),
-                    result = definition.coerce({});
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params));
+                const result = definition.coerce({});
                 
                 assert.ok(Array.isArray(result.schemas) && result.schemas.includes(params.id),
                     "Instance method 'coerce' did not set common attribute 'schemas' on coerced result");
@@ -351,7 +351,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect coerce to be called on directly included attributes", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
                     new SCIMMY.Types.Attribute("string", "test", {required: true})
                 ]);
                 
@@ -364,7 +364,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect namespaced attributes or extensions to be coerced", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params))
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params))
                     .extend(SCIMMY.Schemas.EnterpriseUser.definition, true);
                 
                 assert.throws(() => definition.coerce({}),
@@ -383,10 +383,10 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect the supplied filter to be applied to coerced result", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
                         new SCIMMY.Types.Attribute("string", "testName"), new SCIMMY.Types.Attribute("string", "testValue")
-                    ]),
-                    result = definition.coerce({testName: "a string", testValue: "another string"}, undefined, undefined, new SCIMMY.Types.Filter("testName pr"));
+                    ]);
+                const result = definition.coerce({testName: "a string", testValue: "another string"}, undefined, undefined, new SCIMMY.Types.Filter("testName pr"));
                 
                 assert.ok(Object.keys(result).includes("testName"),
                     "Instance method 'coerce' did not include attributes for filter 'testName pr'");
@@ -395,17 +395,17 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect namespaced attributes in the supplied filter to be applied to coerced result", () => {
-                let definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
-                        new SCIMMY.Types.Attribute("string", "employeeNumber")]).extend(SCIMMY.Schemas.EnterpriseUser.definition),
-                    result = definition.coerce(
-                        {
-                            employeeNumber: "Test",
-                            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber": "1234",
-                            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter": "Test",
-                        },
-                        undefined, undefined,
-                        new SCIMMY.Types.Filter("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber pr")
-                    );
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema",[new SCIMMY.Types.Attribute("string", "employeeNumber")])
+                    .extend(SCIMMY.Schemas.EnterpriseUser.definition);
+                const result = definition.coerce(
+                    {
+                        employeeNumber: "Test",
+                        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber": "1234",
+                        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter": "Test",
+                    },
+                    undefined, undefined,
+                    new SCIMMY.Types.Filter("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber pr")
+                );
                 
                 assert.strictEqual(result["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].employeeNumber, "1234",
                     "Instance method 'coerce' did not include namespaced attributes for filter");

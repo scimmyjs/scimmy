@@ -78,10 +78,10 @@ export class SchemaDefinition {
     attribute(name) {
         if (name.toLowerCase().startsWith("urn:")) {
             // Handle namespaced attributes by looking for a matching extension
-            let extension = (this.attributes.find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))
-                ?? (name.toLowerCase().startsWith(`${this.id.toLowerCase()}:`) || name.toLowerCase() === this.id.toLowerCase() ? this : false)),
-                // Get the actual attribute name minus extension ID
-                attribute = (extension ? name.substring(extension.id.length+1) : "");
+            const extension = (this.attributes.find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))
+                ?? (name.toLowerCase().startsWith(`${this.id.toLowerCase()}:`) || name.toLowerCase() === this.id.toLowerCase() ? this : false));
+            // Get the actual attribute name minus extension ID
+            const attribute = (extension ? name.substring(extension.id.length+1) : "");
             
             // Bail out if no schema extension found with matching ID 
             if (!extension)
@@ -91,11 +91,11 @@ export class SchemaDefinition {
             return (!attribute.length ? extension : extension.attribute(attribute));
         } else {
             // Break name into path parts in case of search for sub-attributes
-            let path = name.split("."),
-                // Find the first attribute in the path
-                target = path.shift(),
-                attribute = this.attributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target.toLowerCase()),
-                spent = [target];
+            const path = name.split(".");
+            const spent = [path.shift()];
+            // Find the first attribute in the path
+            let [target] = spent,
+                attribute = this.attributes.find(a => a instanceof Attribute && a.name.toLowerCase() === target.toLowerCase());
             
             // If nothing was found, the attribute isn't declared by the schema definition
             if (attribute === undefined)
@@ -130,8 +130,8 @@ export class SchemaDefinition {
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
     extend(extension = [], required) {
-        let attribs = this.attributes.map(a => a instanceof SchemaDefinition ? Object.getPrototypeOf(a) : a),
-            extensions = (Array.isArray(extension) ? extension : [extension]);
+        const attribs = this.attributes.map(a => a instanceof SchemaDefinition ? Object.getPrototypeOf(a) : a);
+        const extensions = (Array.isArray(extension) ? extension : [extension]);
         
         // If the extension is a schema definition, add it to the schema definition instance
         if (extension instanceof SchemaDefinition) {
@@ -151,7 +151,7 @@ export class SchemaDefinition {
             }
             
             // Go through the schema extension definition and directly register any nested schema definitions
-            let surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
+            const surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
             for (let definition of surplusSchemas) this.extend(definition);
         }
         // If every extension is an attribute instance, add them to the schema definition
@@ -183,11 +183,11 @@ export class SchemaDefinition {
         for (let attrib of (Array.isArray(attributes) ? attributes : [attributes])) {
             if (this.attributes.includes(attrib)) {
                 // Remove a found attribute from the schema definition
-                let index = this.attributes.indexOf(attrib);
+                const index = this.attributes.indexOf(attrib);
                 if (index >= 0) this.attributes.splice(index, 1);
             } else if (typeof attrib === "string") {
                 // Look for the target attribute to remove, which throws a TypeError if not found
-                let target = this.attribute(attrib);
+                const target = this.attribute(attrib);
                 
                 // Either try truncate again with the target attribute
                 if (!attrib.includes(".")) this.truncate(target);
@@ -212,71 +212,72 @@ export class SchemaDefinition {
         if (data === undefined || Array.isArray(data) || Object(data) !== data)
             throw new TypeError("Expected 'data' parameter to be an object in SchemaDefinition instance");
         
-        let filter = (filters ?? []).slice(0).shift(),
-            target = {},
-            // Compile a list of schema IDs to include in the resource
-            schemas = [...new Set([
-                this.id,
-                ...(this.attributes.filter(a => a instanceof SchemaDefinition)
-                    .map(s => s.id).filter(id => !!data[id])),
-                ...(Array.isArray(data.schemas) ? data.schemas : [])
-            ])],
-            // Add schema IDs, and schema's name as resource type to meta attribute
-            source = {
-                // Cast all key names to lower case to eliminate case sensitivity....
-                ...(Object.keys(data).reduce((res, key) => (((res[key.toLowerCase()] = data[key]) || true) && res), {})),
-                schemas: schemas, meta: {
-                    ...(data?.meta ?? {}), resourceType: this.name,
-                    ...(typeof basepath === "string" ? {location: `${basepath}${!!data.id ? `/${data.id}` : ""}`} : {})
-                }
-            };
+        // Get the filter and coercion target ready
+        const filter = (filters ?? []).slice(0).shift();
+        const target = {};
+        // Compile a list of schema IDs to include in the resource
+        const schemas = [...new Set([
+            this.id,
+            ...(this.attributes.filter(a => a instanceof SchemaDefinition).map(s => s.id)
+                .filter(id => !!data[id] || Object.keys(data).some(d => d.startsWith(`${id}:`)))),
+            ...(Array.isArray(data.schemas) ? data.schemas : [])
+        ])];
+        // Add schema IDs, and schema's name as resource type to meta attribute
+        const source = {
+            // Cast all key names to lower case to eliminate case sensitivity....
+            ...(Object.keys(data).reduce((res, key) => Object.assign(res, {[key.toLowerCase()]: data[key]}), {})),
+            schemas, meta: {
+                ...(data?.meta ?? {}), resourceType: this.name,
+                ...(typeof basepath === "string" ? {location: `${basepath}${!!data.id ? `/${data.id}` : ""}`} : {})
+            }
+        };
         
         // Go through all attributes and coerce them
         for (let attribute of this.attributes) {
             if (attribute instanceof Attribute) {
-                let {name} = attribute,
-                    // Evaluate the coerced value
-                    value = attribute.coerce(source[name.toLowerCase()], direction);
+                // Evaluate the coerced value
+                const {name} = attribute;
+                const value = attribute.coerce(source[name.toLowerCase()], direction);
                 
                 // If it's defined, add it to the target
                 if (value !== undefined) target[name] = value;
             } else if (attribute instanceof SchemaDefinition) {
-                let {id: name, required} = attribute,
-                    // Get any values from the source that begin with the extension ID
-                    namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name.toLowerCase()}:`))
-                        // Get the actual attribute name and value
-                        .map(k => [k.replace(`${name.toLowerCase()}:`, ""), source[k]])
-                        .reduce((res = {}, [name, value]) => {
-                            // Get attribute path parts and actual value
-                            let parts = name.toLowerCase().split("."),
-                                parent = res,
-                                target = {[parts.pop()]: value};
-                            
-                            // Traverse as deep as necessary
-                            while (parts.length > 0) {
-                                let path = parts.shift();
-                                parent = (parent[path] = parent[path] ?? {});
-                            }
-                            
-                            // Assign and return
-                            Object.assign(parent, target);
-                            return res;
-                        }, undefined),
-                    // Mix the namespaced attribute values in with the extension value
-                    mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
-                        // Cast all key names to lower case to eliminate case sensitivity....
-                        t = (Object.keys(t).reduce((res, key) => (((res[key.toLowerCase()] = t[key]) || true) && res), {}));
+                const {id: name, required} = attribute;
+                // Get any values from the source that begin with the extension ID
+                const namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name.toLowerCase()}:`))
+                    // Get the actual attribute name and value
+                    .map(k => [k.replace(`${name.toLowerCase()}:`, ""), source[k]])
+                    .reduce((res = {}, [name, value]) => {
+                        // Get attribute path parts and actual value
+                        const parts = name.toLowerCase().split(".");
+                        const target = {[parts.pop()]: value};
+                        let parent = res;
                         
-                        // Merge all properties from s into t, joining arrays and objects
-                        for (let skey of Object.keys(s)) {
-                            let tkey = skey.toLowerCase();
-                            if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
-                            else if (s[skey] !== Object(s[skey])) t[tkey] = s[skey];
-                            else t[tkey] = merge(t[tkey] ?? {}, s[skey]);
+                        // Traverse as deep as necessary
+                        while (parts.length > 0) {
+                            const path = parts.shift();
+                            parent = (parent[path] = parent[path] ?? {});
                         }
                         
-                        return t;
-                    }, {});
+                        // Assign and return
+                        Object.assign(parent, target);
+                        return res;
+                    }, undefined);
+                // Mix the namespaced attribute values in with the extension value
+                const mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
+                    // Cast all key names to lower case to eliminate case sensitivity....
+                    t = (Object.keys(t).reduce((res, key) => Object.assign(res, {[key.toLowerCase()]: t[key]}), {}));
+                    
+                    // Merge all properties from s into t, joining arrays and objects
+                    for (let skey of Object.keys(s)) {
+                        const tkey = skey.toLowerCase();
+                        if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
+                        else if (s[skey] !== Object(s[skey])) t[tkey] = s[skey];
+                        else t[tkey] = merge(t[tkey] ?? {}, s[skey]);
+                    }
+                    
+                    return t;
+                }, {});
                 
                 // Attempt to coerce the schema extension
                 if (!!required && !Object.keys(mixedSource).length) {
@@ -318,7 +319,7 @@ export class SchemaDefinition {
             // Check for any negative filters
             for (let key in {...filter}) {
                 // Find the attribute by lower case name
-                let {name, config: {returned} = {}} = attributes.find(a => a.name.toLowerCase() === key.toLowerCase()) ?? {};
+                const {name, config: {returned} = {}} = attributes.find(a => a.name.toLowerCase() === key.toLowerCase()) ?? {};
                 
                 if (returned !== "always" && Array.isArray(filter[key]) && filter[key][0] === "np") {
                     // Remove the property from the result, and remove the spent filter
@@ -331,7 +332,7 @@ export class SchemaDefinition {
             if (!Object.keys(filter).length) return data;
             else {
                 // Prepare resultant value storage
-                let target = {}
+                const target = {}
                 
                 // Go through every value in the data and filter attributes
                 for (let key in data) {
@@ -353,7 +354,7 @@ export class SchemaDefinition {
                                 target[key] = data[key];
                             // Otherwise if the filter is defined and the attribute is complex, evaluate it
                             else if (key in filter && type === "complex") {
-                                let value = SchemaDefinition.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
+                                const value = SchemaDefinition.#filter(data[key], filter[key], multiValued ? [] : subAttributes);
                                 
                                 // Only set the value if it isn't empty
                                 if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
