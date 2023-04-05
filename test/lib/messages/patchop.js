@@ -84,7 +84,7 @@ export let PatchOpSuite = (SCIMMY) => {
                 ]});
             } catch (ex) {
                 if (ex instanceof SCIMMY.Types.Error && ex.message.startsWith("Invalid operation")) {
-                    let op = ex.message.replace("Invalid operation '").split("'").unshift();
+                    const op = ex.message.replace("Invalid operation '").split("'").unshift();
                     assert.fail(`PatchOp did not ignore case of 'op' value '${op}' in 'Operations' attribute of 'request' parameter`);
                 }
             }
@@ -105,7 +105,7 @@ export let PatchOpSuite = (SCIMMY) => {
         });
         
         it("should expect all patch op 'path' values to be strings in 'Operations' attribute of 'request' parameter", () => {
-            let operations = [
+            const operations = [
                 {op: "remove", path: 1},
                 {op: "remove", path: true},
                 {op: "add", value: 1, path: false}
@@ -131,12 +131,20 @@ export let PatchOpSuite = (SCIMMY) => {
                     "PatchOp did not expect message to be dispatched before proceeding with 'apply' method");
             });
             
-            it("should expect 'resource' parameter to be an instance of SCIMMY.Types.Schema", async () => {
+            it("should expect 'resource' parameter to be defined", async () => {
                 await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: false}]}).apply(),
                     {name: "TypeError", message: "Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method"},
-                    "PatchOp did not verify 'resource' parameter type before proceeding with 'apply' method");
+                    "PatchOp did not expect 'resource' parameter to be defined in 'apply' method");
             });
-    
+            
+            it("should expect 'resource' parameter to be an instance of SCIMMY.Types.Schema", async () => {
+                for (let value of [{}, new Date()]) {
+                    await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: false}]}).apply(value),
+                        {name: "TypeError", message: "Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method"},
+                        "PatchOp did not verify 'resource' parameter type before proceeding with 'apply' method");
+                }
+            });
+            
             for (let op of ["add", "remove", "replace"]) {
                 it(`should support simple and complex '${op}' operations`, async () => {
                     const {inbound: {[op]: suite}} = await fixtures;
@@ -160,15 +168,37 @@ export let PatchOpSuite = (SCIMMY) => {
                             `PatchOp 'apply' did not support '${op}' op specified in inbound fixture ${suite.indexOf(fixture) + 1}`);
                     }
                 });
+                
+                if (["add", "replace"].includes(op)) {
+                    it(`should expect 'value' to be an object when 'path' is not specified in '${op}' operations`, async () => {
+                        await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op, value: false}]})
+                                .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"})),
+                            {name: "SCIMError", status: 400, scimType: "invalidValue",
+                                message: `Attribute 'value' must be an object when 'path' is empty for '${op}' op of operation 1 in PatchOp request body`},
+                            `PatchOp did not expect 'value' to be an object when 'path' was not specified in '${op}' operations`);
+                    });
+                }
+                
+                it(`should respect attribute mutability in '${op}' operations`, async () => {
+                    const Operations = [{op, path: "id", ...(op === "add" ? {value: "asdf"} : {})}];
+                    
+                    await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations})
+                            .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"})),
+                        {name: "SCIMError", status: 400, scimType: "invalidValue",
+                            message: `Attribute 'id' already defined and is not mutable for '${op}' op of operation 1 in PatchOp request body`},
+                        `PatchOp did not respect attribute mutability in '${op}' operations`);
+                });
+                
+                it(`should not remove required attributes in '${op}' operations`, async () => {
+                    const Operations = [{op, path: "userName", ...(op === "add" ? {value: null} : {})}];
+                    
+                    await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations})
+                            .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"})),
+                        {name: "SCIMError", status: 400, scimType: "invalidValue",
+                            message: `Required attribute 'userName' is missing for '${op}' op of operation 1 in PatchOp request body`},
+                        `PatchOp removed required attributes in '${op}' operations`);
+                });
             }
-            
-            it("should expect 'value' to be an object when 'path' is not specified in 'add' operations", async () => {
-                await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: false}]})
-                        .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"})),
-                    {name: "SCIMError", status: 400, scimType: "invalidValue",
-                        message: "Attribute 'value' must be an object when 'path' is empty for 'add' op of operation 1 in PatchOp request body"},
-                    "PatchOp did not expect 'value' to be an object when 'path' was not specified in 'add' operations");
-            });
         });
     });
 }

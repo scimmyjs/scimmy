@@ -258,6 +258,9 @@ export class PatchOp {
                         // Add additional context to SCIM errors
                         ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
                         throw ex;
+                    } else if (ex.message?.endsWith?.("object is not extensible")) {
+                        // Handle errors caused by non-existent attributes in complex values
+                        throw new Types.Error(400, "invalidValue", `Invalid attribute '${key}' for supplied value of 'add' operation ${index} in PatchOp request body`);
                     } else {
                         // Rethrow other exceptions as SCIM errors
                         throw new Types.Error(400, "invalidValue", `Value '${val}' not valid for attribute '${key}' of 'add' operation ${index} in PatchOp request body`);
@@ -364,17 +367,22 @@ export class PatchOp {
             // Call remove, then call add!
             try {
                 if (path !== undefined) this.#remove(index, path);
-            } catch {
-                // Do nothing, remove target doesn't exist
+            } catch (ex) {
+                // Only rethrow if error is anything other than target doesn't exist
+                if (ex.scimType !== "noTarget") throw ex;
             }
             
             try {
                 // Try set the value at the path
                 this.#add(index, path, value);
-            } catch {
+            } catch (ex) {
                 // If it's a multi-value target that doesn't exist, add to the collection instead
-                this.#add(index, path.split(pathSeparator).filter(p => p)
-                    .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+                if (ex.scimType === "noTarget") {
+                    this.#add(index, path.split(pathSeparator).filter(p => p)
+                        .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+                }
+                // Otherwise, rethrow the error
+                else throw ex;
             }
         } catch (ex) {
             // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
