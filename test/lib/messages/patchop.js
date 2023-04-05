@@ -13,110 +13,112 @@ export let PatchOpSuite = (SCIMMY) => {
         assert.ok(!!SCIMMY.Messages.PatchOp, "Static class 'PatchOp' not defined"));
     
     describe("SCIMMY.Messages.PatchOp", () => {
-        it("should not instantiate requests with invalid schemas", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({schemas: ["nonsense"]}),
-                {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                    message: `PatchOp request body messages must exclusively specify schema as '${params.id}'`},
-                "PatchOp instantiated with invalid 'schemas' property");
-            assert.throws(() => new SCIMMY.Messages.PatchOp({schemas: [params.id, "nonsense"]}),
-                {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                    message: `PatchOp request body messages must exclusively specify schema as '${params.id}'`},
-                "PatchOp instantiated with invalid 'schemas' property");
-        });
-        
-        it("should expect 'Operations' attribute of 'request' parameter to be an array", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: "a string"}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp expects 'Operations' attribute of 'request' parameter to be an array"},
-                "PatchOp instantiated with invalid 'Operations' attribute value 'a string' of 'request' parameter");
-        });
-        
-        it("should expect at least one patch op in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp request body must contain 'Operations' attribute with at least one operation"},
-                "PatchOp instantiated without at least one patch op in 'Operations' attribute of 'request' parameter");
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: []}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp request body must contain 'Operations' attribute with at least one operation"},
-                "PatchOp instantiated without at least one patch op in 'Operations' attribute of 'request' parameter");
-        });
-        
-        it("should expect all patch ops to be 'complex' values in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, "a string"]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'string'"},
-                `PatchOp instantiated with invalid patch op 'a string' in 'Operations' attribute of 'request' parameter`);
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, true]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'boolean'"},
-                `PatchOp instantiated with invalid patch op 'true' in 'Operations' attribute of 'request' parameter`);
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, []]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'collection'"},
-                `PatchOp instantiated with invalid patch op '[]' in 'Operations' attribute of 'request' parameter`);
-        });
-        
-        it("should expect all patch ops to have an 'op' value in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{}]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "Missing required attribute 'op' from operation 1 in PatchOp request body"},
-                "PatchOp instantiated with invalid patch op '{}' in 'Operations' attribute of 'request' parameter");
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, {value: "a string"}]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "Missing required attribute 'op' from operation 2 in PatchOp request body"},
-                `PatchOp instantiated with invalid patch op '{value: "a string"}' in 'Operations' attribute of 'request' parameter`);
-        });
-        
-        it("should not accept unknown 'op' values in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "a string"}]}),
-                {name: "SCIMError", status: 400, scimType: "invalidSyntax",
-                    message: "Invalid operation 'a string' for operation 1 in PatchOp request body"},
-                "PatchOp instantiated with invalid 'op' value 'a string' in 'Operations' attribute of 'request' parameter");
-        });
-        
-        it("should ignore case of 'op' values in 'Operations' attribute of 'request' parameter", () => {
-            try {
-                new SCIMMY.Messages.PatchOp({...template, Operations: [
-                    {op: "Add", value: {}}, {op: "ADD", value: {}}, {op: "aDd", value: {}},
-                    {op: "Remove", path: "test"}, {op: "REMOVE", path: "test"}, {op: "rEmOvE", path: "test"},
-                    {op: "Replace", value: {}}, {op: "REPLACE", value: {}}, {op: "rEpLaCe", value: {}},
-                ]});
-            } catch (ex) {
-                if (ex instanceof SCIMMY.Types.Error && ex.message.startsWith("Invalid operation")) {
-                    const op = ex.message.replace("Invalid operation '").split("'").unshift();
-                    assert.fail(`PatchOp did not ignore case of 'op' value '${op}' in 'Operations' attribute of 'request' parameter`);
-                }
-            }
-        });
-        
-        it("should expect all 'add' ops to have a 'value' value in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, {op: "add", value: false}, {op: "add", path: "test"}]}),
-                {name: "SCIMError", status: 400, scimType: "invalidValue",
-                    message: "Missing required attribute 'value' for 'add' op of operation 3 in PatchOp request body"},
-                "PatchOp instantiated with missing 'value' value for 'add' op in 'Operations' attribute of 'request' parameter");
-        });
-        
-        it("should expect all 'remove' ops to have a 'path' value in 'Operations' attribute of 'request' parameter", () => {
-            assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "remove", path: "test"}, {op: "remove"}]}),
-                {name: "SCIMError", status: 400, scimType: "noTarget",
-                    message: "Missing required attribute 'path' for 'remove' op of operation 2 in PatchOp request body"},
-                "PatchOp instantiated with missing 'path' value for 'remove' op in 'Operations' attribute of 'request' parameter");
-        });
-        
-        it("should expect all patch op 'path' values to be strings in 'Operations' attribute of 'request' parameter", () => {
-            const operations = [
-                {op: "remove", path: 1},
-                {op: "remove", path: true},
-                {op: "add", value: 1, path: false}
-            ];
+        describe("#constructor", () => {
+            it("should not instantiate requests with invalid schemas", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({schemas: ["nonsense"]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                        message: `PatchOp request body messages must exclusively specify schema as '${params.id}'`},
+                    "PatchOp instantiated with invalid 'schemas' property");
+                assert.throws(() => new SCIMMY.Messages.PatchOp({schemas: [params.id, "nonsense"]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                        message: `PatchOp request body messages must exclusively specify schema as '${params.id}'`},
+                    "PatchOp instantiated with invalid 'schemas' property");
+            });
             
-            for (let op of operations) {
-                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [op]}),
-                    {name: "SCIMError", status: 400, scimType: "invalidPath",
-                        message: `Invalid path '${op.path}' for operation 1 in PatchOp request body`},
-                    `PatchOp instantiated with invalid 'path' value '${op.path}' in 'Operations' attribute of 'request' parameter`);
-            }
+            it("should expect 'Operations' attribute of 'request' parameter to be an array", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: "a string"}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp expects 'Operations' attribute of 'request' parameter to be an array"},
+                    "PatchOp instantiated with invalid 'Operations' attribute value 'a string' of 'request' parameter");
+            });
+            
+            it("should expect at least one patch op in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp request body must contain 'Operations' attribute with at least one operation"},
+                    "PatchOp instantiated without at least one patch op in 'Operations' attribute of 'request' parameter");
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: []}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp request body must contain 'Operations' attribute with at least one operation"},
+                    "PatchOp instantiated without at least one patch op in 'Operations' attribute of 'request' parameter");
+            });
+            
+            it("should expect all patch ops to be 'complex' values in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, "a string"]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'string'"},
+                    `PatchOp instantiated with invalid patch op 'a string' in 'Operations' attribute of 'request' parameter`);
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, true]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'boolean'"},
+                    `PatchOp instantiated with invalid patch op 'true' in 'Operations' attribute of 'request' parameter`);
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, []]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'collection'"},
+                    `PatchOp instantiated with invalid patch op '[]' in 'Operations' attribute of 'request' parameter`);
+            });
+            
+            it("should expect all patch ops to have an 'op' value in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{}]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "Missing required attribute 'op' from operation 1 in PatchOp request body"},
+                    "PatchOp instantiated with invalid patch op '{}' in 'Operations' attribute of 'request' parameter");
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, {value: "a string"}]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "Missing required attribute 'op' from operation 2 in PatchOp request body"},
+                    `PatchOp instantiated with invalid patch op '{value: "a string"}' in 'Operations' attribute of 'request' parameter`);
+            });
+            
+            it("should not accept unknown 'op' values in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "a string"}]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                        message: "Invalid operation 'a string' for operation 1 in PatchOp request body"},
+                    "PatchOp instantiated with invalid 'op' value 'a string' in 'Operations' attribute of 'request' parameter");
+            });
+            
+            it("should ignore case of 'op' values in 'Operations' attribute of 'request' parameter", () => {
+                try {
+                    new SCIMMY.Messages.PatchOp({...template, Operations: [
+                        {op: "Add", value: {}}, {op: "ADD", value: {}}, {op: "aDd", value: {}},
+                        {op: "Remove", path: "test"}, {op: "REMOVE", path: "test"}, {op: "rEmOvE", path: "test"},
+                        {op: "Replace", value: {}}, {op: "REPLACE", value: {}}, {op: "rEpLaCe", value: {}},
+                    ]});
+                } catch (ex) {
+                    if (ex instanceof SCIMMY.Types.Error && ex.message.startsWith("Invalid operation")) {
+                        const op = ex.message.replace("Invalid operation '").split("'").unshift();
+                        assert.fail(`PatchOp did not ignore case of 'op' value '${op}' in 'Operations' attribute of 'request' parameter`);
+                    }
+                }
+            });
+            
+            it("should expect all 'add' ops to have a 'value' value in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: {}}, {op: "add", value: false}, {op: "add", path: "test"}]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "Missing required attribute 'value' for 'add' op of operation 3 in PatchOp request body"},
+                    "PatchOp instantiated with missing 'value' value for 'add' op in 'Operations' attribute of 'request' parameter");
+            });
+            
+            it("should expect all 'remove' ops to have a 'path' value in 'Operations' attribute of 'request' parameter", () => {
+                assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "remove", path: "test"}, {op: "remove"}]}),
+                    {name: "SCIMError", status: 400, scimType: "noTarget",
+                        message: "Missing required attribute 'path' for 'remove' op of operation 2 in PatchOp request body"},
+                    "PatchOp instantiated with missing 'path' value for 'remove' op in 'Operations' attribute of 'request' parameter");
+            });
+            
+            it("should expect all patch op 'path' values to be strings in 'Operations' attribute of 'request' parameter", () => {
+                const operations = [
+                    {op: "remove", path: 1},
+                    {op: "remove", path: true},
+                    {op: "add", value: 1, path: false}
+                ];
+                
+                for (let op of operations) {
+                    assert.throws(() => new SCIMMY.Messages.PatchOp({...template, Operations: [op]}),
+                        {name: "SCIMError", status: 400, scimType: "invalidPath",
+                            message: `Invalid path '${op.path}' for operation 1 in PatchOp request body`},
+                        `PatchOp instantiated with invalid 'path' value '${op.path}' in 'Operations' attribute of 'request' parameter`);
+                }
+            });
         });
         
         describe("#apply()", () => {

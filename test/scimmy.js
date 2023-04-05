@@ -11,4 +11,4 @@ describe("SCIMMY", () => {
     MessagesSuite(SCIMMY);
     SchemasSuite(SCIMMY);
     ResourcesSuite(SCIMMY);
-})
+});
