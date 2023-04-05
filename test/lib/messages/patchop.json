@@ -8,6 +8,13 @@
           {"op": "add", "value": {"displayName": "asdf", "name": {"honorificPrefix": "Mr"}}},
           {"op": "add", "path": "nickName", "value": "dsaf"}
         ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf"},
+        "target": {"id": "1234", "userName": "asdf", "password": "1234"},
+        "ops": [
+          {"op": "add", "path": "password", "value": "1234"}
+        ]
       }
     ],
     "remove": [

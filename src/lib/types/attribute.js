@@ -131,7 +131,7 @@ const validate = {
      */
     string: (attrib, value) => {
         if (typeof value !== "string" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
@@ -145,8 +145,8 @@ const validate = {
      * @param {*} value - the value being validated
      */
     date: (attrib, value) => {
-        let date = new Date(value),
-            type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+        const date = new Date(value);
+        const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
         
         // Reject values that definitely aren't dates
         if (["number", "complex", "boolean"].includes(type) || (type === "string" && date.toString() === "Invalid Date"))
@@ -165,10 +165,10 @@ const validate = {
      * @param {*} value - the value being validated
      */
     number: (attrib, value) => {
-        let {type, name} = attrib,
-            isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/),
-            isInt = isNum && !String(value).includes("."),
-            actual = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+        const {type, name} = attrib;
+        const isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/);
+        const isInt = isNum && !String(value).includes(".");
+        const actual = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
         
         if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
@@ -196,7 +196,7 @@ const validate = {
         let message;
         
         if (typeof value === "object" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'binary'`;
@@ -223,7 +223,7 @@ const validate = {
      */
     boolean: (attrib, value) => {
         if (typeof value !== "boolean" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
@@ -237,15 +237,15 @@ const validate = {
      * @param {*} value - the value being validated
      */
     reference: (attrib, value) => {
-        let listReferences = (attrib.config.referenceTypes || []).map(t => `'${t}'`).join(", "),
-            coreReferences = (attrib.config.referenceTypes || []).filter(t => ["uri", "external"].includes(t)),
-            typeReferences = (attrib.config.referenceTypes || []).filter(t => !["uri", "external"].includes(t)),
-            message;
+        const listReferences = (attrib.config.referenceTypes || []).map(t => `'${t}'`).join(", ");
+        const coreReferences = (attrib.config.referenceTypes || []).filter(t => ["uri", "external"].includes(t));
+        const typeReferences = (attrib.config.referenceTypes || []).filter(t => !["uri", "external"].includes(t));
+        let message;
         
         // If there's no value and the attribute isn't required, skip validation
         if (value === undefined && !attrib?.config?.required) return;
         else if (typeof value !== "string" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
@@ -305,9 +305,9 @@ export class Attribute {
      * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        let errorSuffix = `attribute definition '${name}'`,
-            // Check for invalid characters in attribute name
-            [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
+        const errorSuffix = `attribute definition '${name}'`;
+        // Check for invalid characters in attribute name
+        const [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
         
         // Make sure name and type are supplied as strings
         for (let [param, value] of [["type", type], ["name", name]]) if (typeof value !== "string")
@@ -351,7 +351,7 @@ export class Attribute {
             for (let subAttrib of (Array.isArray(subAttributes) ? subAttributes : [subAttributes])) {
                 if (this.subAttributes.includes(subAttrib)) {
                     // Remove found subAttribute from definition
-                    let index = this.subAttributes.indexOf(subAttrib);
+                    const index = this.subAttributes.indexOf(subAttrib);
                     if (index >= 0) this.subAttributes.splice(index, 1);
                 } else if (typeof subAttrib === "string") {
                     // Attempt to find the subAttribute by name and try truncate again
@@ -412,11 +412,11 @@ export class Attribute {
      */
     coerce(source, direction = "both", isComplexMultiValue = false) {
         // Make sure the direction matches the attribute direction
-        if (["both", direction].includes(this.config.direction)) {
-            let {required, multiValued, canonicalValues} = this.config;
+        if (["both", this.config.direction].includes(direction) || this.config.direction === "both") {
+            const {required, multiValued, canonicalValues} = this.config;
             
             // If the attribute is required, make sure it has a value
-            if ((source === undefined || source === null) && required)
+            if ((source === undefined || source === null) && required && this.config.direction === direction)
                 throw new TypeError(`Required attribute '${this.name}' is missing`);
             // If the attribute is multi-valued, make sure its value is a collection
             if (source !== undefined && !isComplexMultiValue && multiValued && !Array.isArray(source))
@@ -518,7 +518,7 @@ export class Attribute {
                         
                         // Go through each sub-attribute for coercion
                         for (let subAttribute of this.subAttributes) {
-                            let {name} = subAttribute;
+                            const {name} = subAttribute;
                             
                             // Predefine getters and setters for all possible sub-attributes
                             Object.defineProperties(target, {

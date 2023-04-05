@@ -46,7 +46,7 @@ export class PatchOp {
      * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {
-        let {schemas = [], Operations: operations = []} = request ?? {};
+        const {schemas = [], Operations: operations = []} = request ?? {};
         
         // Determine if message is being prepared (outbound) or has been dispatched (inbound) 
         this.#dispatched = (request !== undefined);
@@ -63,8 +63,8 @@ export class PatchOp {
         
         // Make sure all specified operations are valid
         for (let operation of operations) {
-            let index = (operations.indexOf(operation) + 1),
-                {op, path, value} = operation;
+            const index = (operations.indexOf(operation) + 1);
+            const {op, path, value} = operation;
             
             // Make sure operation is of type 'complex' (i.e. it's an object)
             if (Object(operation) !== operation || Array.isArray(operation))
@@ -130,12 +130,12 @@ export class PatchOp {
         // Store details about the resource being patched
         this.#schema = resource.constructor.definition;
         this.#source = resource;
-        this.#target = new resource.constructor(resource, "out");
+        this.#target = new resource.constructor(resource);
         
         // Go through all specified operations
         for (let operation of this.Operations) {
-            let index = (this.Operations.indexOf(operation) + 1),
-                {op, path, value} = operation;
+            const index = (this.Operations.indexOf(operation) + 1);
+            const {op, path, value} = operation;
             
             // And action it
             switch (op.toLowerCase()) {
@@ -159,7 +159,7 @@ export class PatchOp {
         
         // If finalise is a method, feed it the target to retrieve final representation of resource
         if (typeof finalise === "function")
-            this.#target = new this.#target.constructor(await finalise(this.#target), "out");
+            this.#target = new this.#target.constructor(await finalise(this.#target));
         
         // Only return value if something has changed
         if (!isDeepStrictEqual({...this.#source, meta: undefined}, {...this.#target, meta: undefined}))
@@ -176,9 +176,9 @@ export class PatchOp {
      */
     #resolve(index, path, op) {
         // Work out parts of the supplied path
-        let paths = path.split(pathSeparator).filter(p => p),
-            targets = [this.#target],
-            property, attribute, multiValued;
+        const paths = path.split(pathSeparator).filter(p => p);
+        const targets = [this.#target];
+        let property, attribute, multiValued;
         
         try {
             // Remove any filters from the path and attempt to get targeted attribute definition
@@ -191,9 +191,9 @@ export class PatchOp {
         
         // Traverse the path
         while (paths.length > 0) {
-            let path = paths.shift(),
-                // Work out if path contains a filter expression
-                [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
+            // Work out if path contains a filter expression
+            const path = paths.shift();
+            const [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
             
             // We have arrived at our destination
             if (paths.length === 0) {
@@ -231,9 +231,7 @@ export class PatchOp {
          */
         return {
             complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
-            multiValued: multiValued,
-            property: property,
-            targets: targets
+            multiValued, property, targets
         };
     }
     
@@ -268,7 +266,7 @@ export class PatchOp {
             }
         } else {
             // Validate and extract details about the operation
-            let {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
+            const {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
             
             // Go and apply the operation to matching targets
             for (let target of targets) {
@@ -276,7 +274,7 @@ export class PatchOp {
                     // The target is expected to be a collection
                     if (multiValued) {
                         // Wrap objects as arrays
-                        let values = (Array.isArray(value) ? value : [value]);
+                        const values = (Array.isArray(value) ? value : [value]);
                         
                         // Add the values to the existing collection, or create a new one if it doesn't exist yet
                         if (Array.isArray(target[property])) target[property].push(...values);
@@ -307,7 +305,7 @@ export class PatchOp {
      */
     #remove(index, path, value) {
         // Validate and extract details about the operation
-        let {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
+        const {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
         
         // If there's a property defined, we have an easy target for removal
         if (property) {
@@ -316,20 +314,22 @@ export class PatchOp {
                 try {
                     // No value filter defined, or target is not multi-valued - unset the property
                     if (value === undefined || !multiValued) target[property] = undefined;
-                    // Multi-valued target, attempt removal of matching values from attribute
+                    // Multivalued target, attempt removal of matching values from attribute
                     else if (multiValued) {
                         // Make sure filter values is an array for easy use of "includes" comparison when filtering
-                        let values = (Array.isArray(value) ? value : [value]),
-                            // If values are complex, build a filter to match with - otherwise just use values
-                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Types.Filter(
-                                values.map(f => Object.entries(f)
-                                    // Get rid of any empty values from the filter
-                                    .filter(([, value]) => value !== undefined)
-                                    // Turn it into an equity filter string
-                                    .map(([key, value]) => (`${key} eq ${value}`)).join(" and "))
-                                .join(" or "))
-                                // Get any matching values from the filter
-                                .match(target[property]));
+                        const values = (Array.isArray(value) ? value : [value]);
+                        // If values are complex, build a filter to match with - otherwise just use values
+                        const removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : (
+                            new Types.Filter(values.map(f => Object.entries(f)
+                                // Get rid of any empty values from the filter
+                                .filter(([, value]) => value !== undefined)
+                                // Turn it into an equity filter string
+                                .map(([key, value]) => (`${key} eq ${value}`)).join(" and "))
+                                .join(" or ")
+                            )
+                            // Get any matching values from the filter
+                            .match(target[property])
+                        ));
                         
                         // Filter out any values that exist in removals list
                         target[property] = (target[property] ?? []).filter(v => !removals.includes(v));
@@ -343,7 +343,7 @@ export class PatchOp {
             }
         } else {
             // Get path to the parent attribute having values removed
-            let parentPath = path.split(pathSeparator).filter(v => v)
+            const parentPath = path.split(pathSeparator).filter(v => v)
                 .map((path, index, paths) => (index < paths.length-1 ? path : path.replace(multiValuedFilter, "$1")))
                 .join(".");
             
@@ -378,8 +378,7 @@ export class PatchOp {
             }
         } catch (ex) {
             // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
-            let forReplaceOp = "for 'replace' op";
-            ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
+            ex.message = ex.message.replace(/for '(add|remove)' op/, "for 'replace' op");
             throw ex;
         }
     }

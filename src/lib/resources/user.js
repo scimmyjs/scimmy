@@ -139,9 +139,9 @@ export class User extends Types.Resource {
             throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
         
         try {
-            return await new Messages.PatchOp(message)
-                .apply(new Schemas.User((await User.#egress(this) ?? []).shift(), "out"), 
-                    async (instance) => await User.#ingress(this, instance))
+            return await Promise.resolve(new Messages.PatchOp(message)
+                .apply(new Schemas.User((await User.#egress(this) ?? []).shift()), 
+                    async (instance) => await User.#ingress(this, instance)))
                 .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;

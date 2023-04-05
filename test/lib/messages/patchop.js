@@ -136,52 +136,38 @@ export let PatchOpSuite = (SCIMMY) => {
                     {name: "TypeError", message: "Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method"},
                     "PatchOp did not verify 'resource' parameter type before proceeding with 'apply' method");
             });
-            
-            it("should support simple and complex 'add' operations", async () => {
-                let {inbound: {add: suite}} = await fixtures;
-                
-                for (let fixture of suite) {
-                    let source = new SCIMMY.Schemas.User(fixture.source, "out"),
-                        expected = new SCIMMY.Schemas.User(fixture.target, "out"),
-                        message = new SCIMMY.Messages.PatchOp({...template, Operations: fixture.ops});
+    
+            for (let op of ["add", "remove", "replace"]) {
+                it(`should support simple and complex '${op}' operations`, async () => {
+                    const {inbound: {[op]: suite}} = await fixtures;
                     
-                    assert.deepStrictEqual(await message.apply(source), expected,
-                        `PatchOp 'apply' did not support 'add' op specified in inbound fixture ${suite.indexOf(fixture)+1}`);
-                }
-            });
+                    for (let fixture of suite) {
+                        const message = new SCIMMY.Messages.PatchOp({...template, Operations: fixture.ops});
+                        const source = new SCIMMY.Schemas.User(fixture.source);
+                        const expected = new SCIMMY.Schemas.User(fixture.target, "out");
+                        const actual = new SCIMMY.Schemas.User(await message.apply(source, (patched) => {
+                            const expected = JSON.parse(JSON.stringify({...fixture.target, meta: undefined}));
+                            const actual = JSON.parse(JSON.stringify({...patched, schemas: undefined, meta: undefined}));
+                            
+                            // Also make sure the resource is handled correctly during finalisation
+                            assert.deepStrictEqual(actual, expected,
+                                `PatchOp 'apply' patched resource unexpectedly in '${op}' op specified in inbound fixture ${suite.indexOf(fixture) + 1}`);
+                            
+                            return patched;
+                        }), "out");
+                        
+                        assert.deepStrictEqual(actual, expected,
+                            `PatchOp 'apply' did not support '${op}' op specified in inbound fixture ${suite.indexOf(fixture) + 1}`);
+                    }
+                });
+            }
             
             it("should expect 'value' to be an object when 'path' is not specified in 'add' operations", async () => {
                 await assert.rejects(() => new SCIMMY.Messages.PatchOp({...template, Operations: [{op: "add", value: false}]})
-                        .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"}, "out")),
+                        .apply(new SCIMMY.Schemas.User({id: "1234", userName: "asdf"})),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Attribute 'value' must be an object when 'path' is empty for 'add' op of operation 1 in PatchOp request body"},
                     "PatchOp did not expect 'value' to be an object when 'path' was not specified in 'add' operations");
-            });
-            
-            it("should support simple and complex 'remove' operations", async () => {
-                let {inbound: {remove: suite}} = await fixtures;
-                
-                for (let fixture of suite) {
-                    let source = new SCIMMY.Schemas.User(fixture.source, "out"),
-                        expected = new SCIMMY.Schemas.User(fixture.target, "out"),
-                        message = new SCIMMY.Messages.PatchOp({...template, Operations: fixture.ops});
-                    
-                    assert.deepStrictEqual(await message.apply(source), expected,
-                        `PatchOp 'apply' did not support 'remove' op specified in inbound fixture ${suite.indexOf(fixture)+1}`);
-                }
-            });
-            
-            it("should support simple and complex 'replace' operations", async () => {
-                let {inbound: {replace: suite}} = await fixtures;
-                
-                for (let fixture of suite) {
-                    let source = new SCIMMY.Schemas.User(fixture.source, "out"),
-                        expected = new SCIMMY.Schemas.User(fixture.target, "out"),
-                        message = new SCIMMY.Messages.PatchOp({...template, Operations: fixture.ops});
-                    
-                    assert.deepStrictEqual(await message.apply(source), expected,
-                        `PatchOp 'apply' did not support 'replace' op specified in inbound fixture ${suite.indexOf(fixture)+1}`);
-                }
             });
         });
     });

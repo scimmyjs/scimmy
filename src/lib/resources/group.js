@@ -139,9 +139,9 @@ export class Group extends Types.Resource {
             throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
         
         try {
-            return await new Messages.PatchOp(message)
-                .apply(new Schemas.Group((await Group.#egress(this) ?? []).shift(), "out"), 
-                    async (instance) => await Group.#ingress(this, instance))
+            return await Promise.resolve(new Messages.PatchOp(message)
+                .apply(new Schemas.Group((await Group.#egress(this) ?? []).shift()), 
+                    async (instance) => await Group.#ingress(this, instance)))
                 .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
