@@ -175,6 +175,11 @@ export const SchemasSuite = () => {
                     "Static method 'declared' did not return all declared definitions when called without arguments");
             });
             
+            it("should return boolean 'false' when called with unexpected arguments", () => {
+                assert.strictEqual(SCIMMY.Schemas.declared({}), false,
+                    "Static method 'declared' did not return boolean 'false' when called with unexpected arguments");
+            });
+            
             it("should find declaration status of definitions by name", () => {
                 assert.ok(SCIMMY.Schemas.declared("User"),
                     "Static method 'declared' did not find declaration status of declared 'User' schema by name");
