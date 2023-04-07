@@ -37,11 +37,23 @@
     "type": "git",
     "url": "git+https://github.com/scimmyjs/scimmy.git"
   },
+  "c8": {
+    "all": true,
+    "check-coverage": true,
+    "include": [
+      "src/**/*.js"
+    ],
+    "reporter": [
+      "clover",
+      "lcov"
+    ]
+  },
   "bugs": {
     "url": "https://github.com/scimmyjs/scimmy/issues"
   },
   "devDependencies": {
     "@types/node": "^18.15.11",
+    "c8": "^7.13.0",
     "chalk": "^5.2.0",
     "classy-template": "^1.2.0",
     "jsdoc": "^4.0.2",
