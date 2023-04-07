@@ -2,49 +2,52 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let BulkRequestSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./bulkrequest.json"), "utf8").then((f) => JSON.parse(f));
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkRequest"};
-    const template = {schemas: [params.id], Operations: [{}, {}]};
-    
-    /** 
-     * BulkRequest Test Resource Class
-     * Because BulkRequest needs a set of implemented resources to test against 
-     */
-    class Test extends SCIMMY.Types.Resource {
-        // Store some helpful things for the mock methods
-        static #lastId = 0;
-        static #instances = [];
-        static reset() {
-            Test.#lastId = 0;
-            Test.#instances = [];
-            return Test;
-        }
-        
-        // Endpoint/basepath required by all Resource implementations
-        static endpoint = "/Test";
-        static basepath() {}
-        
-        // Mock write method that assigns IDs and stores in static instances array
-        async write(instance) {
-            // Give the instance an ID and assign data to it
-            const target = Object.assign((!!this.id ? Test.#instances.find(i => i.id === this.id) : {id: String(++Test.#lastId)}),
-                JSON.parse(JSON.stringify({...instance, schemas: undefined, meta: undefined})));
-            
-            // Save the instance if necessary and return it
-            if (!Test.#instances.includes(target)) Test.#instances.push(target);
-            return {...target, meta: {location: `/Test/${target.id}`}};
-        }
-        
-        // Mock dispose method that removes from static instances array  
-        async dispose() {
-            if (this.id) Test.#instances.splice(Test.#instances.indexOf(Test.#instances.find(i => i.id === this.id)), 1);
-            else throw new SCIMMY.Types.Error(404, null, "DELETE operation must target a specific resource");
-        }
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./bulkrequest.json"), "utf8").then((f) => JSON.parse(f));
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkRequest"};
+const template = {schemas: [params.id], Operations: [{}, {}]};
+
+/** 
+ * BulkRequest Test Resource Class
+ * Because BulkRequest needs a set of implemented resources to test against 
+ */
+class Test extends SCIMMY.Types.Resource {
+    // Store some helpful things for the mock methods
+    static #lastId = 0;
+    static #instances = [];
+    static reset() {
+        Test.#lastId = 0;
+        Test.#instances = [];
+        return Test;
     }
     
+    // Endpoint/basepath required by all Resource implementations
+    static endpoint = "/Test";
+    static basepath() {}
+    
+    // Mock write method that assigns IDs and stores in static instances array
+    async write(instance) {
+        // Give the instance an ID and assign data to it
+        const target = Object.assign(
+            (!!this.id ? Test.#instances.find(i => i.id === this.id) : {id: String(++Test.#lastId)}),
+            JSON.parse(JSON.stringify({...instance, schemas: undefined, meta: undefined}))
+        );
+        
+        // Save the instance if necessary and return it
+        if (!Test.#instances.includes(target)) Test.#instances.push(target);
+        return {...target, meta: {location: `/Test/${target.id}`}};
+    }
+    
+    // Mock dispose method that removes from static instances array  
+    async dispose() {
+        if (this.id) Test.#instances.splice(Test.#instances.indexOf(Test.#instances.find(i => i.id === this.id)), 1);
+        else throw new SCIMMY.Types.Error(404, null, "DELETE operation must target a specific resource");
+    }
+}
+
+export const BulkRequestSuite = () => {
     it("should include static class 'BulkRequest'", () => 
         assert.ok(!!SCIMMY.Messages.BulkRequest, "Static class 'BulkRequest' not defined"));
     
@@ -331,4 +334,4 @@ export let BulkRequestSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

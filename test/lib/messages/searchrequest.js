@@ -1,31 +1,32 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let SearchRequestSuite = (SCIMMY) => {
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"};
-    const template = {schemas: [params.id]};
-    const suites = {
-        strings: [
-            ["empty string value", ""],
-            ["boolean value 'false'", false],
-            ["number value '1'", 1],
-            ["complex value", {}]
-        ],
-        numbers: [
-            ["string value 'a string'", "a string"],
-            ["boolean value 'false'", false],
-            ["negative integer value '-1'", -1],
-            ["decimal value '1.5'", 1.5],
-            ["complex value", {}]
-        ],
-        arrays: [
-            ["string value 'a string'", "a string"],
-            ["boolean value 'false'", false],
-            ["number value '1'", 1],
-            ["complex value", {}],
-            ["array with an empty string", ["test", ""]]
-        ]
-    };
-    
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"};
+const template = {schemas: [params.id]};
+const suites = {
+    strings: [
+        ["empty string value", ""],
+        ["boolean value 'false'", false],
+        ["number value '1'", 1],
+        ["complex value", {}]
+    ],
+    numbers: [
+        ["string value 'a string'", "a string"],
+        ["boolean value 'false'", false],
+        ["negative integer value '-1'", -1],
+        ["decimal value '1.5'", 1.5],
+        ["complex value", {}]
+    ],
+    arrays: [
+        ["string value 'a string'", "a string"],
+        ["boolean value 'false'", false],
+        ["number value '1'", 1],
+        ["complex value", {}],
+        ["array with an empty string", ["test", ""]]
+    ]
+};
+
+export const SearchRequestSuite = () => {
     it("should include static class 'SearchRequest'", () =>
         assert.ok(!!SCIMMY.Messages.SearchRequest, "Static class 'SearchRequest' not defined"));
     
@@ -241,4 +242,4 @@ export let SearchRequestSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

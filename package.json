@@ -37,6 +37,11 @@
     "type": "git",
     "url": "git+https://github.com/scimmyjs/scimmy.git"
   },
+  "imports": {
+    "#@/*": {
+      "default": "./src/*"
+    }
+  },
   "c8": {
     "all": true,
     "check-coverage": true,

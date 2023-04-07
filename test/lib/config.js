@@ -1,4 +1,5 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
 function returnsImmutableObject(name, config) {
     assert.ok(Object(config) === config && !Array.isArray(config),
@@ -8,7 +9,7 @@ function returnsImmutableObject(name, config) {
         `Static method '${name}' returned a mutable object`);
 }
 
-export let ConfigSuite = (SCIMMY) => {
+export const ConfigSuite = () => {
     it("should include static class 'Config'", () => 
         assert.ok(!!SCIMMY.Config, "Static class 'Config' not defined"));
     
@@ -24,7 +25,7 @@ export let ConfigSuite = (SCIMMY) => {
         });
         
         describe(".set()", () => {
-            let origin = JSON.parse(JSON.stringify(SCIMMY.Config.get()));
+            const origin = JSON.parse(JSON.stringify(SCIMMY.Config.get()));
             after(() => SCIMMY.Config.set(origin));
             
             it("should have static method 'set'", () => {
@@ -36,7 +37,7 @@ export let ConfigSuite = (SCIMMY) => {
                 returnsImmutableObject("set", SCIMMY.Config.set()));
             
             it("should do nothing without arguments", () => {
-                let config = SCIMMY.Config.get();
+                const config = SCIMMY.Config.get();
                 
                 assert.deepStrictEqual(SCIMMY.Config.set(), config,
                     "Static method 'set' unexpectedly modified config");
@@ -111,4 +112,4 @@ export let ConfigSuite = (SCIMMY) => {
             }
         });
     });
-}
+};

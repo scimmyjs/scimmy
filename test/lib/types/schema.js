@@ -1,6 +1,7 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let SchemaSuite = (SCIMMY) => {
+export const SchemaSuite = () => {
     it("should include static class 'Schema'", () => 
         assert.ok(!!SCIMMY.Types.Schema, "Static class 'Schema' not defined"));
     
@@ -27,4 +28,4 @@ export let SchemaSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

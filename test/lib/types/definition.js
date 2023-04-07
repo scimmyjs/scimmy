@@ -2,13 +2,14 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 import {instantiateFromFixture} from "./attribute.js";
 
-export let SchemaDefinitionSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./definition.json"), "utf8").then((f) => JSON.parse(f));
-    const params = {name: "Test", id: "urn:ietf:params:scim:schemas:Test"};
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./definition.json"), "utf8").then((f) => JSON.parse(f));
+const params = {name: "Test", id: "urn:ietf:params:scim:schemas:Test"};
+
+export const SchemaDefinitionSuite = () => {
     it("should include static class 'SchemaDefinition'", () => 
         assert.ok(!!SCIMMY.Types.SchemaDefinition, "Static class 'SchemaDefinition' not defined"));
     
@@ -94,7 +95,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
                 for (let fixture of suite) {
                     const definition = new SCIMMY.Types.SchemaDefinition(
                         fixture.source.name, fixture.source.id, fixture.source.description, 
-                        fixture.source.attributes.map((a) => instantiateFromFixture(SCIMMY, a))
+                        fixture.source.attributes.map((a) => instantiateFromFixture(a))
                     );
                     
                     assert.deepStrictEqual(JSON.parse(JSON.stringify(definition.describe())), fixture.target,
@@ -383,9 +384,8 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect the supplied filter to be applied to coerced result", () => {
-                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [
-                        new SCIMMY.Types.Attribute("string", "testName"), new SCIMMY.Types.Attribute("string", "testValue")
-                    ]);
+                const attributes = [new SCIMMY.Types.Attribute("string", "testName"), new SCIMMY.Types.Attribute("string", "testValue")];
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", attributes);
                 const result = definition.coerce({testName: "a string", testValue: "another string"}, undefined, undefined, new SCIMMY.Types.Filter("testName pr"));
                 
                 assert.ok(Object.keys(result).includes("testName"),
@@ -395,7 +395,7 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
             
             it("should expect namespaced attributes in the supplied filter to be applied to coerced result", () => {
-                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema",[new SCIMMY.Types.Attribute("string", "employeeNumber")])
+                const definition = new SCIMMY.Types.SchemaDefinition(...Object.values(params), "Test Schema", [new SCIMMY.Types.Attribute("string", "employeeNumber")])
                     .extend(SCIMMY.Schemas.EnterpriseUser.definition);
                 const result = definition.coerce(
                     {
@@ -414,4 +414,4 @@ export let SchemaDefinitionSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

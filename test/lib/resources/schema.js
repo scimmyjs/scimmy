@@ -2,11 +2,13 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
+import {ResourcesHooks} from "../resources.js";
 
-export let SchemaSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
+
+export const SchemaSuite = () => {
     it("should include static class 'Schema'", () => 
         assert.ok(!!SCIMMY.Resources.Schema, "Static class 'Schema' not defined"));
     
@@ -26,4 +28,4 @@ export let SchemaSuite = (SCIMMY, ResourcesHooks) => {
         describe("#constructor", ResourcesHooks.construct(SCIMMY.Resources.Schema, false));
         describe("#read()", ResourcesHooks.read(SCIMMY.Resources.Schema, fixtures));
     });
-}
+};

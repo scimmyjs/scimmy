@@ -2,13 +2,14 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let PatchOpSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./patchop.json"), "utf8").then((f) => JSON.parse(f));
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:PatchOp"};
-    const template = {schemas: [params.id]};
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./patchop.json"), "utf8").then((f) => JSON.parse(f));
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:PatchOp"};
+const template = {schemas: [params.id]};
+
+export const PatchOpSuite = () => {
     it("should include static class 'PatchOp'", () => 
         assert.ok(!!SCIMMY.Messages.PatchOp, "Static class 'PatchOp' not defined"));
     
@@ -203,4 +204,4 @@ export let PatchOpSuite = (SCIMMY) => {
             }
         });
     });
-}
+};

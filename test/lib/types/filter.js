@@ -2,11 +2,12 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let FilterSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./filter.json"), "utf8").then((f) => JSON.parse(f));
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./filter.json"), "utf8").then((f) => JSON.parse(f));
+
+export const FilterSuite = () => {
     it("should include static class 'Filter'", () => 
         assert.ok(!!SCIMMY.Types.Filter, "Static class 'Filter' not defined"));
     
@@ -23,7 +24,7 @@ export let FilterSuite = (SCIMMY) => {
         
         describe("#constructor", () => {
             it("should expect 'expression' argument to be a non-empty string or collection of objects", () => {
-                let fixtures = [
+                const fixtures = [
                     ["number value '1'", 1],
                     ["boolean value 'false'", false]
                 ];
@@ -65,7 +66,7 @@ export let FilterSuite = (SCIMMY) => {
             });
             
             it("should parse simple expressions without logical or grouping operators", async () => {
-                let {parse: {simple: suite}} = await fixtures;
+                const {parse: {simple: suite}} = await fixtures;
                 
                 for (let fixture of suite) {
                     assert.deepStrictEqual([...new SCIMMY.Types.Filter(fixture.source)], fixture.target,
@@ -74,7 +75,7 @@ export let FilterSuite = (SCIMMY) => {
             });
             
             it("should parse expressions with logical operators", async () => {
-                let {parse: {logical: suite}} = await fixtures;
+                const {parse: {logical: suite}} = await fixtures;
                 
                 for (let fixture of suite) {
                     assert.deepStrictEqual([...new SCIMMY.Types.Filter(fixture.source)], fixture.target,
@@ -83,7 +84,7 @@ export let FilterSuite = (SCIMMY) => {
             });
             
             it("should parse expressions with grouping operators", async () => {
-                let {parse: {grouping: suite}} = await fixtures;
+                const {parse: {grouping: suite}} = await fixtures;
                 
                 for (let fixture of suite) {
                     assert.deepStrictEqual([...new SCIMMY.Types.Filter(fixture.source)], fixture.target,
@@ -92,7 +93,7 @@ export let FilterSuite = (SCIMMY) => {
             });
             
             it("should parse complex expressions with a mix of logical and grouping operators", async () => {
-                let {parse: {complex: suite}} = await fixtures;
+                const {parse: {complex: suite}} = await fixtures;
                 
                 for (let fixture of suite) {
                     assert.deepStrictEqual([...new SCIMMY.Types.Filter(fixture.source)], fixture.target,
@@ -120,7 +121,7 @@ export let FilterSuite = (SCIMMY) => {
             
             for (let [key, label] of targets) {
                 it(`should ${label}`, async () => {
-                    let {match: {source, targets: {[key]: suite}}} = await fixtures;
+                    const {match: {source, targets: {[key]: suite}}} = await fixtures;
                     
                     for (let fixture of suite) {
                         assert.deepStrictEqual(new SCIMMY.Types.Filter(fixture.expression).match(source).map((v) => v.id), fixture.expected,
@@ -130,4 +131,4 @@ export let FilterSuite = (SCIMMY) => {
             }
         });
     });
-}
+};

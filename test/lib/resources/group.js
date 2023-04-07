@@ -2,11 +2,13 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
+import {ResourcesHooks} from "../resources.js";
 
-export let GroupSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
+
+export const GroupSuite = () => {
     it("should include static class 'Group'", () => 
         assert.ok(!!SCIMMY.Resources.Group, "Static class 'Group' not defined"));
     
@@ -26,4 +28,4 @@ export let GroupSuite = (SCIMMY, ResourcesHooks) => {
         describe("#patch()", ResourcesHooks.patch(SCIMMY.Resources.Group, fixtures));
         describe("#dispose()", ResourcesHooks.dispose(SCIMMY.Resources.Group, fixtures));
     });
-}
+};

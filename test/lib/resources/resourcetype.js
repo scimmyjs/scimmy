@@ -2,11 +2,13 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
+import {ResourcesHooks} from "../resources.js";
 
-export let ResourceTypeSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./resourcetype.json"), "utf8").then((f) => JSON.parse(f));
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./resourcetype.json"), "utf8").then((f) => JSON.parse(f));
+
+export const ResourceTypeSuite = () => {
     it("should include static class 'ResourceType'", () => 
         assert.ok(!!SCIMMY.Resources.ResourceType, "Static class 'ResourceType' not defined"));
     
@@ -26,4 +28,4 @@ export let ResourceTypeSuite = (SCIMMY, ResourcesHooks) => {
         describe("#constructor", ResourcesHooks.construct(SCIMMY.Resources.ResourceType, false));
         describe("#read()", ResourcesHooks.read(SCIMMY.Resources.ResourceType, fixtures));
     });
-}
+};

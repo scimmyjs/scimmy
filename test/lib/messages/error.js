@@ -2,13 +2,14 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let ErrorSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./error.json"), "utf8").then((f) => JSON.parse(f));
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:Error"};
-    const template = {schemas: [params.id], status: "500"};
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./error.json"), "utf8").then((f) => JSON.parse(f));
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:Error"};
+const template = {schemas: [params.id], status: "500"};
+
+export const ErrorSuite = () => {
     it("should include static class 'Error'", () => 
         assert.ok(!!SCIMMY.Messages.Error, "Static class 'Error' not defined"));
     
@@ -51,7 +52,7 @@ export let ErrorSuite = (SCIMMY) => {
                     assert.deepStrictEqual({...(new SCIMMY.Messages.Error(fixture))}, {...template, ...fixture}, 
                         `Error message type check 'valid' fixture #${valid.indexOf(fixture) + 1} did not produce expected output`);
                 }
-        
+                
                 for (let fixture of invalid) {
                     assert.throws(() => new SCIMMY.Messages.Error(fixture),
                         {name: "TypeError", message: `HTTP status code '${fixture.status}' not valid for detail error keyword '${fixture.scimType}' in SCIM Error Message constructor`},
@@ -60,4 +61,4 @@ export let ErrorSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

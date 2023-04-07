@@ -2,21 +2,39 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export function instantiateFromFixture(SCIMMY, fixture) {
-    let {type, name, mutability: m, uniqueness: u, subAttributes = [], ...config} = fixture;
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./attribute.json"), "utf8").then((f) => JSON.parse(f));
+
+export function instantiateFromFixture(fixture) {
+    const {type, name, mutability: m, uniqueness: u, subAttributes = [], ...config} = fixture;
     
     return new SCIMMY.Types.Attribute(
         type, name, {...(m !== undefined ? {mutable: m} : {}), ...(u !== null ? {uniqueness: !u ? false : u} : {}), ...config}, 
-        subAttributes.map((a) => instantiateFromFixture(SCIMMY, a))
+        subAttributes.map(instantiateFromFixture)
     );
 }
 
-export let AttributeSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./attribute.json"), "utf8").then((f) => JSON.parse(f));
+// Run valid and invalid fixtures for different attribute types
+function typedCoercion(type, {config = {}, multiValued = false, valid, invalid, assertion}) {
+    const attribute = new SCIMMY.Types.Attribute(type, "test", {...config, multiValued: multiValued});
+    const target = (multiValued ? attribute.coerce([]) : null);
     
-    it("should include static class 'Attribute'", () => 
+    for (let [label, value] of valid) {
+        assert.doesNotThrow(() => (multiValued ? target.push(value) : attribute.coerce(value)),
+            `Instance method 'coerce' rejected ${label} when attribute type was ${type}`);
+    }
+    
+    for (let [label, actual, value] of invalid) {
+        assert.throws(() => (multiValued ? target.push(value) : attribute.coerce(value)),
+            {name: "TypeError", message: (typeof assertion === "function" ? assertion(actual) : `Attribute 'test' expected value type '${type}' but found type '${actual}'`)},
+            `Instance method 'coerce' did not reject ${label} when attribute type was ${type}`);
+    }
+}
+
+export const AttributeSuite = () => {
+    it("should include static class 'Attribute'", () =>  
         assert.ok(!!SCIMMY.Types.Attribute, "Static class 'Attribute' not defined"));
     
     describe("SCIMMY.Types.Attribute", () => {
@@ -33,8 +51,8 @@ export let AttributeSuite = (SCIMMY) => {
             assert.throws(() => new SCIMMY.Types.Attribute("string"),
                 {name: "TypeError", message: "Required parameter 'name' missing from Attribute instantiation"},
                 "Attribute instantiated without 'name' argument");
-            
-            let invalidNames = [
+    
+            const invalidNames = [
                 [".", "invalid.name"],
                 ["@", "invalid@name"],
                 ["=", "invalid=name"], 
@@ -85,7 +103,7 @@ export let AttributeSuite = (SCIMMY) => {
         }
         
         it("should be frozen after instantiation", () => {
-            let attribute = new SCIMMY.Types.Attribute("string", "test");
+            const attribute = new SCIMMY.Types.Attribute("string", "test");
             
             assert.throws(() => attribute.test = true,
                 {name: "TypeError", message: "Cannot add property test, object is not extensible"},
@@ -105,10 +123,10 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should produce valid SCIM attribute definition objects", async () => {
-                let {toJSON: suite} = await fixtures;
+                const {toJSON: suite} = await fixtures;
                 
                 for (let fixture of suite) {
-                    let attribute = instantiateFromFixture(SCIMMY, fixture);
+                    const attribute = instantiateFromFixture(fixture);
                     
                     assert.deepStrictEqual(JSON.parse(JSON.stringify(attribute)), fixture, 
                         `Attribute 'toJSON' fixture #${suite.indexOf(fixture)+1} did not produce valid SCIM attribute definition object`);
@@ -123,10 +141,10 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should do nothing without arguments", async () => {
-                let {truncate: suite} = await fixtures;
+                const {truncate: suite} = await fixtures;
                 
                 for (let fixture of suite) {
-                    let attribute = instantiateFromFixture(SCIMMY, fixture);
+                    const attribute = instantiateFromFixture(fixture);
                     
                     assert.deepStrictEqual(JSON.parse(JSON.stringify(attribute.truncate())), fixture,
                         `Attribute 'truncate' fixture #${suite.indexOf(fixture)+1} modified attribute without arguments`);
@@ -134,21 +152,21 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should do nothing when type is not 'complex'", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test"),
-                    before = JSON.parse(JSON.stringify(attribute)),
-                    after = JSON.parse(JSON.stringify(attribute.truncate()));
+                const attribute = new SCIMMY.Types.Attribute("string", "test");
+                const before = JSON.parse(JSON.stringify(attribute));
+                const after = JSON.parse(JSON.stringify(attribute.truncate()));
                 
                 assert.deepStrictEqual(after, before,
                     "Instance method 'truncate' modified non-complex attribute");
             });
             
             it("should remove specified sub-attribute from 'subAttributes' collection", async () => {
-                let {truncate: suite} = await fixtures;
+                const {truncate: suite} = await fixtures;
                 
                 for (let fixture of suite) {
-                    let attribute = instantiateFromFixture(SCIMMY, fixture),
-                        comparison = {...fixture, subAttributes: [...fixture.subAttributes ?? []]},
-                        target = comparison.subAttributes.shift()?.name;
+                    const attribute = instantiateFromFixture(fixture);
+                    const comparison = {...fixture, subAttributes: [...fixture.subAttributes ?? []]};
+                    const target = comparison.subAttributes.shift()?.name;
                     
                     assert.deepStrictEqual(JSON.parse(JSON.stringify(attribute.truncate(target))), comparison,
                         `Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not remove specified sub-attribute '${target}'`);
@@ -161,23 +179,6 @@ export let AttributeSuite = (SCIMMY) => {
                 assert.ok(typeof (new SCIMMY.Types.Attribute("string", "test")).coerce === "function",
                     "Instance method 'coerce' not defined");
             });
-            
-            // Run valid and invalid fixtures for different attribute types
-            function typedCoercion(type, {config = {}, multiValued = false, valid, invalid, assertion}) {
-                let attribute = new SCIMMY.Types.Attribute(type, "test", {...config, multiValued: multiValued}),
-                    target = (multiValued ? attribute.coerce([]) : null);
-                
-                for (let [label, value] of valid) {
-                    assert.doesNotThrow(() => (multiValued ? target.push(value) : attribute.coerce(value)),
-                        `Instance method 'coerce' rejected ${label} when attribute type was ${type}`);
-                }
-                
-                for (let [label, actual, value] of invalid) {
-                    assert.throws(() => (multiValued ? target.push(value) : attribute.coerce(value)),
-                        {name: "TypeError", message: (typeof assertion === "function" ? assertion(actual) : `Attribute 'test' expected value type '${type}' but found type '${actual}'`)},
-                        `Instance method 'coerce' did not reject ${label} when attribute type was ${type}`);
-                }
-            }
             
             it("should expect required attributes to have a value", () => {
                 for (let type of ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"]) {
@@ -194,7 +195,7 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should expect value to be an array when attribute is multi-valued", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test", {multiValued: true});
+                const attribute = new SCIMMY.Types.Attribute("string", "test", {multiValued: true});
                 
                 assert.doesNotThrow(() => attribute.coerce(),
                     "Instance method 'coerce' rejected empty value when attribute was not required");
@@ -209,7 +210,7 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should expect value to be singular when attribute is not multi-valued", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test");
+                const attribute = new SCIMMY.Types.Attribute("string", "test");
                 
                 assert.doesNotThrow(() => attribute.coerce(),
                     "Instance method 'coerce' rejected empty value when attribute was not required");
@@ -222,7 +223,7 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should expect value to be canonical when attribute specifies canonicalValues characteristic", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test", {canonicalValues: ["Test"]});
+                const attribute = new SCIMMY.Types.Attribute("string", "test", {canonicalValues: ["Test"]});
                 
                 assert.doesNotThrow(() => attribute.coerce(),
                     "Instance method 'coerce' rejected empty non-canonical value");
@@ -234,8 +235,8 @@ export let AttributeSuite = (SCIMMY) => {
             });
             
             it("should expect all values to be canonical when attribute is multi-valued and specifies canonicalValues characteristic", () => {
-                let attribute = new SCIMMY.Types.Attribute("string", "test", {multiValued: true, canonicalValues: ["Test"]}),
-                    target = attribute.coerce([]);
+                const attribute = new SCIMMY.Types.Attribute("string", "test", {multiValued: true, canonicalValues: ["Test"]});
+                const target = attribute.coerce([]);
                 
                 assert.throws(() => attribute.coerce(["a string"]),
                     {name: "TypeError", message: "Attribute 'test' contains non-canonical value"},
@@ -250,114 +251,134 @@ export let AttributeSuite = (SCIMMY) => {
                     "Instance method 'coerce' did not reject addition of non-canonical value 'a string' to coerced collection");
             });
             
-            it("should expect value to be a string when attribute type is 'string'", () => typedCoercion("string", {
-                valid: [["string value 'a string'", "a string"]],
-                invalid: [
-                    ["number value '1'", "number", 1],
-                    ["complex value", "complex", {}],
-                    ["boolean value 'false'", "boolean", false],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect value to be a string when attribute type is 'string'", () => (
+                typedCoercion("string", {
+                    valid: [["string value 'a string'", "a string"]],
+                    invalid: [
+                        ["number value '1'", "number", 1],
+                        ["complex value", "complex", {}],
+                        ["boolean value 'false'", "boolean", false],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be strings when attribute is multi-valued and type is 'string'", () => typedCoercion("string", {
-                multiValued: true,
-                valid: [["string value 'a string'", "a string"]],
-                invalid: [
-                    ["number value '1'", "number", 1],
-                    ["complex value", "complex", {}],
-                    ["boolean value 'false'", "boolean", false],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect all values to be strings when attribute is multi-valued and type is 'string'", () => (
+                typedCoercion("string", {
+                    multiValued: true,
+                    valid: [["string value 'a string'", "a string"]],
+                    invalid: [
+                        ["number value '1'", "number", 1],
+                        ["complex value", "complex", {}],
+                        ["boolean value 'false'", "boolean", false],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect value to be either true or false when attribute type is 'boolean'", () => typedCoercion("boolean", {
-                valid: [["boolean value 'true'", true], ["boolean value 'false'", false]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect value to be either true or false when attribute type is 'boolean'", () => (
+                typedCoercion("boolean", {
+                    valid: [["boolean value 'true'", true], ["boolean value 'false'", false]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be either true or false when attribute is multi-valued and type is 'boolean'", () => typedCoercion("boolean", {
-                multiValued: true,
-                valid: [["boolean value 'true'", true], ["boolean value 'false'", false]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect all values to be either true or false when attribute is multi-valued and type is 'boolean'", () => (
+                typedCoercion("boolean", {
+                    multiValued: true,
+                    valid: [["boolean value 'true'", true], ["boolean value 'false'", false]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect value to be a decimal number when attribute type is 'decimal'", () => typedCoercion("decimal", {
-                valid: [["decimal value '1.0'", Number(1.0).toFixed(1)], ["decimal value '1.01'", 1.01]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["integer value '1'", "integer", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect value to be a decimal number when attribute type is 'decimal'", () => (
+                typedCoercion("decimal", {
+                    valid: [["decimal value '1.0'", Number(1.0).toFixed(1)], ["decimal value '1.01'", 1.01]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["integer value '1'", "integer", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be decimal numbers when attribute is multi-valued and type is 'decimal'", () => typedCoercion("decimal", {
-                multiValued: true,
-                valid: [["decimal value '1.0'", Number(1.0).toFixed(1)], ["decimal value '1.01'", 1.01]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["integer value '1'", "integer", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect all values to be decimal numbers when attribute is multi-valued and type is 'decimal'", () => (
+                typedCoercion("decimal", {
+                    multiValued: true,
+                    valid: [["decimal value '1.0'", Number(1.0).toFixed(1)], ["decimal value '1.01'", 1.01]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["integer value '1'", "integer", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect value to be an integer number when attribute type is 'integer'", () => typedCoercion("integer", {
-                valid: [["integer value '1'", 1]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["decimal value '1.01'", "decimal", 1.01],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect value to be an integer number when attribute type is 'integer'", () => (
+                typedCoercion("integer", {
+                    valid: [["integer value '1'", 1]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["decimal value '1.01'", "decimal", 1.01],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be integer numbers when attribute is multi-valued and type is 'integer'", () => typedCoercion("integer", {
-                multiValued: true,
-                valid: [["integer value '1'", 1]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["decimal value '1.01'", "decimal", 1.01],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect all values to be integer numbers when attribute is multi-valued and type is 'integer'", () => (
+                typedCoercion("integer", {
+                    multiValued: true,
+                    valid: [["integer value '1'", 1]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["decimal value '1.01'", "decimal", 1.01],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect value to be a valid date instance or date string when attribute type is 'dateTime'", () => typedCoercion("dateTime", {
-                valid: [["date instance value", new Date()], ["date string value", new Date().toISOString()]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}]
-                ]
-            }));
+            it("should expect value to be a valid date instance or date string when attribute type is 'dateTime'", () => (
+                typedCoercion("dateTime", {
+                    valid: [["date instance value", new Date()], ["date string value", new Date().toISOString()]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be valid date instances or date strings when attribute is multi-valued and type is 'dateTime'", () => typedCoercion("dateTime", {
-                multiValued: true,
-                valid: [["date instance value", new Date()], ["date string value", new Date().toISOString()]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["complex value", "complex", {}]
-                ]
-            }));
+            it("should expect all values to be valid date instances or date strings when attribute is multi-valued and type is 'dateTime'", () => (
+                typedCoercion("dateTime", {
+                    multiValued: true,
+                    valid: [["date instance value", new Date()], ["date string value", new Date().toISOString()]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["complex value", "complex", {}]
+                    ]
+                })
+            ));
             
             it("should expect value to be a valid reference when attribute type is 'reference'", () => {
                 assert.throws(() => new SCIMMY.Types.Attribute("reference", "test").coerce("a string"),
@@ -394,28 +415,32 @@ export let AttributeSuite = (SCIMMY) => {
                 });
             });
             
-            it("should expect value to be an object when attribute type is 'complex'", () => typedCoercion("complex", {
-                assertion: (type) => `Complex attribute 'test' expected complex value but found type '${type}'`,
-                valid: [["complex value", {}]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect value to be an object when attribute type is 'complex'", () => (
+                typedCoercion("complex", {
+                    assertion: (type) => `Complex attribute 'test' expected complex value but found type '${type}'`,
+                    valid: [["complex value", {}]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
             
-            it("should expect all values to be objects when attribute is multi-valued and type is 'complex'", () => typedCoercion("complex", {
-                multiValued: true,
-                assertion: (type) => `Complex attribute 'test' expected complex value but found type '${type}'`,
-                valid: [["complex value", {}]],
-                invalid: [
-                    ["string value 'a string'", "string", "a string"],
-                    ["number value '1'", "number", 1],
-                    ["boolean value 'false'", "boolean", false],
-                    ["Date instance value", "dateTime", new Date()]
-                ]
-            }));
+            it("should expect all values to be objects when attribute is multi-valued and type is 'complex'", () => (
+                typedCoercion("complex", {
+                    multiValued: true,
+                    assertion: (type) => `Complex attribute 'test' expected complex value but found type '${type}'`,
+                    valid: [["complex value", {}]],
+                    invalid: [
+                        ["string value 'a string'", "string", "a string"],
+                        ["number value '1'", "number", 1],
+                        ["boolean value 'false'", "boolean", false],
+                        ["Date instance value", "dateTime", new Date()]
+                    ]
+                })
+            ));
         });
     });
-}
+};

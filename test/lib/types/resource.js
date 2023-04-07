@@ -1,6 +1,7 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let ResourceSuite = (SCIMMY) => {
+export const ResourceSuite = () => {
     it("should include static class 'Resource'", () => 
         assert.ok(!!SCIMMY.Types.Resource, "Static class 'Resource' not defined"));
     
@@ -107,4 +108,4 @@ export let ResourceSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

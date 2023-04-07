@@ -2,13 +2,14 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let ListResponseSuite = (SCIMMY) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./listresponse.json"), "utf8").then((f) => JSON.parse(f));
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:ListResponse"};
-    const template = {schemas: [params.id], Resources: [], totalResults: 0, startIndex: 1, itemsPerPage: 20};
-    
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./listresponse.json"), "utf8").then((f) => JSON.parse(f));
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:ListResponse"};
+const template = {schemas: [params.id], Resources: [], totalResults: 0, startIndex: 1, itemsPerPage: 20};
+
+export const ListResponseSuite = () => {
     it("should include static class 'ListResponse'", () => 
         assert.ok(!!SCIMMY.Messages.ListResponse, "Static class 'ListResponse' not defined"));
     
@@ -37,7 +38,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should use 'startIndex' value included in inbound requests", async () => {
-            let {inbound: suite} = await fixtures;
+            const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
                 assert.ok((new SCIMMY.Messages.ListResponse(fixture, {startIndex: 20})).startIndex === fixture.startIndex, 
@@ -54,7 +55,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should use 'itemsPerPage' value included in inbound requests", async () => {
-            let {inbound: suite} = await fixtures;
+            const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
                 assert.ok((new SCIMMY.Messages.ListResponse(fixture, {itemsPerPage: 200})).itemsPerPage === fixture.itemsPerPage,
@@ -83,7 +84,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should have instance member 'Resources' that is an array", () => {
-            let list = new SCIMMY.Messages.ListResponse();
+            const list = new SCIMMY.Messages.ListResponse();
             
             assert.ok("Resources" in list,
                 "Instance member 'Resources' not defined");
@@ -92,7 +93,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should have instance member 'totalResults' that is a non-negative integer", () => {
-            let list = new SCIMMY.Messages.ListResponse();
+            const list = new SCIMMY.Messages.ListResponse();
             
             assert.ok("totalResults" in list,
                 "Instance member 'totalResults' not defined");
@@ -103,7 +104,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should use 'totalResults' value included in inbound requests", async () => {
-            let {inbound: suite} = await fixtures;
+            const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
                 assert.ok((new SCIMMY.Messages.ListResponse(fixture, {totalResults: 200})).totalResults === fixture.totalResults,
@@ -113,7 +114,7 @@ export let ListResponseSuite = (SCIMMY) => {
         
         for (let member of ["startIndex", "itemsPerPage"]) {
             it(`should have instance member '${member}' that is a positive integer`, () => {
-                let list = new SCIMMY.Messages.ListResponse();
+                const list = new SCIMMY.Messages.ListResponse();
                 
                 assert.ok(member in list,
                     `Instance member '${member}' not defined`);
@@ -125,8 +126,8 @@ export let ListResponseSuite = (SCIMMY) => {
         }
         
         it("should only sort resources if 'sortBy' parameter is supplied", async () => {
-            let {outbound: {source}} = await fixtures,
-                list = new SCIMMY.Messages.ListResponse(source, {sortOrder: "descending"});
+            const {outbound: {source}} = await fixtures;
+            const list = new SCIMMY.Messages.ListResponse(source, {sortOrder: "descending"});
             
             for (let item of source) {
                 assert.ok(item.id === list.Resources[source.indexOf(item)]?.id,
@@ -135,10 +136,10 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should correctly sort resources if 'sortBy' parameter is supplied", async () => {
-            let {outbound: {source, targets: suite}} = await fixtures;
+            const {outbound: {source, targets: suite}} = await fixtures;
             
             for (let fixture of suite) {
-                let list = new SCIMMY.Messages.ListResponse(source, {sortBy: fixture.sortBy, sortOrder: fixture.sortOrder});
+                const list = new SCIMMY.Messages.ListResponse(source, {sortBy: fixture.sortBy, sortOrder: fixture.sortOrder});
                 
                 assert.deepStrictEqual(list.Resources.map(r => r.id), fixture.expected,
                     `ListResponse did not correctly sort outbound target #${suite.indexOf(fixture)+1} by 'sortBy' value '${fixture.sortBy}'`);
@@ -146,7 +147,7 @@ export let ListResponseSuite = (SCIMMY) => {
         });
         
         it("should not include more resources than 'itemsPerPage' parameter", async () => {
-            let {outbound: {source}} = await fixtures;
+            const {outbound: {source}} = await fixtures;
             
             for (let length of [2, 5, 10, 200, 1]) {
                 assert.ok((new SCIMMY.Messages.ListResponse(source, {itemsPerPage: length})).Resources.length <= length,
@@ -154,4 +155,4 @@ export let ListResponseSuite = (SCIMMY) => {
             }
         });
     });
-}
+};

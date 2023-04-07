@@ -1,9 +1,10 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let BulkResponseSuite = (SCIMMY) => {
-    const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkResponse"};
-    const template = {schemas: [params.id], Operations: []};
-    
+const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkResponse"};
+const template = {schemas: [params.id], Operations: []};
+
+export const BulkResponseSuite = () => {
     it("should include static class 'BulkResponse'", () => 
         assert.ok(!!SCIMMY.Messages.BulkResponse, "Static class 'BulkResponse' not defined"));
     
@@ -42,4 +43,4 @@ export let BulkResponseSuite = (SCIMMY) => {
             });
         });
     });
-}
+};

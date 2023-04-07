@@ -1,6 +1,7 @@
 import assert from "assert";
+import SCIMMY from "#@/scimmy.js";
 
-export let ErrorSuite = (SCIMMY) => {
+export const ErrorSuite = () => {
     it("should include static class 'Error'", () => 
         assert.ok(!!SCIMMY.Types.Error, "Static class 'Error' not defined"));
     
@@ -35,4 +36,4 @@ export let ErrorSuite = (SCIMMY) => {
                 "Error type class did not include instance member 'message'");
         });
     });
-}
+};
