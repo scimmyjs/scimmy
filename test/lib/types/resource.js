@@ -1,5 +1,27 @@
 import assert from "assert";
 import SCIMMY from "#@/scimmy.js";
+import {createSchemaClass} from "./schema.js";
+
+// Default values to use when creating a resource class in tests
+const params = {name: "Test", id: "urn:ietf:params:scim:schemas:Test", description: "A Test"};
+const extension = ["Extension", "urn:ietf:params:scim:schemas:Extension", "An Extension"];
+
+/**
+ * Create a class that extends SCIMMY.Types.Resource, for use in tests
+ * @param {String} name - the name of the Resource to create a class for
+ * @param {*[]} params - arguments to pass through to the Schema class
+ * @returns {typeof SCIMMY.Types.Resource} a class that extends SCIMMY.Types.Resource for use in tests
+ */
+export const createResourceClass = (name, ...params) => (
+    class Test extends SCIMMY.Types.Resource {
+        static #endpoint = `/${name}`
+        static get endpoint() { return Test.#endpoint; }
+        static #extensions = [];
+        static get extensions() { return Test.#extensions; }
+        static #schema = createSchemaClass(name, ...params);
+        static get schema() { return Test.#schema; }
+    }
+);
 
 export const ResourceSuite = () => {
     it("should include static class 'Resource'", () => 
@@ -105,6 +127,37 @@ export const ResourceSuite = () => {
             it("should have static method 'describe'", () => {
                 assert.ok(typeof SCIMMY.Types.Resource.describe === "function",
                     "Static method 'describe' not defined");
+            });
+            
+            const TestResource = createResourceClass(...Object.values(params));
+            const properties = [
+                ["name"], ["description"], ["id", "name"], ["schema", "id"],
+                ["endpoint", "name", `/${params.name}`, ", with leading forward-slash"]
+            ];
+            
+            for (let [prop, target = prop, expected = params[target], suffix = ""] of properties) {
+                it(`should expect '${prop}' property of description to equal '${target}' property of resource's schema definition${suffix}`, () => {
+                    assert.strictEqual(TestResource.describe()[prop], expected, 
+                        `Resource 'describe' method returned '${prop}' property with unexpected value`);
+                });
+            }
+            
+            it("should expect 'schemaExtensions' property to be excluded in description when resource is not extended", () => {
+                assert.strictEqual(TestResource.describe().schemaExtensions, undefined,
+                    "Resource 'describe' method unexpectedly included 'schemaExtensions' property in description");
+            });
+            
+            it("should expect 'schemaExtensions' property to be included in description when resource is extended", function () {
+                try {
+                    TestResource.extend(createSchemaClass(...extension));
+                } catch {
+                    this.skip();
+                }
+                
+                assert.ok(!!TestResource.describe().schemaExtensions,
+                    "Resource 'describe' method did not include 'schemaExtensions' property in description");
+                assert.deepStrictEqual(TestResource.describe().schemaExtensions, [{schema: "urn:ietf:params:scim:schemas:Extension", required: false}],
+                    "Resource 'describe' method included 'schemaExtensions' property with unexpected value in description");
             });
         });
     });

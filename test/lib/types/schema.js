@@ -1,6 +1,18 @@
 import assert from "assert";
 import SCIMMY from "#@/scimmy.js";
 
+/**
+ * Create a class that extends SCIMMY.Types.Schema, for use in tests
+ * @param {*[]} params - arguments to pass through to the SchemaDefinition instance
+ * @returns {typeof SCIMMY.Types.Schema} a class that extends SCIMMY.Types.Schema for use in tests
+ */
+export const createSchemaClass = (...params) => (
+    class Test extends SCIMMY.Types.Schema {
+        static #definition = new SCIMMY.Types.SchemaDefinition(...params);
+        static get definition() { return Test.#definition; }
+    }
+);
+
 export const SchemaSuite = () => {
     it("should include static class 'Schema'", () => 
         assert.ok(!!SCIMMY.Types.Schema, "Static class 'Schema' not defined"));
