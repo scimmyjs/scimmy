@@ -66,11 +66,6 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
  * // Add custom "mail" attribute to the Group schema definition
  * SCIMMY.Schemas.Group.definition.extend([new SCIMMY.Types.Attribute("string", "mail", {required: true})]);
  * ```
- * 
- * > **Note:**  
- * > Extension schemas should be added via a resource type implementation's `extend` method (see `{@link SCIMMY.Resources}` for more details).
- * > Extensions added via a schema definition's `extend` method will **not** be included in the `schemaExtensions`
- * > property by the `{@link SCIMMY.Resources.ResourceType}` resource type.
  */
 export default class Schemas {
     // Store declared schema definitions for later retrieval

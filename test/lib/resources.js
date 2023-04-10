@@ -24,17 +24,6 @@ export const ResourcesHooks = {
                 "Static member 'schema' unexpectedly implemented by resource");
         }
     }),
-    extensions: (TargetResource, implemented = true) => (() => {
-        if (implemented) {
-            assert.ok(Object.getOwnPropertyNames(TargetResource).includes("extensions"),
-                "Resource did not implement static member 'extensions'");
-            assert.ok(Array.isArray(TargetResource.extensions),
-                "Static member 'extensions' was not an array");
-        } else {
-            assert.ok(!Object.getOwnPropertyNames(TargetResource).includes("extensions"),
-                "Static member 'extensions' unexpectedly implemented by resource");
-        }
-    }),
     extend: (TargetResource, overrides = false) => (() => {
         if (!overrides) {
             assert.ok(!Object.getOwnPropertyNames(TargetResource).includes("extend"),

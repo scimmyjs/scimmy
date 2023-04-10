@@ -15,7 +15,6 @@ export const SchemaSuite = () => {
     describe("SCIMMY.Resources.Schema", () => {
         it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.Schema));
         it("should not implement static member 'schema'", ResourcesHooks.schema(SCIMMY.Resources.Schema, false));
-        it("should not implement static member 'extensions'", ResourcesHooks.extensions(SCIMMY.Resources.Schema, false));
         it("should override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.Schema, true));
         it("should not implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.Schema, false));
         it("should not implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.Schema, false));

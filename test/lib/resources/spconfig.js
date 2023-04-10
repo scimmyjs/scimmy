@@ -15,7 +15,6 @@ export const ServiceProviderConfigSuite = () => {
     describe("SCIMMY.Resources.ServiceProviderConfig", () => {
         it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.ServiceProviderConfig));
         it("should not implement static member 'schema'", ResourcesHooks.schema(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement static member 'extensions'", ResourcesHooks.extensions(SCIMMY.Resources.ServiceProviderConfig, false));
         it("should override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.ServiceProviderConfig, true));
         it("should not implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.ServiceProviderConfig, false));
         it("should not implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.ServiceProviderConfig, false));

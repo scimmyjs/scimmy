@@ -15,7 +15,6 @@ export const UserSuite = () => {
     describe("SCIMMY.Resources.User", () => {
         it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.User));
         it("should implement static member 'schema' that is a Schema", ResourcesHooks.schema(SCIMMY.Resources.User));
-        it("should implement static member 'extensions' that is an array", ResourcesHooks.extensions(SCIMMY.Resources.User));
         it("should not override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.User, false));
         it("should implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.User, fixtures));
         it("should implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.User, fixtures));

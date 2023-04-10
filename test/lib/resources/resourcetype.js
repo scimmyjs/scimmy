@@ -15,7 +15,6 @@ export const ResourceTypeSuite = () => {
     describe("SCIMMY.Resources.ResourceType", () => {
         it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.ResourceType));
         it("should not implement static member 'schema'", ResourcesHooks.schema(SCIMMY.Resources.ResourceType, false));
-        it("should not implement static member 'extensions'", ResourcesHooks.extensions(SCIMMY.Resources.ResourceType, false));
         it("should override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.ResourceType, true));
         it("should not implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.ResourceType, false));
         it("should not implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.ResourceType, false));

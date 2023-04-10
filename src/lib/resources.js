@@ -129,9 +129,9 @@ export default class Resources {
     
     /**
      * Register a resource implementation for exposure as a ResourceType
-     * @param {SCIMMY.Types.Resource} resource - the resource type implementation to register
+     * @param {typeof SCIMMY.Types.Resource} resource - the resource type implementation to register
      * @param {Object|String} [config] - the configuration to feed to the resource being registered, or the name of the resource type implementation if different to the class name
-     * @returns {SCIMMY.Resources|SCIMMY.Types.Resource} the Resources class or registered resource type class for chaining
+     * @returns {typeof SCIMMY.Resources|typeof SCIMMY.Types.Resource} the Resources class or registered resource type class for chaining
      */
     static declare(resource, config) {
         // Make sure the registering resource is valid
@@ -189,8 +189,8 @@ export default class Resources {
     
     /**
      * Get registration status of specific resource implementation, or get all registered resource implementations
-     * @param {SCIMMY.Types.Resource|String} [resource] - the resource implementation or name to query registration status for
-     * @returns {Object|SCIMMY.Types.Resource|Boolean}
+     * @param {typeof SCIMMY.Types.Resource|String} [resource] - the resource implementation or name to query registration status for
+     * @returns {Object|typeof SCIMMY.Types.Resource|Boolean}
      * *   A containing object with registered resource implementations for exposure as ResourceTypes, if no arguments are supplied.
      * *   The registered resource type implementation with matching name, or undefined, if a string argument is supplied.
      * *   The registration status of the specified resource implementation, if a class extending `SCIMMY.Types.Resource` is supplied.

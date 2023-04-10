@@ -47,32 +47,13 @@ export class Resource {
     }
     
     /**
-     * List of extensions to a resource's core schema
-     * @type {Object[]}
-     * @private
-     * @abstract
-     */
-    static #extensions;
-    /**
-     * Get the list of registered schema extensions for a resource
-     * @type {Object[]}
-     * @abstract
-     */
-    static get extensions() {
-        throw new TypeError(`Method 'get' for property 'extensions' not implemented by resource '${this.name}'`);
-    }
-    
-    /**
      * Register an extension to the resource's core schema
-     * @param {SCIMMY.Types.Schema} extension - the schema extension to register
-     * @param {Boolean} required - whether the extension is required
+     * @param {typeof SCIMMY.Types.Schema} extension - the schema extension to register
+     * @param {Boolean} [required] - whether the extension is required
      * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
-        if (!this.extensions.find(e => e.schema === extension)) {
-            if (extension.prototype instanceof Schema) this.extensions.push({schema: extension, required: required});
-            this.schema.extend(extension, required);
-        }
+        this.schema.extend(extension, required);
         
         return this;
     }
@@ -153,7 +134,7 @@ export class Resource {
          * @property {String} name - friendly name of the resource's SCIM schema definition
          * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
          * @property {String} description - human-readable description of the resource
-         * @property {Object[]} [schemaExtensions] - schema extensions that augment the resource
+         * @property {Object} [schemaExtensions] - schema extensions that augment the resource
          * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
          * @property {Boolean} schemaExtensions[].required - whether resource instances must include the schema extension
          */

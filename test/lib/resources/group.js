@@ -15,7 +15,6 @@ export const GroupSuite = () => {
     describe("SCIMMY.Resources.Group", () => {
         it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.Group));
         it("should implement static member 'schema' that is a Schema", ResourcesHooks.schema(SCIMMY.Resources.Group));
-        it("should implement static member 'extensions' that is an array", ResourcesHooks.extensions(SCIMMY.Resources.Group));
         it("should not override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.Group, false));
         it("should implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.Group, fixtures));
         it("should implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.Group, fixtures));

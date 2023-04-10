@@ -32,13 +32,6 @@ export class User extends Types.Resource {
     }
     
     /** @private */
-    static #extensions = [];
-    /** @implements {SCIMMY.Types.Resource.extensions} */
-    static get extensions() {
-        return User.#extensions;
-    }
-    
-    /** @private */
     static #ingress = () => {};
     /** @implements {SCIMMY.Types.Resource.ingress} */
     static ingress(handler) {

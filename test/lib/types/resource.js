@@ -16,8 +16,6 @@ export const createResourceClass = (name, ...params) => (
     class Test extends SCIMMY.Types.Resource {
         static #endpoint = `/${name}`
         static get endpoint() { return Test.#endpoint; }
-        static #extensions = [];
-        static get extensions() { return Test.#extensions; }
         static #schema = createSchemaClass(name, ...params);
         static get schema() { return Test.#schema; }
     }
@@ -42,14 +40,6 @@ export const ResourceSuite = () => {
             assert.throws(() => SCIMMY.Types.Resource.schema,
                 {name: "TypeError", message: "Method 'get' for property 'schema' not implemented by resource 'Resource'"},
                 "Static member 'schema' not abstract");
-        });
-        
-        it("should have abstract static member 'extensions'", () => {
-            assert.ok(typeof Object.getOwnPropertyDescriptor(SCIMMY.Types.Resource, "extensions").get === "function",
-                "Abstract static member 'extensions' not defined");
-            assert.throws(() => SCIMMY.Types.Resource.extensions,
-                {name: "TypeError", message: "Method 'get' for property 'extensions' not implemented by resource 'Resource'"},
-                "Static member 'extensions' not abstract");
         });
         
         it("should have abstract static method 'basepath'", () => {
