@@ -1,4 +1,5 @@
 import {SCIMError} from "./error.js";
+import {SchemaDefinition} from "./definition.js";
 import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
@@ -38,7 +39,7 @@ export class Resource {
     
     /**
      * Retrieves a resource's core schema
-     * @type {SCIMMY.Types.Schema}
+     * @type {typeof SCIMMY.Types.Schema}
      * @abstract
      */
     static get schema() {
@@ -139,22 +140,27 @@ export class Resource {
      * @returns {SCIMMY.Types.Resource~ResourceType} object describing the resource type implementation 
      */
     static describe() {
+        // Find all schema definitions that extend this resource's definition...
+        const findSchemaDefinitions = (d) => d.attributes.filter(a => a instanceof SchemaDefinition)
+            .map(e => ([e, ...findSchemaDefinitions(e)])).flat(Infinity);
+        // ...so they can be included in the returned description
+        const schemaExtensions = [...new Set(findSchemaDefinitions(this.schema.definition))]
+            .map(({id: schema, required}) => ({schema, required}));
+        
         /**
          * @typedef {Object} SCIMMY.Types.Resource~ResourceType
          * @property {String} id - URN namespace of the resource's SCIM schema definition
          * @property {String} name - friendly name of the resource's SCIM schema definition
          * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
          * @property {String} description - human-readable description of the resource
-         * @property {Object} [schemaExtensions] - schema extensions that augment the resource
+         * @property {Object[]} [schemaExtensions] - schema extensions that augment the resource
          * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
          * @property {Boolean} schemaExtensions[].required - whether resource instances must include the schema extension
          */
         return {
             id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,
             description: this.schema.definition.description, schema: this.schema.definition.id,
-            ...(this.extensions.length === 0 ? {} : {
-                schemaExtensions: this.extensions.map(E => ({schema: E.schema.definition.id, required: E.required}))
-            })
+            ...(schemaExtensions.length ? {schemaExtensions} : {})
         };
     }
     
@@ -231,10 +237,10 @@ export class Resource {
                 count = Number(sCount ?? undefined);
             
             this.constraints = {
-                ...(sortBy !== undefined ? {sortBy: sortBy} : {}),
-                ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder: sortOrder} : {}),
-                ...(!Number.isNaN(startIndex) && Number.isInteger(startIndex) ? {startIndex: startIndex} : {}),
-                ...(!Number.isNaN(count) && Number.isInteger(count) ? {count: count} : {})
+                ...(sortBy !== undefined ? {sortBy} : {}),
+                ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder} : {}),
+                ...(!Number.isNaN(startIndex) && Number.isInteger(startIndex) ? {startIndex} : {}),
+                ...(!Number.isNaN(count) && Number.isInteger(count) ? {count} : {})
             };
         }
     }
