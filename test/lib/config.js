@@ -14,27 +14,33 @@ export const ConfigSuite = () => {
         assert.ok(!!SCIMMY.Config, "Static class 'Config' not defined"));
     
     describe("SCIMMY.Config", () => {
+        // Reset the configuration after all config tests are complete
+        after(() => SCIMMY.Config.set({
+            documentationUri: false, authenticationSchemes: [], changePassword: false,
+            etag: false, patch: false, sort: false, filter: {maxResults: 200, supported: false},
+            bulk: {maxOperations: 1000, maxPayloadSize: 1048576, supported: false}
+        }));
+        
         describe(".get()", () => {
             it("should have static method 'get'", () => {
                 assert.ok(typeof SCIMMY.Config.get === "function",
                     "Static method 'get' not defined");
             });
             
-            it("should return an immutable object", () => 
-                returnsImmutableObject("get", SCIMMY.Config.get()));
+            it("should return an immutable object", () => (
+                returnsImmutableObject("get", SCIMMY.Config.get())
+            ));
         });
         
         describe(".set()", () => {
-            const origin = JSON.parse(JSON.stringify(SCIMMY.Config.get()));
-            after(() => SCIMMY.Config.set(origin));
-            
             it("should have static method 'set'", () => {
                 assert.ok(typeof SCIMMY.Config.set === "function",
                     "Static method 'set' not defined");
             });
             
-            it("should return an immutable object", () => 
-                returnsImmutableObject("set", SCIMMY.Config.set()));
+            it("should return an immutable object", () => (
+                returnsImmutableObject("set", SCIMMY.Config.set())
+            ));
             
             it("should do nothing without arguments", () => {
                 const config = SCIMMY.Config.get();
@@ -59,6 +65,22 @@ export const ConfigSuite = () => {
                 assert.throws(() => SCIMMY.Config.set("documentationUri", true),
                     {name: "TypeError", message: "SCIM configuration: attribute 'documentationUri' expected value type 'string'"},
                     "Static method 'set' accepted boolean value 'true' for 'documentationUri' attribute");
+            });
+            
+            it("should not accept string value 'true' for 'documentationUri' attribute", () => {
+                assert.throws(() => SCIMMY.Config.set("documentationUri", "true"),
+                    {name: "TypeError", message: "Attribute 'documentationUri' expected value type 'reference' to refer to one of: 'external'"},
+                    "Static method 'set' accepted string value 'true' for 'documentationUri' attribute");
+            });
+            
+            it("should accept string value 'https://example.com' for 'documentationUri' attribute", () => {
+                assert.doesNotThrow(() => SCIMMY.Config.set("documentationUri", "https://example.com"),
+                    "Static method 'set' did not accept string value 'https://example.com' for 'documentationUri' attribute");
+            });
+            
+            it("should accept boolean value 'false' for 'documentationUri' attribute", () => {
+                assert.doesNotThrow(() => SCIMMY.Config.set("documentationUri", false),
+                    "Static method 'set' did not accept boolean value 'false' for 'documentationUri' attribute");
             });
             
             it("should not accept boolean value 'true' for 'authenticationSchemes' attribute", () => {
