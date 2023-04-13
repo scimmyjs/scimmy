@@ -15,11 +15,12 @@ const basepath = path.relative(process.cwd(), cwd);
 export class Packager {
     /**
      * Various paths to locations of assets used in packaging process
-     * @type {{src: string, dist: string}}
+     * @type {{src: string, dist: string, test: string}}
      */
     static paths = {
         src: `./${path.join(basepath, "src")}`,
-        dist: `./${path.join(basepath, "dist")}`
+        dist: `./${path.join(basepath, "dist")}`,
+        test: `./${path.join(basepath, "test")}`
     };
     
     /**
@@ -152,16 +153,24 @@ export class Packager {
      */
     static async test(filter, reporter = "base") {
         const {default: Mocha} = await import("mocha");
-        let mocha = new Mocha()
-            .reporter(...(typeof reporter === "object" ? [reporter.name, reporter.options] : [reporter]))
-            .addFile(`./${path.join(basepath, "./test/scimmy.js")}`)
-            .grep(`/${filter ?? ".*"}/i`);
+        const mocha = new Mocha().reporter(...(typeof reporter === "object" ? [reporter.name, reporter.options] : [reporter]));
+        // Recursively go through directories and find all test files
+        const find = async (dir) => (await Promise.all((await fs.readdir(dir, {withFileTypes: true}))
+            // Put files above directories, then go through and find all files recursively
+            .sort((fa, fb) => -fa.isFile()+fb.isFile())
+            .map(async (file) => ([file.isFile() && path.join(dir, file.name), ...(file.isDirectory() ? await find(path.join(dir, file.name)) : [])]))))
+            // Collapse the pyramid and find all actual test files
+            .flat(Infinity).filter(filename => !!filename && filename.endsWith(".js"));
+        
+        // Let mocha know about the test files
+        for (let file of await find(Packager.paths.test)) mocha.addFile(file);
         
         return new Promise((resolve, reject) => {
+            mocha.grep(`/^${(filter ?? "").split("").map(s => `[${s}]`).join("") ?? ".*"}/i`);
             mocha.timeout("2m").loadFilesAsync().then(() => mocha.run()).then((runner) => {
                 if (reporter === "base") {
-                    let reporter = new Mocha.reporters.Base(runner),
-                        epilogue = reporter.epilogue.bind(reporter);
+                    const reporter = new Mocha.reporters.Base(runner);
+                    const epilogue = reporter.epilogue.bind(reporter);
                     
                     runner.on("end", () => !!reporter.stats.failures ? reject(epilogue) : resolve(epilogue));
                 }
