@@ -1,6 +1,7 @@
 import assert from "assert";
 import sinon from "sinon";
 import * as Schemas from "#@/lib/schemas.js";
+import {SCIMError} from "#@/lib/types/error.js";
 import SCIMMY from "#@/scimmy.js";
 import Resources from "#@/lib/resources.js";
 
@@ -115,12 +116,17 @@ describe("SCIMMY.Resources", () => {
                 "Static method 'declared' did not return all declared resources when called without arguments");
         });
         
-        it("should find declared resource by name when 'config' argument is a string", () => {
-            assert.deepStrictEqual(Resources.declared("User"), Resources.User,
-                "Static method 'declared' did not find declared resource 'User' when called with 'config' string value 'User'");
+        it("should return boolean 'false' when called with unexpected arguments", () => {
+            assert.strictEqual(Resources.declared({}), false,
+                "Static method 'declared' did not return boolean 'false' when called with unexpected arguments");
         });
         
-        it("should find declaration status of resource when 'config' argument is a resource instance", () => {
+        it("should find declared resource by name when 'resource' argument is a string", () => {
+            assert.deepStrictEqual(Resources.declared("User"), Resources.User,
+                "Static method 'declared' did not find declared resource 'User' when called with 'resource' string value 'User'");
+        });
+        
+        it("should find declaration status of resource when 'resource' argument is a resource instance", () => {
             assert.ok(Resources.declared(Resources.User),
                 "Static method 'declared' did not find declaration status of declared 'User' resource by instance");
             assert.ok(!Resources.declared(Resources.ResourceType),
@@ -189,14 +195,27 @@ export const ResourcesHooks = {
             });
         } else {
             const handler = async (res, instance) => {
-                const {egress} = await fixtures;
-                const target = Object.assign(
-                    (!!res.id ? egress.find(f => f.id === res.id) : {id: "5"}),
-                    JSON.parse(JSON.stringify({...instance, schemas: undefined, meta: undefined}))
-                );
+                const {id} = res ?? {};
                 
-                if (!egress.includes(target)) egress.push(target);
-                return target;
+                switch (id) {
+                    case "TypeError":
+                        throw new TypeError("Failing as requested");
+                    case "SCIMError":
+                        throw new SCIMError(500, "invalidVers", "Failing as requested");
+                    default:
+                        const {egress} = await fixtures;
+                        const target = Object.assign(
+                            egress.find(f => f.id === id) ?? {id: "5"},
+                            JSON.parse(JSON.stringify({...instance, schemas: undefined, meta: undefined}))
+                        );
+                        
+                        if (!egress.includes(target)) {
+                            if (!!id) throw new Error("Not found");
+                            else egress.push(target);
+                        }
+                        
+                        return target;
+                }
             };
             
             it("should be implemented", () => {
@@ -221,11 +240,20 @@ export const ResourcesHooks = {
             });
         } else {
             const handler = async (res) => {
-                const {egress} = await fixtures;
-                const target = (!!res.id ? egress.find(f => f.id === res.id) : egress);
+                const {id} = res ?? {};
                 
-                if (!target) throw new Error("Not found");
-                else return (Array.isArray(target) ? target : [target]);
+                switch (id) {
+                    case "TypeError":
+                        throw new TypeError("Failing as requested");
+                    case "SCIMError":
+                        throw new SCIMError(500, "invalidVers", "Failing as requested");
+                    default:
+                        const {egress} = await fixtures;
+                        const target = (!!id ? egress.find(f => f.id === id) : egress);
+                        
+                        if (!target) throw new Error("Not found");
+                        else return (Array.isArray(target) ? target : [target]);
+                }
             };
             
             it("should be implemented", () => {
@@ -250,11 +278,20 @@ export const ResourcesHooks = {
             });
         } else {
             const handler = async (res) => {
-                const {egress} = await fixtures;
-                const index = egress.indexOf(egress.find(f => f.id === res.id));
+                const {id} = res ?? {};
                 
-                if (index < 0) throw new SCIMMY.Types.Error(404, null, `Resource ${res.id} not found`);
-                else egress.splice(index, 1);
+                switch (id) {
+                    case "TypeError":
+                        throw new TypeError("Failing as requested");
+                    case "SCIMError":
+                        throw new SCIMError(500, "invalidVers", "Failing as requested");
+                    default:
+                        const {egress} = await fixtures;
+                        const index = egress.indexOf(egress.find(f => f.id === id));
+                        
+                        if (index < 0) throw new Error("Not found");
+                        else egress.splice(index, 1);
+                }
             };
             
             it("should be implemented", () => {
@@ -279,15 +316,14 @@ export const ResourcesHooks = {
         });
         
         it("should only set basepath once, then do nothing", () => {
-            const existing = TargetResource.basepath();
             const expected = `/scim${TargetResource.endpoint}`;
             
             TargetResource.basepath("/scim");
-            assert.ok(TargetResource.basepath() === (existing ?? expected),
+            assert.ok(TargetResource.basepath() === (expected),
                 "Static method 'basepath' did not set or ignore resource basepath");
             
             TargetResource.basepath("/test");
-            assert.ok(TargetResource.basepath() === (existing ?? expected),
+            assert.ok(TargetResource.basepath() === (expected),
                 "Static method 'basepath' did not do nothing when basepath was already set");
         });
     }),
@@ -463,7 +499,7 @@ export const ResourcesHooks = {
                     }
                 }
             });
-        
+            
             it("should call ingress to create new resources when resource instantiated without ID", async () => {
                 const {ingress: source} = await fixtures;
                 const result = await (new TargetResource()).write(source);
@@ -482,6 +518,27 @@ export const ResourcesHooks = {
                 assert.deepStrictEqual(actual, expected,
                     "Instance method 'write' did not update existing resource");
             });
+            
+            it("should expect a resource with supplied ID to exist", async () => {
+                const {ingress: source} = await fixtures;
+                await assert.rejects(() => new TargetResource("10").write(source),
+                    {name: "SCIMError", status: 404, scimType: null, message: /10 not found/},
+                    "Instance method 'write' did not expect requested resource to exist");
+            });
+            
+            it("should rethrow SCIMErrors", async () => {
+                const {ingress: source} = await fixtures;
+                await assert.rejects(() => new TargetResource("SCIMError").write(source),
+                    {name: "SCIMError", status: 500, scimType: "invalidVers", message: "Failing as requested"},
+                    "Instance method 'write' did not rethrow SCIM Errors");
+            });
+            
+            it("should rethrow TypeErrors as SCIMErrors", async () => {
+                const {ingress: source} = await fixtures;
+                await assert.rejects(() => new TargetResource("TypeError").write(source),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue", message: "Failing as requested"},
+                    "Instance method 'write' did not rethrow TypeError as SCIMError");
+            });
         }
     }),
     patch: (TargetResource, fixtures) => (() => {
@@ -492,7 +549,7 @@ export const ResourcesHooks = {
                     "Instance method 'patch' unexpectedly implemented by resource");
             });
         } else {
-            it("should implement instance method 'patch'", () => {
+            it("should be implemented", () => {
                 assert.ok("patch" in (new TargetResource()),
                     "Resource did not implement instance method 'patch'");
                 assert.ok(typeof (new TargetResource()).patch === "function",
@@ -543,6 +600,42 @@ export const ResourcesHooks = {
                 assert.deepStrictEqual(JSON.parse(JSON.stringify({...actual, schemas: undefined, meta: undefined})), expected,
                     "Instance method 'patch' did not return the full resource when resource was modified");
             });
+            
+            it("should expect a resource with supplied ID to exist", async () => {
+                const {ingress: source} = await fixtures;
+                const message = {
+                    schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                    Operations: [{op: "add", value: source}]
+                };
+                
+                await assert.rejects(() => new TargetResource("10").patch(message),
+                    {name: "SCIMError", status: 404, scimType: null, message: /10 not found/},
+                    "Instance method 'patch' did not expect requested resource to exist");
+            });
+            
+            it("should rethrow SCIMErrors", async () => {
+                const {ingress: source} = await fixtures;
+                const message = {
+                    schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                    Operations: [{op: "add", value: source}]
+                };
+                
+                await assert.rejects(() => new TargetResource("SCIMError").patch(message),
+                    {name: "SCIMError", status: 500, scimType: "invalidVers", message: "Failing as requested"},
+                    "Instance method 'patch' did not rethrow SCIM Errors");
+            });
+            
+            it("should rethrow TypeErrors as SCIMErrors", async () => {
+                const {ingress: source} = await fixtures;
+                const message = {
+                    schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                    Operations: [{op: "add", value: source}]
+                };
+                
+                await assert.rejects(() => new TargetResource("TypeError").patch(message),
+                    {name: "SCIMError", status: 400, scimType: "invalidValue", message: "Failing as requested"},
+                    "Instance method 'patch' did not rethrow TypeError as SCIMError");
+            });
         }
     }),
     dispose: (TargetResource, fixtures) => (() => {
@@ -579,6 +672,18 @@ export const ResourcesHooks = {
                 await assert.rejects(() => new TargetResource("5").dispose(),
                     {name: "SCIMError", status: 404, scimType: null, message: /5 not found/},
                     "Instance method 'dispose' did not expect requested resource to exist");
+            });
+            
+            it("should rethrow SCIMErrors", async () => {
+                await assert.rejects(() => new TargetResource("SCIMError").dispose(),
+                    {name: "SCIMError", status: 500, scimType: "invalidVers", message: "Failing as requested"},
+                    "Instance method 'dispose' did not rethrow SCIM Errors");
+            });
+            
+            it("should rethrow TypeErrors as SCIMErrors", async () => {
+                await assert.rejects(() => new TargetResource("TypeError").dispose(),
+                    {name: "SCIMError", status: 500, scimType: null, message: "Failing as requested"},
+                    "Instance method 'dispose' did not rethrow TypeError as SCIMError");
             });
         }
     })
