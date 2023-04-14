@@ -1,5 +1,9 @@
 import assert from "assert";
-import SCIMMY from "#@/scimmy.js";
+import sinon from "sinon";
+import * as Resources from "#@/lib/resources.js";
+import {ListResponse} from "#@/lib/messages/listresponse.js";
+import {User} from "#@/lib/resources/user.js";
+import {Group} from "#@/lib/resources/group.js";
 import {SearchRequest} from "#@/lib/messages/searchrequest.js";
 
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"};
@@ -28,7 +32,12 @@ const suites = {
 };
 
 describe("SCIMMY.Messages.SearchRequest", () => {
-    describe("#constructor", () => {
+    const sandbox = sinon.createSandbox();
+    
+    after(() => sandbox.restore());
+    before(() => sandbox.stub(Resources.default, "declared").returns([User, Group]));
+    
+    describe("@constructor", () => {
         it("should not require arguments at instantiation", () => {
             assert.deepStrictEqual({...(new SearchRequest())}, template,
                 "SearchRequest did not instantiate with correct default properties");
@@ -234,7 +243,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
         });
         
         it("should return a ListResponse message instance", async () => {
-            assert.ok(await (new SearchRequest()).apply() instanceof SCIMMY.Messages.ListResponse,
+            assert.ok(await (new SearchRequest()).apply() instanceof ListResponse,
                 "Instance method 'apply' did not return an instance of ListResponse");
         });
     });
