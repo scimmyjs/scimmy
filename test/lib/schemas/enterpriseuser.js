@@ -1,8 +1,8 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import {EnterpriseUser} from "#@/lib/schemas/enterpriseuser.js";
 import {SchemasHooks} from "../schemas.js";
+import {EnterpriseUser} from "#@/lib/schemas/enterpriseuser.js";
 
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./enterpriseuser.json"), "utf8").then((f) => JSON.parse(f));
