@@ -3,8 +3,8 @@ import path from "path";
 import url from "url";
 import sinon from "sinon";
 import * as Config from "#@/lib/config.js";
-import {ServiceProviderConfig} from "#@/lib/resources/spconfig.js";
 import {ResourcesHooks} from "../resources.js";
+import {ServiceProviderConfig} from "#@/lib/resources/spconfig.js";
 
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
@@ -19,16 +19,16 @@ describe("SCIMMY.Resources.ServiceProviderConfig", () => {
         patch: {supported: false}, changePassword: {supported: false}, etag: {supported: false}
     }));
     
-    context(".endpoint", ResourcesHooks.endpoint(ServiceProviderConfig));
-    context(".schema", ResourcesHooks.schema(ServiceProviderConfig, false));
-    context(".basepath()", ResourcesHooks.basepath(ServiceProviderConfig));
-    context(".extend()", ResourcesHooks.extend(ServiceProviderConfig, true));
-    context(".ingress()", ResourcesHooks.ingress(ServiceProviderConfig, false));
-    context(".egress()", ResourcesHooks.egress(ServiceProviderConfig, false));
-    context(".degress()", ResourcesHooks.degress(ServiceProviderConfig, false));
-    context("@constructor", ResourcesHooks.construct(ServiceProviderConfig, false));
-    context("#read()", ResourcesHooks.read(ServiceProviderConfig, fixtures, false));
-    context("#write()", ResourcesHooks.write(ServiceProviderConfig, false));
-    context("#patch()", ResourcesHooks.patch(ServiceProviderConfig, false));
-    context("#dispose()", ResourcesHooks.dispose(ServiceProviderConfig, false));
+    describe(".endpoint", ResourcesHooks.endpoint(ServiceProviderConfig));
+    describe(".schema", ResourcesHooks.schema(ServiceProviderConfig, false));
+    describe(".basepath()", ResourcesHooks.basepath(ServiceProviderConfig));
+    describe(".extend()", ResourcesHooks.extend(ServiceProviderConfig, true));
+    describe(".ingress()", ResourcesHooks.ingress(ServiceProviderConfig, false));
+    describe(".egress()", ResourcesHooks.egress(ServiceProviderConfig, false));
+    describe(".degress()", ResourcesHooks.degress(ServiceProviderConfig, false));
+    describe("@constructor", ResourcesHooks.construct(ServiceProviderConfig, false));
+    describe("#read()", ResourcesHooks.read(ServiceProviderConfig, fixtures, false));
+    describe("#write()", ResourcesHooks.write(ServiceProviderConfig, false));
+    describe("#patch()", ResourcesHooks.patch(ServiceProviderConfig, false));
+    describe("#dispose()", ResourcesHooks.dispose(ServiceProviderConfig, false));
 });

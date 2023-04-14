@@ -1,23 +1,23 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import {User} from "#@/lib/resources/user.js";
 import {ResourcesHooks} from "../resources.js";
+import {User} from "#@/lib/resources/user.js";
 
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./user.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Resources.User", () => {
-    context(".endpoint", ResourcesHooks.endpoint(User));
-    context(".schema", ResourcesHooks.schema(User));
-    context(".basepath()", ResourcesHooks.basepath(User));
-    context(".extend()", ResourcesHooks.extend(User, false));
-    context(".ingress()", ResourcesHooks.ingress(User, fixtures));
-    context(".egress()", ResourcesHooks.egress(User, fixtures));
-    context(".degress()", ResourcesHooks.degress(User, fixtures));
-    context("@constructor", ResourcesHooks.construct(User));
-    context("#read()", ResourcesHooks.read(User, fixtures));
-    context("#write()", ResourcesHooks.write(User, fixtures));
-    context("#patch()", ResourcesHooks.patch(User, fixtures));
-    context("#dispose()", ResourcesHooks.dispose(User, fixtures));
+    describe(".endpoint", ResourcesHooks.endpoint(User));
+    describe(".schema", ResourcesHooks.schema(User));
+    describe(".basepath()", ResourcesHooks.basepath(User));
+    describe(".extend()", ResourcesHooks.extend(User, false));
+    describe(".ingress()", ResourcesHooks.ingress(User, fixtures));
+    describe(".egress()", ResourcesHooks.egress(User, fixtures));
+    describe(".degress()", ResourcesHooks.degress(User, fixtures));
+    describe("@constructor", ResourcesHooks.construct(User));
+    describe("#read()", ResourcesHooks.read(User, fixtures));
+    describe("#write()", ResourcesHooks.write(User, fixtures));
+    describe("#patch()", ResourcesHooks.patch(User, fixtures));
+    describe("#dispose()", ResourcesHooks.dispose(User, fixtures));
 });
