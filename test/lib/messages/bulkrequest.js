@@ -2,7 +2,13 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
-import SCIMMY from "#@/scimmy.js";
+import sinon from "sinon";
+import * as Resources from "#@/lib/resources.js";
+import {SCIMError} from "#@/lib/types/error.js";
+import {Resource} from "#@/lib/types/resource.js";
+import {Error as ErrorMessage} from "#@/lib/messages/error.js";
+import {User} from "#@/lib/resources/user.js";
+import {Group} from "#@/lib/resources/group.js";
 import {BulkRequest} from "#@/lib/messages/bulkrequest.js";
 
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
@@ -14,7 +20,7 @@ const template = {schemas: [params.id], Operations: [{}, {}]};
  * BulkRequest Test Resource Class
  * Because BulkRequest needs a set of implemented resources to test against 
  */
-class Test extends SCIMMY.Types.Resource {
+class Test extends Resource {
     // Store some helpful things for the mock methods
     static #lastId = 0;
     static #instances = [];
@@ -44,11 +50,16 @@ class Test extends SCIMMY.Types.Resource {
     // Mock dispose method that removes from static instances array  
     async dispose() {
         if (this.id) Test.#instances.splice(Test.#instances.indexOf(Test.#instances.find(i => i.id === this.id)), 1);
-        else throw new SCIMMY.Types.Error(404, null, "DELETE operation must target a specific resource");
+        else throw new SCIMError(404, null, "DELETE operation must target a specific resource");
     }
 }
 
 describe("SCIMMY.Messages.BulkRequest", () => {
+    const sandbox = sinon.createSandbox();
+    
+    after(() => sandbox.restore());
+    before(() => sandbox.stub(Resources.default, "declared").returns([User, Group]));
+    
     describe("@constructor", () => {
         it("should not instantiate requests with invalid schemas", () => {
             assert.throws(() => new BulkRequest({schemas: ["nonsense"]}),
@@ -134,7 +145,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'method' attribute to have a value for each operation", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{}, {path: "/Test"}, {method: ""}]})).apply())?.Operations;
             const expected = [{status: "400"}, {status: "400", location: "/Test"}, {status: "400", method: ""}].map((e, index) => ({...e, response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidSyntax", `Missing or empty 'method' string in BulkRequest operation #${index+1}`))
+                ...new ErrorMessage(new SCIMError(400, "invalidSyntax", `Missing or empty 'method' string in BulkRequest operation #${index+1}`))
             }}));
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -151,8 +162,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
             for (let [label, value] of fixtures) {
                 const actual = (await (new BulkRequest({...template, Operations: [{method: value}]})).apply())?.Operations;
                 const expected = [{status: "400", method: value, response: {
-                    ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(
-                        400, "invalidSyntax", "Expected 'method' to be a string in BulkRequest operation #1"))
+                    ...new ErrorMessage(new SCIMError(400, "invalidSyntax", "Expected 'method' to be a string in BulkRequest operation #1"))
                 }}];
                 
                 assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -163,7 +173,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'method' attribute to be one of POST, PUT, PATCH, or DELETE for each operation", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "a string"}]})).apply())?.Operations;
             const expected = [{status: "400", method: "a string", response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidValue", "Invalid 'method' value 'a string' in BulkRequest operation #1"))
+                ...new ErrorMessage(new SCIMError(400, "invalidValue", "Invalid 'method' value 'a string' in BulkRequest operation #1"))
             }}];
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -173,7 +183,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'path' attribute to have a value for each operation", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST"}, {method: "POST", path: ""}]})).apply())?.Operations;
             const expected = [{status: "400", method: "POST"}, {status: "400", method: "POST"}].map((e, index) => ({...e, response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidSyntax", `Missing or empty 'path' string in BulkRequest operation #${index+1}`))
+                ...new ErrorMessage(new SCIMError(400, "invalidSyntax", `Missing or empty 'path' string in BulkRequest operation #${index+1}`))
             }}));
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -190,8 +200,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
             for (let [label, value] of fixtures) {
                 const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: value}]})).apply())?.Operations;
                 const expected = [{status: "400", method: "POST", response: {
-                    ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(
-                        400, "invalidSyntax", "Expected 'path' to be a string in BulkRequest operation #1"))
+                    ...new ErrorMessage(new SCIMError(400, "invalidSyntax", "Expected 'path' to be a string in BulkRequest operation #1"))
                 }}];
                 
                 assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -202,7 +211,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'path' attribute to refer to a valid resource type endpoint", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test"}]})).apply())?.Operations;
             const expected = [{status: "400", method: "POST", response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidValue", "Invalid 'path' value '/Test' in BulkRequest operation #1"))
+                ...new ErrorMessage(new SCIMError(400, "invalidValue", "Invalid 'path' value '/Test' in BulkRequest operation #1"))
             }}];
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -212,7 +221,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'path' attribute to NOT specify a resource ID if 'method' is POST", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test/1", bulkId: "asdf"}]})).apply([Test]))?.Operations;
             const expected = [{status: "404", method: "POST", bulkId: "asdf", response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(404, null, "POST operation must not target a specific resource in BulkRequest operation #1"))
+                ...new ErrorMessage(new SCIMError(404, null, "POST operation must not target a specific resource in BulkRequest operation #1"))
             }}];
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -222,7 +231,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'path' attribute to specify a resource ID if 'method' is not POST", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "PUT", path: "/Test"}, {method: "DELETE", path: "/Test"}]})).apply([Test]))?.Operations;
             const expected = [{status: "404", method: "PUT", location: "/Test"}, {status: "404", method: "DELETE", location: "/Test"}].map((e, index) => ({...e, response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(404, null, `${e.method} operation must target a specific resource in BulkRequest operation #${index+1}`))
+                ...new ErrorMessage(new SCIMError(404, null, `${e.method} operation must target a specific resource in BulkRequest operation #${index+1}`))
             }}));
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -232,7 +241,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'bulkId' attribute to have a value for each 'POST' operation", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test"}, {method: "POST", path: "/Test", bulkId: ""}]})).apply([Test]))?.Operations;
             const expected = [{status: "400", method: "POST"}, {status: "400", method: "POST", bulkId: ""}].map((e, index) => ({...e, response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidSyntax", `POST operation missing required 'bulkId' string in BulkRequest operation #${index+1}`))
+                ...new ErrorMessage(new SCIMError(400, "invalidSyntax", `POST operation missing required 'bulkId' string in BulkRequest operation #${index+1}`))
             }}));
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -249,8 +258,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
             for (let [label, value] of fixtures) {
                 const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test", bulkId: value}]})).apply([Test]))?.Operations;
                 const expected = [{status: "400", method: "POST", response: {
-                    ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(
-                        400, "invalidValue", "POST operation expected 'bulkId' to be a string in BulkRequest operation #1"))
+                    ...new ErrorMessage(new SCIMError(400, "invalidValue", "POST operation expected 'bulkId' to be a string in BulkRequest operation #1"))
                 }}];
                 
                 assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -261,7 +269,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         it("should expect 'data' attribute to have a value when 'method' is not DELETE", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test", bulkId: "asdf"}, {method: "PUT", path: "/Test/1"}, {method: "PATCH", path: "/Test/1"}]})).apply([Test]))?.Operations;
             const expected = [{status: "400", method: "POST", bulkId: "asdf"}, {status: "400", method: "PUT", location: "/Test/1"}, {status: "400", method: "PATCH", location: "/Test/1"}].map((e, index) => ({...e, response: {
-                ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(400, "invalidSyntax", `Expected 'data' to be a single complex value in BulkRequest operation #${index+1}`))
+                ...new ErrorMessage(new SCIMError(400, "invalidSyntax", `Expected 'data' to be a single complex value in BulkRequest operation #${index+1}`))
             }}));
             
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
@@ -284,8 +292,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
                 for (let [label, value] of fixtures) {
                     const actual = (await (new BulkRequest({...template, Operations: [{...op, data: value}]})).apply([Test]))?.Operations;
                     const expected = [{status: "400", method: op.method, ...(op.method === "POST" ? {bulkId: op.bulkId} : {location: op.path}), response: {
-                        ...new SCIMMY.Messages.Error(new SCIMMY.Types.Error(
-                            400, "invalidSyntax", "Expected 'data' to be a single complex value in BulkRequest operation #1"))
+                        ...new ErrorMessage(new SCIMError(400, "invalidSyntax", "Expected 'data' to be a single complex value in BulkRequest operation #1"))
                     }}];
                     
                     assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
