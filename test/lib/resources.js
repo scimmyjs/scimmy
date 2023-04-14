@@ -4,9 +4,18 @@ import * as Schemas from "#@/lib/schemas.js";
 import {SCIMError} from "#@/lib/types/error.js";
 import SCIMMY from "#@/scimmy.js";
 import Resources from "#@/lib/resources.js";
+import {createResourceClass} from "./types/resource.js";
 
 describe("SCIMMY.Resources", () => {
     const sandbox = sinon.createSandbox();
+    
+    class Test extends createResourceClass("Test", "urn:ietf:params:scim:schemas:Test") {
+        static ingress = sandbox.stub();
+        static egress = sandbox.stub();
+        static degress = sandbox.stub();
+        static basepath = sandbox.stub();
+        static extend = sandbox.stub();
+    }
     
     it("should include static class 'Schema'", () => {
         assert.ok(!!Resources.Schema,
@@ -103,6 +112,27 @@ describe("SCIMMY.Resources", () => {
                     "Static method 'declare' did not declare resource type implementation's schema definition");
             }
         });
+        
+        const properties = [
+            ["ingress"],
+            ["egress"],
+            ["degress"],
+            ["basepath", "/scim", "a string"],
+            ["extensions", [{}], "an array", "extend"]
+        ];
+        
+        for (let [prop, val = (() => {}), kind = "a function", fn = prop] of properties) {
+            it(`should call resource's '${fn}' static method if '${prop}' property of 'config' argument is ${kind}`, function () {
+                try {
+                    Resources.declare(Test, {[prop]: val});
+                } catch {
+                    this.skip();
+                }
+                
+                assert.ok(Test[fn].calledOnce,
+                    `Static method 'declare' did not call resource's '${fn}' static method when '${prop}' property of 'config' argument was ${kind}`);
+            });
+        }
     });
     
     describe(".declared()", () => {
@@ -112,7 +142,7 @@ describe("SCIMMY.Resources", () => {
         });
         
         it("should return all declared resources when called without arguments", () => {
-            assert.deepStrictEqual(Resources.declared(), {User: Resources.User, Group: Resources.Group},
+            assert.deepStrictEqual(Resources.declared(), {Test, User: Resources.User, Group: Resources.Group},
                 "Static method 'declared' did not return all declared resources when called without arguments");
         });
         
