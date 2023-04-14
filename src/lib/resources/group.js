@@ -150,7 +150,15 @@ export class Group extends Types.Resource {
      * await (new SCIMMY.Resources.Group("1234")).dispose();
      */
     async dispose() {
-        if (!!this.id) await Group.#degress(this);
-        else throw new Types.Error(404, null, "DELETE operation must target a specific resource");
+        if (!this.id)
+            throw new Types.Error(404, null, "DELETE operation must target a specific resource");
+        
+        try {
+            await Group.#degress(this);
+        } catch (ex) {
+            if (ex instanceof Types.Error) throw ex;
+            else if (ex instanceof TypeError) throw new Types.Error(500, null, ex.message);
+            else throw new Types.Error(404, null, `Resource ${this.id} not found`);
+        }
     }
 }
