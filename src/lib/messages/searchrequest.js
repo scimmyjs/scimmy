@@ -37,14 +37,14 @@ export class SearchRequest {
      * @property {Number} [count] - maximum number of retrieved resources that should be returned in one operation
      */
     constructor(request) {
-        let {schemas} = request ?? {};
+        const {schemas} = request ?? {};
         
         // Verify the SearchRequest contents are valid
         if (request !== undefined && (!Array.isArray(schemas) || ((schemas.length === 1 && !schemas.includes(SearchRequest.#id)) || schemas.length > 1)))
             throw new Types.Error(400, "invalidSyntax", `SearchRequest request body messages must exclusively specify schema as '${SearchRequest.#id}'`);
         
         try {
-            // All seems ok, prepare the SearchRequest
+            // All seems OK, prepare the SearchRequest
             this.schemas = [SearchRequest.#id];
             this.prepare(request);
         } catch (ex) {
@@ -66,7 +66,7 @@ export class SearchRequest {
      * @returns {SCIMMY.Messages.SearchRequest} this SearchRequest instance for chaining
      */
     prepare(params = {}) {
-        let {filter, excludedAttributes = [], attributes = [], sortBy, sortOrder, startIndex, count} = params;
+        const {filter, excludedAttributes = [], attributes = [], sortBy, sortOrder, startIndex, count} = params;
         
         // Make sure filter is a non-empty string, if specified
         if (filter !== undefined && (typeof filter !== "string" || !filter.trim().length))
@@ -104,7 +104,7 @@ export class SearchRequest {
     
     /**
      * Apply a search request operation, retrieving results from specified resource types
-     * @param {SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing the search request, defaults to declared resources
+     * @param {typeof SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing the search request, defaults to declared resources
      * @returns {SCIMMY.Messages.ListResponse} a ListResponse message with results of the search request 
      */
     async apply(resourceTypes = Object.values(Resources.declared())) {
@@ -113,7 +113,7 @@ export class SearchRequest {
             throw new TypeError("Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of SearchRequest");
         
         // Build the common request template
-        let request = {
+        const request = {
             ...(!!this.filter ? {filter: this.filter} : {}),
             ...(!!this.excludedAttributes ? {excludedAttributes: this.excludedAttributes.join(",")} : {}),
             ...(!!this.attributes ? {attributes: this.attributes.join(",")} : {})
@@ -121,13 +121,13 @@ export class SearchRequest {
         
         // If only one resource type, just read from it
         if (resourceTypes.length === 1) {
-            let [Resource] = resourceTypes;
+            const [Resource] = resourceTypes;
             return new Resource({...this, ...request}).read();
         }
         // Otherwise, read from all resources and return collected results
         else {
             // Read from, and unwrap results for, supplied resource types
-            let results = await Promise.all(resourceTypes.map((Resource) => new Resource(request).read()))
+            const results = await Promise.all(resourceTypes.map((Resource) => new Resource(request).read()))
                 .then((r) => r.map((l) => l.Resources));
             
             // Collect the results in a list response with specified constraints

@@ -9,14 +9,15 @@ const extension = ["Extension", "urn:ietf:params:scim:schemas:Extension", "An Ex
 /**
  * Create a class that extends SCIMMY.Types.Resource, for use in tests
  * @param {String} name - the name of the Resource to create a class for
- * @param {*[]} params - arguments to pass through to the Schema class
+ * @param {String} id - the ID to pass through to the Schema class
+ * @param {*[]} rest - arguments to pass through to the Schema class
  * @returns {typeof Resource} a class that extends SCIMMY.Types.Resource for use in tests
  */
-export const createResourceClass = (name, ...params) => (
+export const createResourceClass = (name = params.name, id = params.id, ...rest) => (
     class Test extends Resource {
         static #endpoint = `/${name}`
         static get endpoint() { return Test.#endpoint; }
-        static #schema = createSchemaClass(name, ...params);
+        static #schema = createSchemaClass(name, id, ...rest);
         static get schema() { return Test.#schema; }
     }
 );

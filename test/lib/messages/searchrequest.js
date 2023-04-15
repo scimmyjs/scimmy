@@ -5,9 +5,12 @@ import {ListResponse} from "#@/lib/messages/listresponse.js";
 import {User} from "#@/lib/resources/user.js";
 import {Group} from "#@/lib/resources/group.js";
 import {SearchRequest} from "#@/lib/messages/searchrequest.js";
+import {createResourceClass} from "../types/resource.js";
 
+// Default values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"};
 const template = {schemas: [params.id]};
+// List of test suites to run validation against
 const suites = {
     strings: [
         ["empty string value", ""],
@@ -70,8 +73,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest({...template, excludedAttributes: ["test"]}),
                 "SearchRequest did not instantiate with valid 'excludedAttributes' property non-empty string array value");
             
-            for (let [label, value] of suites.arrays) {
-                assert.throws(() => new SearchRequest({...template, excludedAttributes: value}),
+            for (let [label, excludedAttributes] of suites.arrays) {
+                assert.throws(() => new SearchRequest({...template, excludedAttributes}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Expected 'excludedAttributes' parameter to be an array of non-empty strings"},
                     `SearchRequest instantiated with invalid 'excludedAttributes' property ${label}`);
@@ -79,14 +82,14 @@ describe("SCIMMY.Messages.SearchRequest", () => {
         });
         
         it("should expect 'attributes' property of 'request' argument to be an array of non-empty strings, if specified", () => {
-            assert.doesNotThrow(() => new SearchRequest({...template, excludedAttributes: ["test"]}),
-                "SearchRequest did not instantiate with valid 'excludedAttributes' property non-empty string array value");
+            assert.doesNotThrow(() => new SearchRequest({...template, attributes: ["test"]}),
+                "SearchRequest did not instantiate with valid 'attributes' property non-empty string array value");
             
-            for (let [label, value] of suites.arrays) {
-                assert.throws(() => new SearchRequest({...template, excludedAttributes: value}),
+            for (let [label, attributes] of suites.arrays) {
+                assert.throws(() => new SearchRequest({...template, attributes}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
-                        message: "Expected 'excludedAttributes' parameter to be an array of non-empty strings"},
-                    `SearchRequest instantiated with invalid 'excludedAttributes' property ${label}`);
+                        message: "Expected 'attributes' parameter to be an array of non-empty strings"},
+                    `SearchRequest instantiated with invalid 'attributes' property ${label}`);
             }
         });
         
@@ -94,8 +97,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest({...template, sortBy: "test"}),
                 "SearchRequest did not instantiate with valid 'sortBy' property string value 'test'");
             
-            for (let [label, value] of suites.strings) {
-                assert.throws(() => new SearchRequest({...template, sortBy: value}),
+            for (let [label, sortBy] of suites.strings) {
+                assert.throws(() => new SearchRequest({...template, sortBy}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Expected 'sortBy' parameter to be a non-empty string"},
                     `SearchRequest instantiated with invalid 'sortBy' property ${label}`);
@@ -106,8 +109,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest({...template, sortOrder: "ascending"}),
                 "SearchRequest did not instantiate with valid 'sortOrder' property string value 'ascending'");
             
-            for (let [label, value] of suites.strings) {
-                assert.throws(() => new SearchRequest({...template, sortOrder: value}),
+            for (let [label, sortOrder] of suites.strings) {
+                assert.throws(() => new SearchRequest({...template, sortOrder}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Expected 'sortOrder' parameter to be either 'ascending' or 'descending'"},
                     `SearchRequest instantiated with invalid 'sortOrder' property ${label}`);
@@ -118,8 +121,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest({...template, startIndex: 1}),
                 "SearchRequest did not instantiate with valid 'startIndex' property positive integer value '1'");
             
-            for (let [label, value] of suites.numbers) {
-                assert.throws(() => new SearchRequest({...template, startIndex: value}),
+            for (let [label, startIndex] of suites.numbers) {
+                assert.throws(() => new SearchRequest({...template, startIndex}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Expected 'startIndex' parameter to be a positive integer"},
                     `SearchRequest instantiated with invalid 'startIndex' property ${label}`);
@@ -130,8 +133,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest({...template, count: 1}),
                 "SearchRequest did not instantiate with valid 'count' property positive integer value '1'");
             
-            for (let [label, value] of suites.numbers) {
-                assert.throws(() => new SearchRequest({...template, count: value}),
+            for (let [label, count] of suites.numbers) {
+                assert.throws(() => new SearchRequest({...template, count}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: "Expected 'count' parameter to be a positive integer"},
                     `SearchRequest instantiated with invalid 'count' property ${label}`);
@@ -140,13 +143,13 @@ describe("SCIMMY.Messages.SearchRequest", () => {
     });
     
     describe("#prepare()", () => {
-        it("should have instance method 'prepare'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new SearchRequest()).prepare === "function",
                 "Instance method 'prepare' not defined");
         });
         
         it("should return the same instance it was called from", () => {
-            let expected = new SearchRequest();
+            const expected = new SearchRequest();
             
             assert.strictEqual(expected.prepare(), expected,
                 "Instance method 'prepare' did not return the same instance it was called from");
@@ -156,8 +159,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({filter: "test"}),
                 "Instance method 'prepare' rejected valid 'filter' property string value 'test'");
             
-            for (let [label, value] of suites.strings) {
-                assert.throws(() => new SearchRequest().prepare({filter: value}),
+            for (let [label, filter] of suites.strings) {
+                assert.throws(() => new SearchRequest().prepare({filter}),
                     {name: "TypeError", message: "Expected 'filter' parameter to be a non-empty string in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'filter' property ${label}`);
             }
@@ -167,8 +170,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({excludedAttributes: ["test"]}),
                 "Instance method 'prepare' rejected valid 'excludedAttributes' property non-empty string array value");
             
-            for (let [label, value] of suites.arrays) {
-                assert.throws(() => new SearchRequest().prepare({excludedAttributes: value}),
+            for (let [label, excludedAttributes] of suites.arrays) {
+                assert.throws(() => new SearchRequest().prepare({excludedAttributes}),
                     {name: "TypeError", message: "Expected 'excludedAttributes' parameter to be an array of non-empty strings in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'excludedAttributes' property ${label}`);
             }
@@ -178,8 +181,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({attributes: ["test"]}),
                 "Instance method 'prepare' rejected valid 'attributes' property non-empty string array value");
             
-            for (let [label, value] of suites.arrays) {
-                assert.throws(() => new SearchRequest().prepare({attributes: value}),
+            for (let [label, attributes] of suites.arrays) {
+                assert.throws(() => new SearchRequest().prepare({attributes}),
                     {name: "TypeError", message: "Expected 'attributes' parameter to be an array of non-empty strings in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'attributes' property ${label}`);
             }
@@ -189,8 +192,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({sortBy: "test"}),
                 "Instance method 'prepare' rejected valid 'sortBy' property string value 'test'");
             
-            for (let [label, value] of suites.strings) {
-                assert.throws(() => new SearchRequest().prepare({sortBy: value}),
+            for (let [label, sortBy] of suites.strings) {
+                assert.throws(() => new SearchRequest().prepare({sortBy}),
                     {name: "TypeError", message: "Expected 'sortBy' parameter to be a non-empty string in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'sortBy' property ${label}`);
             }
@@ -200,8 +203,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({sortOrder: "ascending"}),
                 "Instance method 'prepare' rejected valid 'sortOrder' property string value 'ascending'");
             
-            for (let [label, value] of suites.strings) {
-                assert.throws(() => new SearchRequest().prepare({sortOrder: value}),
+            for (let [label, sortOrder] of suites.strings) {
+                assert.throws(() => new SearchRequest().prepare({sortOrder}),
                     {name: "TypeError", message: "Expected 'sortOrder' parameter to be either 'ascending' or 'descending' in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'sortOrder' property ${label}`);
             }
@@ -211,8 +214,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({startIndex: 1}),
                 "Instance method 'prepare' rejected valid 'startIndex' property positive integer value '1'");
             
-            for (let [label, value] of suites.numbers) {
-                assert.throws(() => new SearchRequest().prepare({startIndex: value}),
+            for (let [label, startIndex] of suites.numbers) {
+                assert.throws(() => new SearchRequest().prepare({startIndex}),
                     {name: "TypeError", message: "Expected 'startIndex' parameter to be a positive integer in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'startIndex' property ${label}`);
             }
@@ -222,8 +225,8 @@ describe("SCIMMY.Messages.SearchRequest", () => {
             assert.doesNotThrow(() => new SearchRequest().prepare({count: 1}),
                 "Instance method 'prepare' rejected valid 'count' property positive integer value '1'");
             
-            for (let [label, value] of suites.numbers) {
-                assert.throws(() => new SearchRequest().prepare({count: value}),
+            for (let [label, count] of suites.numbers) {
+                assert.throws(() => new SearchRequest().prepare({count}),
                     {name: "TypeError", message: "Expected 'count' parameter to be a positive integer in 'prepare' method of SearchRequest"},
                     `Instance method 'prepare' did not reject invalid 'count' property ${label}`);
             }
@@ -231,7 +234,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
     });
     
     describe("#apply()", () => {
-        it("should have instance method 'apply'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new SearchRequest()).apply === "function",
                 "Instance method 'apply' not defined");
         });
@@ -245,6 +248,27 @@ describe("SCIMMY.Messages.SearchRequest", () => {
         it("should return a ListResponse message instance", async () => {
             assert.ok(await (new SearchRequest()).apply() instanceof ListResponse,
                 "Instance method 'apply' did not return an instance of ListResponse");
+        });
+        
+        it("should call through to Resource type when only one given in 'resourceTypes' argument", async function() {
+            const count = 10;
+            const stub = sandbox.stub();
+            
+            try {
+                await (new SearchRequest().prepare({count})).apply([class Test extends createResourceClass() {
+                    constructor(...args) {
+                        stub(...args);
+                        super(...args);
+                    }
+                    
+                    read = sandbox.stub();
+                }]);
+            } catch {
+                this.skip();
+            }
+            
+            assert.ok(stub.calledWithMatch({...template, count}),
+                "Instance method 'apply' did not call through to Resource type when only one given in 'resourceTypes' argument");
         });
     });
 });
