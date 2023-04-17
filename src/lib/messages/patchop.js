@@ -249,24 +249,7 @@ export class PatchOp {
                 throw new Types.Error(400, "invalidValue", `Attribute 'value' must be an object when 'path' is empty for 'add' op of operation ${index} in PatchOp request body`);
             
             // Go through and add the data specified by value
-            for (let [key, val] of Object.entries(value)) {
-                if (typeof value[key] === "object") this.#add(index, key, value[key]);
-                else try {
-                    this.#target[key] = val;
-                } catch (ex) {
-                    if (ex instanceof Types.Error) {
-                        // Add additional context to SCIM errors
-                        ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
-                        throw ex;
-                    } else if (ex.message?.endsWith?.("object is not extensible")) {
-                        // Handle errors caused by non-existent attributes in complex values
-                        throw new Types.Error(400, "invalidValue", `Invalid attribute '${key}' for supplied value of 'add' operation ${index} in PatchOp request body`);
-                    } else {
-                        // Rethrow other exceptions as SCIM errors
-                        throw new Types.Error(400, "invalidValue", `Value '${val}' not valid for attribute '${key}' of 'add' operation ${index} in PatchOp request body`);
-                    }
-                }
-            }
+            for (let [key, val] of Object.entries(value)) this.#add(index, key, val);
         } else {
             // Validate and extract details about the operation
             const {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
@@ -292,8 +275,17 @@ export class PatchOp {
                     // The target is not a collection or a complex attribute - assign the value
                     else target[property] = value;
                 } catch (ex) {
-                    // Rethrow exceptions as SCIM errors
-                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                    if (ex instanceof Types.Error) {
+                        // Add additional context to SCIM errors
+                        ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
+                        throw ex;
+                    } else if (ex.message?.endsWith?.("object is not extensible")) {
+                        // Handle errors caused by non-existent attributes in complex values
+                        throw new Types.Error(400, "invalidPath", `Invalid attribute path '${property}' in supplied value for 'add' op of operation ${index} in PatchOp request body`);
+                    } else {
+                        // Rethrow exceptions as SCIM errors
+                        throw new Types.Error(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                    }
                 }
             }
         }
@@ -340,8 +332,17 @@ export class PatchOp {
                         if (target[property].length === 0) target[property] = undefined;
                     }
                 } catch (ex) {
-                    // Rethrow exceptions as SCIM errors
-                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                    if (ex instanceof Types.Error) {
+                        // Add additional context to SCIM errors
+                        ex.message += ` for 'remove' op of operation ${index} in PatchOp request body`;
+                        throw ex;
+                    } else if (ex.message?.endsWith?.("object is not extensible")) {
+                        // Handle errors caused by non-existent attributes in complex values
+                        throw new Types.Error(400, "invalidPath", `Invalid attribute path '${property}' in supplied value for 'remove' op of operation ${index} in PatchOp request body`);
+                    } else {
+                        // Rethrow exceptions as SCIM errors
+                        throw new Types.Error(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                    }
                 }
             }
         } else {
