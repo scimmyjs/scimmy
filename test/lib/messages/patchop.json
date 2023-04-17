@@ -15,6 +15,13 @@
         "ops": [
           {"op": "add", "path": "password", "value": "1234"}
         ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr", "formatted": "Test"}},
+        "ops": [
+          {"op": "add", "path": "name", "value": {"formatted": "Test"}}
+        ]
       }
     ],
     "remove": [

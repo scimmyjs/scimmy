@@ -2,22 +2,17 @@ import assert from "assert";
 import {Resource} from "#@/lib/types/resource.js";
 import {createSchemaClass} from "./schema.js";
 
-// Default values to use when creating a resource class in tests
-const params = {name: "Test", id: "urn:ietf:params:scim:schemas:Test", description: "A Test"};
-const extension = ["Extension", "urn:ietf:params:scim:schemas:Extension", "An Extension"];
-
 /**
  * Create a class that extends SCIMMY.Types.Resource, for use in tests
- * @param {String} name - the name of the Resource to create a class for
- * @param {String} id - the ID to pass through to the Schema class
+ * @param {String} [name=Test] - the name of the Resource to create a class for
  * @param {*[]} rest - arguments to pass through to the Schema class
  * @returns {typeof Resource} a class that extends SCIMMY.Types.Resource for use in tests
  */
-export const createResourceClass = (name = params.name, id = params.id, ...rest) => (
+export const createResourceClass = (name = "Test", ...rest) => (
     class Test extends Resource {
         static #endpoint = `/${name}`
         static get endpoint() { return Test.#endpoint; }
-        static #schema = createSchemaClass(name, id, ...rest);
+        static #schema = createSchemaClass({...rest, name});
         static get schema() { return Test.#schema; }
     }
 );
@@ -116,13 +111,13 @@ describe("SCIMMY.Types.Resource", () => {
                 "Static method 'describe' not defined");
         });
         
-        const TestResource = createResourceClass(...Object.values(params));
+        const TestResource = createResourceClass();
         const properties = [
             ["name"], ["description"], ["id", "name"], ["schema", "id"],
-            ["endpoint", "name", `/${params.name}`, ", with leading forward-slash"]
+            ["endpoint", "name", `/${TestResource.schema.definition.name}`, ", with leading forward-slash"]
         ];
         
-        for (let [prop, target = prop, expected = params[target], suffix = ""] of properties) {
+        for (let [prop, target = prop, expected = TestResource.schema.definition[target], suffix = ""] of properties) {
             it(`should expect '${prop}' property of description to equal '${target}' property of resource's schema definition${suffix}`, () => {
                 assert.strictEqual(TestResource.describe()[prop], expected, 
                     `Resource 'describe' method returned '${prop}' property with unexpected value`);
@@ -136,7 +131,7 @@ describe("SCIMMY.Types.Resource", () => {
         
         it("should expect 'schemaExtensions' property to be included in description when resource is extended", function () {
             try {
-                TestResource.extend(createSchemaClass(...extension));
+                TestResource.extend(createSchemaClass({name: "Extension", id: "urn:ietf:params:scim:schemas:Extension"}));
             } catch {
                 this.skip();
             }

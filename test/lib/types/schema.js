@@ -4,13 +4,21 @@ import {SchemaDefinition} from "#@/lib/types/definition.js";
 
 /**
  * Create a class that extends SCIMMY.Types.Schema, for use in tests
- * @param {*[]} params - arguments to pass through to the SchemaDefinition instance
+ * @param {Object} [params] - parameters to pass through to the SchemaDefinition instance
+ * @param {String} [params.name] - the name to pass through to the SchemaDefinition instance
+ * @param {String} [params.id] - the ID to pass through to the SchemaDefinition instance
+ * @param {String} [params.description] - the description to pass through to the SchemaDefinition instance
+ * @param {String} [params.attributes] - the attributes to pass through to the SchemaDefinition instance
  * @returns {typeof Schema} a class that extends SCIMMY.Types.Schema for use in tests
  */
-export const createSchemaClass = (...params) => (
+export const createSchemaClass = ({name = "Test", id = "urn:ietf:params:scim:schemas:Test", description = "A Test", attributes} = {}) => (
     class Test extends Schema {
-        static #definition = new SchemaDefinition(...params);
+        static #definition = new SchemaDefinition(name, id, description, attributes);
         static get definition() { return Test.#definition; }
+        constructor(resource, direction = "both", basepath, filters) {
+            super(resource, direction);
+            Object.assign(this, Test.#definition.coerce(resource, direction, basepath, filters));
+        }
     }
 );
 
