@@ -98,8 +98,8 @@ describe("SCIMMY.Types.Filter", () => {
         });
     });
     
-    describe(".match()", () => {
-        it("should have instance method 'match'", () => {
+    describe("#match()", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new Filter()).match === "function",
                 "Instance method 'match' not defined");
         });
@@ -112,7 +112,8 @@ describe("SCIMMY.Types.Filter", () => {
             ["numbers", "correctly compare numeric attribute values"],
             ["dates", "correctly compare ISO 8601 datetime string attribute values"],
             ["logicalAnd", "match values against all expressions in a group of logical 'and' expressions for a single attribute"],
-            ["logicalOr", "match values against any one expression in a group of logical 'or' expressions"]
+            ["logicalOr", "match values against any one expression in a group of logical 'or' expressions"],
+            ["unknown", "not match unknown comparators"]
         ];
         
         for (let [key, label] of targets) {

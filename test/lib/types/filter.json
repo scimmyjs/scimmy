@@ -230,6 +230,9 @@
       "logicalOr": [
         {"expression": [{"name": {"formatted": ["co", "an"]}}, {"userName": ["co", "ad"]}], "expected": [1, 2, 4]},
         {"expression": [{"date": ["gt", "2021-09-08"]}, {"userName": ["co", "a"]}], "expected": [2, 4]}
+      ],
+      "unknown": [
+        {"expression": {"userName": ["un", "AdeleV"]}, "expected": []}
       ]
     }
   }

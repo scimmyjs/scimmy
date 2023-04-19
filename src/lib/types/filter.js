@@ -174,7 +174,8 @@ export class Filter extends Array {
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
             // Extract the different matches from the token
-            let [literal, space, number, boolean, empty, string, grouping, attribute, word] = token;
+            const [literal, space, number, boolean, empty, string, grouping, attribute, maybeWord] = token;
+            let word = maybeWord;
             
             // If the token isn't whitespace, handle it!
             if (!space) {
@@ -229,7 +230,7 @@ export class Filter extends Array {
      * @private
      */
     static #operations(tokens, operator) {
-        let operations = [];
+        const operations = [];
         
         for (let token of [...tokens]) {
             // Found the target operator token, push preceding tokens as an operation
@@ -255,16 +256,16 @@ export class Filter extends Array {
         // Go through every expression in the list, or handle a singular expression if that's what was given  
         for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
             // Check if first token is negative for later evaluation
-            let negative = expression[0] === "not" ? expression.shift() : undefined,
-                // Extract expression parts and derive object path
-                [path, comparator, value] = expression,
-                parts = path.split(pathSeparator).filter(p => p),
-                target = result;
+            const negative = expression[0] === "not" ? expression.shift() : undefined;
+            // Extract expression parts and derive object path
+            const [path, comparator, expected] = expression;
+            const parts = path.split(pathSeparator).filter(p => p);
+            let value = expected, target = result;
             
             // Construct the object
             for (let key of parts) {
                 // Fix the attribute name
-                let name = `${key[0].toLowerCase()}${key.slice(1)}`;
+                const name = `${key[0].toLowerCase()}${key.slice(1)}`;
                 
                 // If there's more path to follow, keep digging
                 if (parts.indexOf(key) < parts.length - 1) target = (target[name] = target[name] ?? {});
@@ -290,13 +291,13 @@ export class Filter extends Array {
      * @private
      */
     static #parse(query = "") {
-        let tokens = (Array.isArray(query) ? query : Filter.#tokenise(query)),
-            // Initial pass to check for complexities 
-            simple = !tokens.some(t => ["Operator", "Group"].includes(t.type)),
-            // Closer inspection in case word tokens contain nested attribute filters
-            reallySimple = simple && (tokens[0]?.value ?? tokens[0] ?? "")
-                .split(pathSeparator).every(t => t === multiValuedFilter.exec(t).slice(1).shift()),
-            results = [];
+        const results = [];
+        const tokens = (Array.isArray(query) ? query : Filter.#tokenise(query));
+        // Initial pass to check for complexities
+        const simple = !tokens.some(t => ["Operator", "Group"].includes(t.type));
+        // Closer inspection in case word tokens contain nested attribute filters
+        const reallySimple = simple && (tokens[0]?.value ?? tokens[0] ?? "").split(pathSeparator)
+            .every(t => t === multiValuedFilter.exec(t).slice(1).shift());
         
         // If there's no operators or groups, and no nested attribute filters, assume the expression is complete
         if (reallySimple) {
@@ -304,15 +305,15 @@ export class Filter extends Array {
         }
         // Otherwise, logic and groups need to be evaluated
         else {
-            let expressions = [];
+            const expressions = [];
             
             // Go through every "or" branch in the expression
             for (let branch of Filter.#operations(tokens, "or")) {
                 // Find all "and" joins in the branch
-                let joins = Filter.#operations(branch, "and"),
-                    // Find all complete expressions, and groups that need evaluating
-                    expression = joins.filter(e => !e.some(t => t.type === "Group")),
-                    groups = joins.filter(e => !expression.includes(e));
+                const joins = Filter.#operations(branch, "and");
+                // Find all complete expressions, and groups that need evaluating
+                const expression = joins.filter(e => !e.some(t => t.type === "Group"));
+                const groups = joins.filter(e => !expression.includes(e));
                 
                 // Go through every expression and check for nested attribute filters
                 for (let e of expression.splice(0)) {
@@ -327,14 +328,14 @@ export class Filter extends Array {
                     }
                     // Otherwise, delve into the path parts for complexities
                     else {
-                        let parts = path.value.split(pathSeparator).filter(p => p),
-                            // Store results and spent path parts
-                            results = [],
-                            spent = [];
+                        const parts = path.value.split(pathSeparator).filter(p => p);
+                        // Store results and spent path parts
+                        const results = [];
+                        const spent = [];
                         
                         for (let part of parts) {
                             // Check for filters in the path part
-                            let [, key = part, filter] = multiValuedFilter.exec(part) ?? [];
+                            const [, key = part, filter] = multiValuedFilter.exec(part) ?? [];
                             
                             // Store the spent path part
                             spent.push(key);
@@ -348,8 +349,8 @@ export class Filter extends Array {
                                     .map(b => b.every(b => b.every(b => Array.isArray(b))) ? b.flat(1) : b)
                                     // Prefix any attribute paths with spent parts
                                     .map((branch) => branch.map(join => {
-                                        let negative = (join[0] === "not" ? join.shift() : undefined),
-                                            [path, comparator, value] = join;
+                                        const negative = (join[0] === "not" ? join.shift() : undefined);
+                                        const [path, comparator, value] = join;
                                         
                                         return [negative, `${spent.join(".")}.${path}`, comparator, value].filter(v => v !== undefined);
                                     }));
@@ -384,13 +385,13 @@ export class Filter extends Array {
                 // Evaluate the groups
                 for (let group of groups.splice(0)) {
                     // Check for negative and extract the group token
-                    let [negate, token = negate] = group,
-                        // Parse the group token, negating and stripping double negatives if necessary
-                        tokens = Filter.#tokenise(token === negate ? token.value : `not ${token.value
-                            .replaceAll(" and ", " and not ").replaceAll(" or ", " or not ")
-                            .replaceAll(" and not not ", " and ").replaceAll(" or not not ", " or ")}`),
-                        // Find all "or" branches in this group
-                        branches = Filter.#operations(tokens, "or");
+                    const [negate, token = negate] = group;
+                    // Parse the group token, negating and stripping double negatives if necessary
+                    const tokens = Filter.#tokenise(token === negate ? token.value : `not ${token.value
+                        .replaceAll(" and ", " and not ").replaceAll(" or ", " or not ")
+                        .replaceAll(" and not not ", " and ").replaceAll(" or not not ", " or ")}`);
+                    // Find all "or" branches in this group
+                    const branches = Filter.#operations(tokens, "or");
                     
                     if (branches.length === 1) {
                         // No real branches, so it's probably a simple expression
