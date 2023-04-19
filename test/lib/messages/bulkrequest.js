@@ -36,6 +36,9 @@ class Test extends Resource {
     
     // Mock write method that assigns IDs and stores in static instances array
     async write(instance) {
+        if (instance?.shouldThrow) 
+            throw new TypeError("Failing as requested");
+        
         // Give the instance an ID and assign data to it
         const target = Object.assign(
             (!!this.id ? Test.#instances.find(i => i.id === this.id) : {id: String(++Test.#lastId)}),
@@ -131,7 +134,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
     });
     
     describe("#apply()", () => {
-        it("should have instance method 'apply'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new BulkRequest({...template})).apply === "function",
                 "Instance method 'apply' not defined");
         });
@@ -218,7 +221,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
                 "Instance method 'apply' did not expect 'path' attribute to refer to a valid resource type endpoint");
         });
         
-        it("should expect 'path' attribute to NOT specify a resource ID if 'method' is POST", async () => {
+        it("should expect 'path' attribute not to specify a resource ID if 'method' is POST", async () => {
             const actual = (await (new BulkRequest({...template, Operations: [{method: "POST", path: "/Test/1", bulkId: "asdf"}]})).apply([Test]))?.Operations;
             const expected = [{status: "404", method: "POST", bulkId: "asdf", response: {
                 ...new ErrorMessage(new SCIMError(404, null, "POST operation must not target a specific resource in BulkRequest operation #1"))
@@ -336,5 +339,52 @@ describe("SCIMMY.Messages.BulkRequest", () => {
                     `Instance method 'apply' did not resolve references in inbound bulkId circular fixture #${suite.indexOf(fixture)+1}`);
             }
         });
+        
+        it("should dispose of newly created resources when circular bulkId operations fail", async () => {
+            // Stub the dispose method on the test class, so it can be spied on
+            const stub = sandbox.stub();
+            const TestStubbed = class extends Test.reset() {dispose = stub};
+            // Prepare a list of operations that are circular and will fail
+            const Operations = [["qwerty", {ref: "bulkId:asdfgh"}], ["asdfgh", {ref: "bulkId:qwerty", shouldThrow: true}]]
+                .map(([bulkId, data]) => ({method: "POST", path: "/Test", bulkId, data}));
+            
+            await (new BulkRequest({...template, Operations})).apply([TestStubbed]);
+            
+            assert.ok(stub.called && stub.getCall(0)?.args?.length === 0, 
+                "Instance method 'apply' did not dispose of newly created resource when circular bulkId operation failed");
+        });
+        
+        it("should handle precondition failures in dependent bulk operations", async () => {
+            // Prepare a list of operations where the referenced bulkId operation will fail 
+            const Operations = [["qwerty", {ref: "bulkId:asdfgh"}], ["asdfgh", {shouldThrow: true}]]
+                .map(([bulkId, data]) => ({method: "POST", path: "/Test", bulkId, data}));
+            const actual = await (new BulkRequest({...template, Operations})).apply([Test.reset()]);
+            // Prepare the expected outcomes including the precondition failure and intentional failure
+            const failedRef = "Referenced POST operation with bulkId 'asdfgh' was not successful";
+            const expected = [["qwerty", 412, null, failedRef], ["asdfgh", 400, "invalidValue", "Failing as requested"]]
+                .map(([bulkId, status, type, reason]) => ([bulkId, String(status), {...new ErrorMessage(new SCIMError(status, type, reason))}]))
+                .map(([bulkId, status, response]) => ({method: "POST", bulkId, status, response}));
+            
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual.Operations)), expected,
+                "Instance method 'apply' did not handle precondition failure in dependent bulk operation");
+        });
+        
+        for (let [method, fn] of [["POST", "write"], ["PUT", "write"], ["PATCH", "patch"], ["DELETE", "dispose"]]) {
+            it(`should call resource instance '${fn}' method when 'method' attribute value is ${method}`, async () => {
+                // Stub the target resource instance method on the test class, so it can be spied on
+                const stub = sandbox.stub().returns(method !== "DELETE" ? {id: 1} : undefined);
+                const TestStubbed = class extends Test.reset() {[fn] = stub};
+                // Prepare details for an operation that should call the target method
+                const path = `/Test${method !== "POST" ? "/1" : ""}`;
+                const bulkId = (method === "POST" ? "asdf" : undefined);
+                const data = (method !== "DELETE" ? {calledWithMe: true} : undefined);
+                const Operations = [{method, path, bulkId, data}];
+                
+                await (new BulkRequest({...template, Operations})).apply([TestStubbed]);
+                
+                assert.ok(method !== "DELETE" ? stub.calledWithMatch(data) : stub.getCall(0)?.args?.length === 0,
+                    `Instance method 'apply' did not call resource instance '${fn}' method when 'method' attribute value was ${method}`);
+            });
+        }
     });
 });
