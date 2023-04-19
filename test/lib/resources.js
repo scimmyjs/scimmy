@@ -364,7 +364,7 @@ export const ResourcesHooks = {
         });
         
         if (filterable) {
-            it("should expect query parameters to be an object after instantiation", () => {
+            it("should expect query parameters to be an object", () => {
                 const fixtures = [
                     ["number value '1'", 1],
                     ["boolean value 'false'", false],
