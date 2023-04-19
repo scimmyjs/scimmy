@@ -67,7 +67,7 @@ export class BulkRequest {
         if (maxOperations > 0 && operations.length > maxOperations)
             throw new Types.Error(413, null, `Number of operations in BulkRequest exceeds maxOperations limit (${maxOperations})`);
         
-        // All seems ok, prepare the BulkRequest body
+        // All seems OK, prepare the BulkRequest body
         this.schemas = [BulkRequest.#id];
         this.Operations = [...operations];
         if (failOnErrors) this.failOnErrors = failOnErrors;
@@ -75,7 +75,7 @@ export class BulkRequest {
     
     /**
      * Apply the operations specified by the supplied BulkRequest 
-     * @param {SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing bulk operations, defaults to declared resources
+     * @param {typeof SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing bulk operations, defaults to declared resources
      * @returns {SCIMMY.Messages.BulkResponse} a new BulkResponse Message instance with results of the requested operations 
      */
     async apply(resourceTypes = Object.values(Resources.declared())) {
@@ -89,50 +89,59 @@ export class BulkRequest {
         else this.#dispatched = true;
         
         // Set up easy access to resource types by endpoint, and store pending results
-        let typeMap = new Map(resourceTypes.map((r) => [r.endpoint, r])),
-            results = [],
-            // Get a list of POST ops with bulkIds for direct and circular reference resolution
-            bulkIds = new Map(this.Operations
-                .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
-                .map(({bulkId}, index, postOps) => {
-                    // Establish who waits on what, and provide a way for that to happen
-                    let handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)},
-                        value = new Promise((resolve, reject) => Object.assign(handlers, {resolve: resolve, reject: reject})).catch((e) => e);
-                    
-                    return [bulkId, Object.assign(value, handlers)];
-                })
-            ),
-            bulkIdTransients = [...bulkIds.keys()],
-            // Establish error handling for the entire list of operations
-            errorCount = 0, errorLimit = this.failOnErrors,
+        const typeMap = new Map(resourceTypes.map((r) => [r.endpoint, r]));
+        const results = [];
+        
+        // Get a map of POST ops with bulkIds for direct and circular reference resolution
+        const bulkIds = new Map(this.Operations
+            .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
+            .map(({bulkId}, index, postOps) => {
+                // Establish who waits on what, and provide a way for that to happen
+                const handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)};
+                const value = new Promise((resolve, reject) => Object.assign(handlers, {resolve, reject}));
+                
+                return [bulkId, Object.assign(value, handlers)];
+            })
+        );
+        
+        // Turn them into a list for operation ordering
+        const bulkIdTransients = [...bulkIds.keys()];
+        
+        // Establish error handling for the entire list of operations
+        let errorCount = 0,
+            errorLimit = this.failOnErrors,
             lastErrorIndex = this.Operations.length + 1;
         
         for (let op of this.Operations) results.push((async () => {
             // Unwrap useful information from the operation
-            let {method, bulkId, path = "", data} = op,
-                // Evaluate endpoint and resource ID, and thus what kind of resource we're targeting 
-                [endpoint, id] = (typeof path === "string" ? path : "").substring(1).split("/"),
-                TargetResource = (endpoint ? typeMap.get(`/${endpoint}`) : false),
-                // Construct a location for the response, and prepare common aspects of the result
-                location = (TargetResource ? [TargetResource.basepath() ?? TargetResource.endpoint, id].filter(v => v).join("/") : path || undefined),
-                result = {method: method, bulkId: (typeof bulkId === "string" ? bulkId : undefined), location: (typeof location === "string" ? location : undefined)},
-                // Find out if this op waits on any other operations 
-                jsonData = (!!data ? JSON.stringify(data) : ""),
-                waitingOn = (!jsonData.includes("bulkId:") ? [] : [...new Set([...jsonData.matchAll(/"bulkId:(.+?)"/g)].map(([, id]) => id))]),
-                // Establish error handling for this operation
-                index = this.Operations.indexOf(op) + 1,
-                errorSuffix = `in BulkRequest operation #${index}`,
-                error = false;
-            
+            const {method, bulkId: opBulkId, path = "", data} = op;
             // Ignore the bulkId unless method is POST
-            bulkId = (String(method).toUpperCase() === "POST" ? bulkId : undefined);
+            const bulkId = (String(method).toUpperCase() === "POST" ? opBulkId : undefined);
+            // Evaluate endpoint and resource ID, and thus what kind of resource we're targeting 
+            const [endpoint, id] = (typeof path === "string" ? path : "").substring(1).split("/");
+            const TargetResource = (endpoint ? typeMap.get(`/${endpoint}`) : false);
+            // Construct a location for the response, and prepare common aspects of the result
+            const location = (TargetResource ? [TargetResource.basepath() ?? TargetResource.endpoint, id].filter(v => v).join("/") : path || undefined);
+            const result = {method, bulkId: (typeof bulkId === "string" ? bulkId : undefined), location: (typeof location === "string" ? location : undefined)};
+            // Get op data and find out if this op waits on any other operations
+            const jsonData = (!!data ? JSON.stringify(data) : "");
+            const waitingOn = (!jsonData.includes("bulkId:") ? [] : [...new Set([...jsonData.matchAll(/"bulkId:(.+?)"/g)].map(([, id]) => id))]);
+            const {referencedBy = []} = bulkIds.get(bulkId) ?? {};
+            // Establish error handling for this operation
+            const index = this.Operations.indexOf(op) + 1;
+            const errorSuffix = `in BulkRequest operation #${index}`;
+            let error = false;
             
-            // If not the first operation, and there's no circular references, wait on all prior operations
-            if (index > 1 && (!bulkId || !waitingOn.length || !waitingOn.some(id => bulkIds.get(bulkId).referencedBy.includes(id)))) {
-                let lastOp = (await Promise.all(results.slice(0, index - 1))).pop();
+            // If not the first operation, and there's no circular references, wait on prior operations
+            if (index > 1 && (!bulkId || !waitingOn.length || !waitingOn.some(id => referencedBy.includes(id)))) {
+                // Check to see if any preceding operations reference this one
+                const dependents = referencedBy.map(bulkId => bulkIdTransients.indexOf(bulkId));
+                // Then filter them out, so they aren't waited on, and get results of the last operation
+                const precedingOps = results.slice(0, index - 1).filter((v, i) => !dependents.includes(i));
+                const lastOp = (await Promise.all(precedingOps)).pop();
                 
-                // If the last operation failed, and error limit reached, bail out here
-                if (!lastOp || (lastOp.response instanceof ErrorMessage && !(!errorLimit || (errorCount < errorLimit))))
+                // If there was last operation, and it failed, and error limit reached, bail out here
+                if (precedingOps.length && (!lastOp || (lastOp.response instanceof ErrorMessage && !(!errorLimit || (errorCount < errorLimit)))))
                     return;
             }
             
@@ -173,72 +182,71 @@ export class BulkRequest {
             else if (!waitingOn.every((id) => bulkIds.has(id)))
                 error = new ErrorMessage(new Types.Error(400, "invalidValue", `No POST operation found matching bulkId '${waitingOn.find((id) => !bulkIds.has(id))}'`));
             // If things look OK, attempt to apply the operation
-            else {
-                try {
-                    // Go through and wait on any referenced POST bulkIds
-                    for (let referenceId of waitingOn) {
-                        // Find the referenced operation to wait for
-                        let reference = bulkIds.get(referenceId),
-                            referenceIndex = bulkIdTransients.indexOf(referenceId);
+            else try {
+                // Get replaceable data for reference resolution
+                let {data} = op;
+                
+                // Go through and wait on any referenced POST bulkIds
+                for (let referenceId of waitingOn) {
+                    // Find the referenced operation to wait for
+                    const reference = bulkIds.get(referenceId);
+                    const referenceIndex = bulkIdTransients.indexOf(referenceId);
+                    
+                    // If the reference is also waiting on us, we have ourselves a circular reference!
+                    if (bulkId && !id && reference.referencedBy.includes(bulkId) && (bulkIdTransients.indexOf(bulkId) < referenceIndex)) {
+                        // Attempt to POST self without reference so referenced operation can complete and give us its ID!
+                        let {id} = await new TargetResource().write(Object.entries(data)
+                            // Remove any values that reference a bulkId
+                            .filter(([,v]) => !JSON.stringify(v).includes("bulkId:"))
+                            .reduce((res, [k, v]) => Object.assign(res, {[k]: v}), {}));
                         
-                        // If the reference is also waiting on us, we have ourselves a circular reference!
-                        if (bulkId && !id && reference.referencedBy.includes(bulkId) && (bulkIdTransients.indexOf(bulkId) < referenceIndex)) {
-                            // Attempt to POST self without reference so referenced operation can complete and give us its ID!
-                            ({id} = await new TargetResource().write(Object.entries(data)
-                                // Remove any values that reference a bulkId
-                                .filter(([,v]) => !JSON.stringify(v).includes("bulkId:"))
-                                .reduce((res, [k, v]) => (((res[k] = v) || true) && res), {})));
-                            
-                            // Set the ID for future use and resolve pending references
-                            jsonData = JSON.stringify(Object.assign(data, {id: id}));
-                            bulkIds.get(bulkId).resolve(id);
-                        }
-                        
-                        try {
-                            // Replace reference with real value once resolved
-                            jsonData = jsonData.replaceAll(`bulkId:${referenceId}`, await reference);
-                            data = JSON.parse(jsonData);
-                        } catch (ex) {
-                            // Referenced POST operation precondition failed, remove any created resource and bail out
-                            if (bulkId && id) await new TargetResource(id).dispose();
-                            
-                            // If we're following on from a prior failure, no need to explain why, otherwise, explain the failure
-                            if (ex instanceof ErrorMessage && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
-                            else throw new Types.Error(412, null, `Referenced POST operation with bulkId '${referenceId}' was not successful`);
-                        }
+                        // Set the ID for future use and resolve pending references
+                        Object.assign(data, {id})
+                        bulkIds.get(bulkId).resolve(id);
                     }
                     
-                    // Get ready
-                    let resource = new TargetResource(id),
-                        value;
-                    
-                    // Do the thing!
-                    switch (method.toUpperCase()) {
-                        case "POST":
-                        case "PUT":
-                            value = await resource.write(data);
-                            if (bulkId && !resource.id && value.id) bulkIds.get(bulkId).resolve(value.id); 
-                            Object.assign(result, {status: (!bulkId ? "200" : "201"), location: value?.meta?.location});
-                            break;
-                            
-                        case "PATCH":
-                            value = await resource.patch(data);
-                            Object.assign(result, {status: (value ? "200" : "204")}, (value ? {location: value?.meta?.location} : {}));
-                            break;
-                            
-                        case "DELETE":
-                            await resource.dispose();
-                            Object.assign(result, {status: "204"});
-                            break;
+                    try {
+                        // Replace reference with real value once resolved, preserving any new resource ID
+                        data = Object.assign(JSON.parse(jsonData.replaceAll(`bulkId:${referenceId}`, await reference)), {id: data.id});
+                    } catch (ex) {
+                        // Referenced POST operation precondition failed, remove any created resource and bail out
+                        if (bulkId && data.id) await new TargetResource(data.id).dispose();
+                        
+                        // If we're following on from a prior failure, no need to explain why, otherwise, explain the failure
+                        if (ex instanceof ErrorMessage && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
+                        else throw new Types.Error(412, null, `Referenced POST operation with bulkId '${referenceId}' was not successful`);
                     }
-                } catch (ex) {
-                    // Coerce the exception into a SCIMError
-                    if (!(ex instanceof Types.Error)) 
-                        ex = new Types.Error(...(ex instanceof TypeError ? [400, "invalidValue"] : [500, null]), ex.message);
-                    
-                    // Set the error variable for final handling, and reject any pending operations
-                    error = new ErrorMessage(ex);
                 }
+                
+                // Get ready
+                const resource = new TargetResource(data?.id ?? id);
+                let value;
+                
+                // Do the thing!
+                switch (method.toUpperCase()) {
+                    case "POST":
+                    case "PUT":
+                        value = await resource.write(data);
+                        if (bulkId && !resource.id && value?.id) bulkIds.get(bulkId).resolve(value?.id); 
+                        break;
+                        
+                    case "PATCH":
+                        value = await resource.patch(data);
+                        break;
+                        
+                    case "DELETE":
+                        await resource.dispose();
+                        break;
+                }
+                
+                Object.assign(result, {status: (value ? (!bulkId ? "200" : "201") : "204")}, (value ? {location: value?.meta?.location} : {}));
+            } catch (ex) {
+                // Coerce the exception into a SCIMError
+                if (!(ex instanceof Types.Error)) 
+                    ex = new Types.Error(...(ex instanceof TypeError ? [400, "invalidValue"] : [500, null]), ex.message);
+                
+                // Set the error variable for final handling, and reject any pending operations
+                error = new ErrorMessage(ex);
             }
             
             // If there was an error, store result and increment error count
