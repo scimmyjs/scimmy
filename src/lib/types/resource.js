@@ -167,7 +167,7 @@ export class Resource {
      */
     constructor(id, config) {
         // Unwrap params from arguments
-        let params = (typeof id === "string" || config !== undefined ? config : id) ?? {};
+        const params = (typeof id === "string" || config !== undefined ? config : id) ?? {};
         
         // Make sure params is a valid object
         if (Object(params) !== params || Array.isArray(params))
@@ -213,15 +213,13 @@ export class Resource {
         
         // Handle sort and pagination parameters
         if (["sortBy", "sortOrder", "startIndex", "count"].some(k => k in params)) {
-            let {sortBy, sortOrder, startIndex: sStartIndex, count: sCount} = params,
-                startIndex = Number(sStartIndex ?? undefined),
-                count = Number(sCount ?? undefined);
+            const {sortBy, sortOrder, startIndex, count} = params;
             
             this.constraints = {
-                ...(sortBy !== undefined ? {sortBy} : {}),
+                ...(typeof sortBy === "string" ? {sortBy} : {}),
                 ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder} : {}),
-                ...(!Number.isNaN(startIndex) && Number.isInteger(startIndex) ? {startIndex} : {}),
-                ...(!Number.isNaN(count) && Number.isInteger(count) ? {count} : {})
+                ...(!Number.isNaN(Number(startIndex)) && Number.isInteger(startIndex) ? {startIndex} : {}),
+                ...(!Number.isNaN(Number(count)) && Number.isInteger(count) ? {count} : {})
             };
         }
     }
