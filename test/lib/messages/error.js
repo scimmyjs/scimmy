@@ -4,14 +4,16 @@ import url from "url";
 import assert from "assert";
 import {Error as ErrorMessage} from "#@/lib/messages/error.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./error.json"), "utf8").then((f) => JSON.parse(f));
+// Default parameter values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:Error"};
 const template = {schemas: [params.id], status: "500"};
 
 describe("SCIMMY.Messages.Error", () => {
     describe("@constructor", () => {
-        it("should not require arguments at instantiation", () => {
+        it("should not require arguments", () => {
             assert.deepStrictEqual({...(new ErrorMessage())}, template,
                 "SCIM Error message did not instantiate with correct default properties");
         });

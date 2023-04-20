@@ -4,21 +4,34 @@ import url from "url";
 import assert from "assert";
 import {Attribute} from "#@/lib/types/attribute.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./attribute.json"), "utf8").then((f) => JSON.parse(f));
 
-export function instantiateFromFixture(fixture) {
-    const {type, name, mutability: m, uniqueness: u, subAttributes = [], ...config} = fixture;
-    
-    return new Attribute(
+/**
+ * Instantiate a new Attribute from the given fixture definition
+ * @param {Object} fixture - the attribute definition from the fixture
+ * @returns {SCIMMY.Types.Attribute} a new Attribute instance created from the fixture definition
+ */
+export const instantiateFromFixture = ({type, name, mutability: m, uniqueness: u, subAttributes = [], ...config}) => (
+    new Attribute(
         type, name, {...(m !== undefined ? {mutable: m} : {}), ...(u !== null ? {uniqueness: !u ? false : u} : {}), ...config}, 
         subAttributes.map(instantiateFromFixture)
-    );
-}
+    )
+);
 
-// Run valid and invalid fixtures for different attribute types
-function typedCoercion(type, {config = {}, multiValued = false, valid, invalid, assertion}) {
-    const attribute = new Attribute(type, "test", {...config, multiValued: multiValued});
+/**
+ * Run valid and invalid coercion fixtures for different attribute types
+ * @param {String} type - the type of attribute being tested
+ * @param {Object} fixture - details of the tests to run
+ * @param {Object.<string, any>} [fixture.config={}] - additional configuration for the attribute instance
+ * @param {Boolean} [fixture.multiValued=false] - whether the attribute under test is multi-valued
+ * @param {[string, any][]} [fixture.valid=[]] - list of valid coercion inputs to verify
+ * @param {[string, string, any][]} [fixture.invalid=[]] - list of invalid coercion inputs to verify
+ * @param {Function} [fixture.assertion] - function to call, with invalid input data type, to get expected assertion message
+ */
+function typedCoercion(type, {config = {}, multiValued = false, valid= [], invalid = [], assertion} = {}) {
+    const attribute = new Attribute(type, "test", {...config, multiValued});
     const target = (multiValued ? attribute.coerce([]) : null);
     
     for (let [label, value] of valid) {
@@ -34,88 +47,90 @@ function typedCoercion(type, {config = {}, multiValued = false, valid, invalid, 
 }
 
 describe("SCIMMY.Types.Attribute", () => {
-    it("should require valid 'type' argument at instantiation", () => {
-        assert.throws(() => new Attribute(),
-            {name: "TypeError", message: "Required parameter 'type' missing from Attribute instantiation"},
-            "Attribute instantiated without 'type' argument");
-        assert.throws(() => new Attribute("other", "other"),
-            {name: "TypeError", message: "Type 'other' not recognised in attribute definition 'other'"},
-            "Attribute instantiated with unknown 'type' argument");
-    });
-    
-    it("should require valid 'name' argument at instantiation", () => {
-        assert.throws(() => new Attribute("string"),
-            {name: "TypeError", message: "Required parameter 'name' missing from Attribute instantiation"},
-            "Attribute instantiated without 'name' argument");
-
-        const invalidNames = [
-            [".", "invalid.name"],
-            ["@", "invalid@name"],
-            ["=", "invalid=name"], 
-            ["%", "invalid%name"]
-        ];
+    describe("@constructor", () => {
+        it("should require valid 'type' argument", () => {
+            assert.throws(() => new Attribute(),
+                {name: "TypeError", message: "Required parameter 'type' missing from Attribute instantiation"},
+                "Attribute instantiated without 'type' argument");
+            assert.throws(() => new Attribute("other", "other"),
+                {name: "TypeError", message: "Type 'other' not recognised in attribute definition 'other'"},
+                "Attribute instantiated with unknown 'type' argument");
+        });
         
-        for (let [char, name] of invalidNames) {
-            assert.throws(() => new Attribute("string", name),
-                {name: "TypeError", message: `Invalid character '${char}' in name of attribute definition '${name}'`},
-                "Attribute instantiated with invalid 'name' argument");
+        it("should require valid 'name' argument", () => {
+            assert.throws(() => new Attribute("string"),
+                {name: "TypeError", message: "Required parameter 'name' missing from Attribute instantiation"},
+                "Attribute instantiated without 'name' argument");
+    
+            const invalidNames = [
+                [".", "invalid.name"],
+                ["@", "invalid@name"],
+                ["=", "invalid=name"], 
+                ["%", "invalid%name"]
+            ];
+            
+            for (let [char, name] of invalidNames) {
+                assert.throws(() => new Attribute("string", name),
+                    {name: "TypeError", message: `Invalid character '${char}' in name of attribute definition '${name}'`},
+                    "Attribute instantiated with invalid 'name' argument");
+            }
+            
+            assert.ok(new Attribute("string", "validName"),
+                "Attribute did not instantiate with valid 'name' argument");
+        });
+        
+        it("should not accept 'subAttributes' argument if type is not 'complex'", () => {
+            assert.throws(() => new Attribute("string", "test", {}, [new Attribute("string", "other")]),
+                {name: "TypeError", message: "Attribute type must be 'complex' when subAttributes are specified in attribute definition 'test'"},
+                "Attribute instantiated with subAttributes when type was not 'complex'");
+        });
+        
+        for (let attrib of ["canonicalValues", "referenceTypes"]) {
+            it(`should not accept invalid '${attrib}' configuration values`, () => {
+                for (let value of ["a string", true]) {
+                    assert.throws(() => new Attribute("string", "test", {[attrib]: value}),
+                        {name: "TypeError", message: `Attribute '${attrib}' value must be either a collection or 'false' in attribute definition 'test'`},
+                        `Attribute instantiated with invalid '${attrib}' configuration value '${value}'`);
+                }
+            });
         }
         
-        assert.ok(new Attribute("string", "validName"),
-            "Attribute did not instantiate with valid 'name' argument");
-    });
-    
-    it("should not accept 'subAttributes' argument if type is not 'complex'", () => {
-        assert.throws(() => new Attribute("string", "test", {}, [new Attribute("string", "other")]),
-            {name: "TypeError", message: "Attribute type must be 'complex' when subAttributes are specified in attribute definition 'test'"},
-            "Attribute instantiated with subAttributes when type was not 'complex'");
-    });
-    
-    for (let attrib of ["canonicalValues", "referenceTypes"]) {
-        it(`should not accept invalid '${attrib}' configuration values`, () => {
-            for (let value of ["a string", true]) {
-                assert.throws(() => new Attribute("string", "test", {[attrib]: value}),
-                    {name: "TypeError", message: `Attribute '${attrib}' value must be either a collection or 'false' in attribute definition 'test'`},
-                    `Attribute instantiated with invalid '${attrib}' configuration value '${value}'`);
-            }
-        });
-    }
-    
-    for (let [attrib, name = attrib] of [["mutable", "mutability"], ["returned"], ["uniqueness"]]) {
-        it(`should not accept invalid '${attrib}' configuration values`, () => {
-            assert.throws(() => new Attribute("string", "test", {[attrib]: "a string"}),
-                {name: "TypeError", message: `Attribute '${name}' value 'a string' not recognised in attribute definition 'test'`},
-                `Attribute instantiated with invalid '${attrib}' configuration value 'a string'`);
-            assert.throws(() => new Attribute("string", "test", {[attrib]: 1}),
-                {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
-                `Attribute instantiated with invalid '${attrib}' configuration number value '1'`);
-            assert.throws(() => new Attribute("string", "test", {[attrib]: {}}),
-                {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
-                `Attribute instantiated with invalid '${attrib}' configuration complex value`);
-            assert.throws(() => new Attribute("string", "test", {[attrib]: new Date()}),
-                {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
-                `Attribute instantiated with invalid '${attrib}' configuration date value`);
-        });
-    }
-    
-    it("should be frozen after instantiation", () => {
-        const attribute = new Attribute("string", "test");
+        for (let [attrib, name = attrib] of [["mutable", "mutability"], ["returned"], ["uniqueness"]]) {
+            it(`should not accept invalid '${attrib}' configuration values`, () => {
+                assert.throws(() => new Attribute("string", "test", {[attrib]: "a string"}),
+                    {name: "TypeError", message: `Attribute '${name}' value 'a string' not recognised in attribute definition 'test'`},
+                    `Attribute instantiated with invalid '${attrib}' configuration value 'a string'`);
+                assert.throws(() => new Attribute("string", "test", {[attrib]: 1}),
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Attribute instantiated with invalid '${attrib}' configuration number value '1'`);
+                assert.throws(() => new Attribute("string", "test", {[attrib]: {}}),
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Attribute instantiated with invalid '${attrib}' configuration complex value`);
+                assert.throws(() => new Attribute("string", "test", {[attrib]: new Date()}),
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Attribute instantiated with invalid '${attrib}' configuration date value`);
+            });
+        }
         
-        assert.throws(() => attribute.test = true,
-            {name: "TypeError", message: "Cannot add property test, object is not extensible"},
-            "Attribute was extensible after instantiation");
-        assert.throws(() => attribute.name = "something",
-            {name: "TypeError", message: "Cannot assign to read only property 'name' of object '#<Attribute>'"},
-            "Attribute properties were modifiable after instantiation");
-        assert.throws(() => delete attribute.config,
-            {name: "TypeError", message: "Cannot delete property 'config' of #<Attribute>"},
-            "Attribute was not sealed after instantiation");
+        it("should be frozen after instantiation", () => {
+            const attribute = new Attribute("string", "test");
+            
+            assert.throws(() => attribute.test = true,
+                {name: "TypeError", message: "Cannot add property test, object is not extensible"},
+                "Attribute was extensible after instantiation");
+            assert.throws(() => attribute.name = "something",
+                {name: "TypeError", message: "Cannot assign to read only property 'name' of object '#<Attribute>'"},
+                "Attribute properties were modifiable after instantiation");
+            assert.throws(() => delete attribute.config,
+                {name: "TypeError", message: "Cannot delete property 'config' of #<Attribute>"},
+                "Attribute was not sealed after instantiation");
+        });
     });
     
     describe("#toJSON()", () => {
-        it("should have instance method 'toJSON'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new Attribute("string", "test")).toJSON === "function",
-                "Instance method 'toJSON' not defined");
+                "Instance method 'toJSON' was not defined");
         });
         
         it("should produce valid SCIM attribute definition objects", async () => {
@@ -131,9 +146,9 @@ describe("SCIMMY.Types.Attribute", () => {
     });
     
     describe("#truncate()", () => {
-        it("should have instance method 'truncate'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new Attribute("string", "test")).truncate === "function",
-                "Instance method 'truncate' not defined");
+                "Instance method 'truncate' was not defined");
         });
         
         it("should do nothing without arguments", async () => {
@@ -171,9 +186,9 @@ describe("SCIMMY.Types.Attribute", () => {
     });
     
     describe("#coerce()", () => {
-        it("should have instance method 'coerce'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new Attribute("string", "test")).coerce === "function",
-                "Instance method 'coerce' not defined");
+                "Instance method 'coerce' was not defined");
         });
         
         it("should expect required attributes to have a value", () => {

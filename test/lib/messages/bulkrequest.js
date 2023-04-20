@@ -11,8 +11,10 @@ import {User} from "#@/lib/resources/user.js";
 import {Group} from "#@/lib/resources/group.js";
 import {BulkRequest} from "#@/lib/messages/bulkrequest.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./bulkrequest.json"), "utf8").then((f) => JSON.parse(f));
+// Default parameter values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkRequest"};
 const template = {schemas: [params.id], Operations: [{}, {}]};
 
@@ -136,7 +138,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
     describe("#apply()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new BulkRequest({...template})).apply === "function",
-                "Instance method 'apply' not defined");
+                "Instance method 'apply' was not implemented");
         });
         
         it("should expect 'resourceTypes' argument to be an array of Resource type classes", async () => {

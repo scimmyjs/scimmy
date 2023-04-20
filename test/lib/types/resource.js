@@ -1,35 +1,21 @@
 import assert from "assert";
 import {Resource} from "#@/lib/types/resource.js";
 import {Filter} from "#@/lib/types/filter.js";
-import {createSchemaClass} from "./schema.js";
-
-/**
- * Create a class that extends SCIMMY.Types.Resource, for use in tests
- * @param {String} [name=Test] - the name of the Resource to create a class for
- * @param {*[]} rest - arguments to pass through to the Schema class
- * @returns {typeof Resource} a class that extends SCIMMY.Types.Resource for use in tests
- */
-export const createResourceClass = (name = "Test", ...rest) => (
-    class Test extends Resource {
-        static #endpoint = `/${name}`
-        static get endpoint() { return Test.#endpoint; }
-        static #schema = createSchemaClass({...rest, name});
-        static get schema() { return Test.#schema; }
-    }
-);
+import {createSchemaClass} from "../../hooks/schemas.js";
+import {createResourceClass} from "../../hooks/resources.js";
 
 describe("SCIMMY.Types.Resource", () => {
     for (let member of ["endpoint", "schema"]) {
         describe(`.${member}`, () => {
             it("should be defined", () => {
                 assert.ok(typeof Object.getOwnPropertyDescriptor(Resource, member).get === "function",
-                    `Abstract static member '${member}' not defined`);
+                    `Static member '${member}' was not defined`);
             });
             
             it("should be abstract", () => {
                 assert.throws(() => Resource[member],
                     {name: "TypeError", message: `Method 'get' for property '${member}' not implemented by resource 'Resource'`},
-                    `Static member '${member}' not abstract`);
+                    `Static member '${member}' was not abstract`);
             });
         });
     }
@@ -38,13 +24,13 @@ describe("SCIMMY.Types.Resource", () => {
         describe(`.${method}()`, () => {
             it("should be defined", () => {
                 assert.ok(typeof Resource[method] === "function",
-                    `Abstract static method '${method}' not defined`);
+                    `Static method '${method}' was not defined`);
             });
             
             it("should be abstract", () => {
                 assert.throws(() => Resource[method](),
                     {name: "TypeError", message: `Method '${method}' not implemented by resource 'Resource'`},
-                    `Static method '${method}' not abstract`);
+                    `Static method '${method}' was not abstract`);
             });
         });
     }
@@ -52,14 +38,14 @@ describe("SCIMMY.Types.Resource", () => {
     describe(".extend()", () => {
         it("should be implemented", () => {
             assert.ok(typeof Resource.extend === "function",
-                "Static method 'extend' not implemented");
+                "Static method 'extend' was not implemented");
         });
     });
     
     describe(".describe()", () => {
         it("should be implemented", () => {
             assert.ok(typeof Resource.describe === "function",
-                "Static method 'describe' not implemented");
+                "Static method 'describe' was not implemented");
         });
         
         const TestResource = createResourceClass();
@@ -71,13 +57,13 @@ describe("SCIMMY.Types.Resource", () => {
         for (let [prop, target = prop, expected = TestResource.schema.definition[target], suffix = ""] of properties) {
             it(`should expect '${prop}' property of description to equal '${target}' property of resource's schema definition${suffix}`, () => {
                 assert.strictEqual(TestResource.describe()[prop], expected, 
-                    `Resource 'describe' method returned '${prop}' property with unexpected value`);
+                    `Static method 'describe' returned '${prop}' property with unexpected value`);
             });
         }
         
         it("should expect 'schemaExtensions' property to be excluded in description when resource is not extended", () => {
             assert.strictEqual(TestResource.describe().schemaExtensions, undefined,
-                "Resource 'describe' method unexpectedly included 'schemaExtensions' property in description");
+                "Static method 'describe' unexpectedly included 'schemaExtensions' property in description");
         });
         
         it("should expect 'schemaExtensions' property to be included in description when resource is extended", function () {
@@ -88,26 +74,26 @@ describe("SCIMMY.Types.Resource", () => {
             }
             
             assert.ok(!!TestResource.describe().schemaExtensions,
-                "Resource 'describe' method did not include 'schemaExtensions' property in description");
+                "Static method 'describe' did not include 'schemaExtensions' property in description");
             assert.deepStrictEqual(TestResource.describe().schemaExtensions, [{schema: "urn:ietf:params:scim:schemas:Extension", required: false}],
-                "Resource 'describe' method included 'schemaExtensions' property with unexpected value in description");
+                "Static method 'describe' included 'schemaExtensions' property with unexpected value in description");
         });
     });
     
     describe("#filter", () => {
-        it("should be an instance of SCIMMY.Types.Filter", () => {
+        it("should be an instance of Filter", () => {
             assert.ok(new Resource({filter: "userName eq \"Test\""}).filter instanceof Filter,
-                "Instance member 'filter' was not an instance of SCIMMY.Types.Filter");
+                "Instance member 'filter' was not an instance of Filter");
         });
     });
     
     describe("#attributes", () => {
         context("when 'excludedAttributes' query parameter was defined", () => {
-            it("should be an instance of SCIMMY.Types.Filter", () => {
+            it("should be an instance of Filter", () => {
                 const resource = new Resource({excludedAttributes: "name"});
                 
                 assert.ok(resource.attributes instanceof Filter,
-                    "Instance member 'attributes' was not an instance of SCIMMY.Types.Filter");
+                    "Instance member 'attributes' was not an instance of Filter");
             });
             
             it("should expect filter expression to be 'not present'", () => {
@@ -126,11 +112,11 @@ describe("SCIMMY.Types.Resource", () => {
         });
         
         context("when 'attributes' query parameter was defined", () => {
-            it("should be an instance of SCIMMY.Types.Filter", () => {
+            it("should be an instance of Filter", () => {
                 const resource = new Resource({attributes: "userName"});
                 
                 assert.ok(resource.attributes instanceof Filter,
-                    "Instance member 'attributes' was not an instance of SCIMMY.Types.Filter");
+                    "Instance member 'attributes' was not an instance of Filter");
             });
             
             it("should expect filter expression to be 'present'", () => {
@@ -175,14 +161,23 @@ describe("SCIMMY.Types.Resource", () => {
                         `Instance member 'constraints' was not an object when '${param}' query parameter was defined`);
                 });
                 
+                it(`should include '${param}' property equal to '${param}' query parameter value when it was valid`, () => {
+                    const resource = new Resource({[param]: validValue});
+    
+                    assert.strictEqual(resource.constraints[param], suite[param],
+                        `Instance member 'constraints' did not include '${param}' property equal to '${param}' query parameter value`);
+                });
+                
                 for (let [label, value, validFor = []] of fixtures) if (!validFor.includes(param)) {
                     it(`should not include '${param}' property when '${param}' query parameter had invalid ${label}`, () => {
                         const resource = new Resource({[param]: value});
-                        
+        
                         assert.ok(resource.constraints[param] === undefined,
                             `Instance member 'constraints' included '${param}' property when '${param}' query parameter had invalid ${label}`);
                     });
-                    
+                }
+                
+                for (let [label, value, validFor = []] of fixtures) if (!validFor.includes(param)) {
                     it(`should include other valid properties when '${param}' query parameter had invalid ${label}`, () => {
                         const resource = new Resource({...suite, [param]: value});
                         const expected = JSON.parse(JSON.stringify({...suite, [param]: undefined}));
@@ -199,13 +194,13 @@ describe("SCIMMY.Types.Resource", () => {
         describe(`#${method}()`, () => {
             it("should be defined", () => {
                 assert.ok(typeof (new Resource())[method] === "function",
-                    `Abstract instance method '${method}' not defined`);
+                    `Instance method '${method}' was not defined`);
             });
             
             it("should be abstract", () => {
                 assert.throws(() => new Resource()[method](),
                     {name: "TypeError", message: `Method '${method}' not implemented by resource 'Resource'`},
-                    `Instance method '${method}' not abstract`);
+                    `Instance method '${method}' was not abstract`);
             });
         });
     }

@@ -1,6 +1,11 @@
 import assert from "assert";
 import SCIMMY from "#@/scimmy.js";
 
+/**
+ * Test whether the returned value of a method call was made immutable
+ * @param {String} name - the name of the method that produced the object
+ * @param {Object} config - the returned value of the called method
+ */
 function returnsImmutableObject(name, config) {
     assert.ok(Object(config) === config && !Array.isArray(config),
         `Static method '${name}' did not return an object`);
@@ -18,9 +23,9 @@ describe("SCIMMY.Config", () => {
     }));
     
     describe(".get()", () => {
-        it("should have static method 'get'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof SCIMMY.Config.get === "function",
-                "Static method 'get' not defined");
+                "Static method 'get' was not implemented");
         });
         
         it("should return an immutable object", () => (
@@ -29,9 +34,9 @@ describe("SCIMMY.Config", () => {
     });
     
     describe(".set()", () => {
-        it("should have static method 'set'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof SCIMMY.Config.set === "function",
-                "Static method 'set' not defined");
+                "Static method 'set' was not implemented");
         });
         
         it("should return an immutable object", () => (

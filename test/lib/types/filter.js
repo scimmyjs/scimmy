@@ -4,6 +4,7 @@ import url from "url";
 import assert from "assert";
 import {Filter} from "#@/lib/types/filter.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./filter.json"), "utf8").then((f) => JSON.parse(f));
 
@@ -14,7 +15,7 @@ describe("SCIMMY.Types.Filter", () => {
     });
     
     describe("@constructor", () => {
-        it("should not require arguments at instantiation", () => {
+        it("should not require arguments", () => {
             assert.doesNotThrow(() => new Filter(),
                 "Filter type class did not instantiate without arguments");
         });
@@ -101,7 +102,7 @@ describe("SCIMMY.Types.Filter", () => {
     describe("#match()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new Filter()).match === "function",
-                "Instance method 'match' not defined");
+                "Instance method 'match' not implemented");
         });
         
         const targets = [

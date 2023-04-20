@@ -5,9 +5,10 @@ import sinon from "sinon";
 import * as Schemas from "#@/lib/schemas.js";
 import {User} from "#@/lib/schemas/user.js";
 import {Group} from "#@/lib/schemas/group.js";
-import {ResourcesHooks} from "../resources.js";
+import ResourcesHooks from "../../hooks/resources.js";
 import {Schema} from "#@/lib/resources/schema.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
 

@@ -1,9 +1,10 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import {ResourcesHooks} from "../resources.js";
+import ResourcesHooks from "../../hooks/resources.js";
 import {User} from "#@/lib/resources/user.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./user.json"), "utf8").then((f) => JSON.parse(f));
 

@@ -3,9 +3,10 @@ import path from "path";
 import url from "url";
 import sinon from "sinon";
 import * as Config from "#@/lib/config.js";
-import {ResourcesHooks} from "../resources.js";
+import ResourcesHooks from "../../hooks/resources.js";
 import {ServiceProviderConfig} from "#@/lib/resources/spconfig.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
 

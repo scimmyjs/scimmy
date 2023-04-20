@@ -5,9 +5,9 @@ import {ListResponse} from "#@/lib/messages/listresponse.js";
 import {User} from "#@/lib/resources/user.js";
 import {Group} from "#@/lib/resources/group.js";
 import {SearchRequest} from "#@/lib/messages/searchrequest.js";
-import {createResourceClass} from "../types/resource.js";
+import {createResourceClass} from "../../hooks/resources.js";
 
-// Default values to use in tests
+// Default parameter values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:SearchRequest"};
 const template = {schemas: [params.id]};
 // List of test suites to run validation against
@@ -41,7 +41,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
     before(() => sandbox.stub(Resources.default, "declared").returns([User, Group]));
     
     describe("@constructor", () => {
-        it("should not require arguments at instantiation", () => {
+        it("should not require arguments", () => {
             assert.deepStrictEqual({...(new SearchRequest())}, template,
                 "SearchRequest did not instantiate with correct default properties");
         });
@@ -145,7 +145,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
     describe("#prepare()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SearchRequest()).prepare === "function",
-                "Instance method 'prepare' not defined");
+                "Instance method 'prepare' was not implemented");
         });
         
         it("should return the same instance it was called from", () => {
@@ -236,7 +236,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
     describe("#apply()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SearchRequest()).apply === "function",
-                "Instance method 'apply' not defined");
+                "Instance method 'apply' was not implemented");
         });
         
         it("should expect 'resourceTypes' argument to be an array of Resource type classes", async () => {

@@ -1,12 +1,13 @@
 import assert from "assert";
 import {BulkResponse} from "#@/lib/messages/bulkresponse.js";
 
+// Default parameter values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:BulkResponse"};
 const template = {schemas: [params.id], Operations: []};
 
 describe("SCIMMY.Messages.BulkResponse", () => {
     describe("@constructor", () => {
-        it("should not require arguments at instantiation", () => {
+        it("should not require arguments", () => {
             assert.deepStrictEqual({...(new BulkResponse())}, template,
                 "BulkResponse did not instantiate with correct default properties");
         });
@@ -28,9 +29,9 @@ describe("SCIMMY.Messages.BulkResponse", () => {
     });
     
     describe("#resolve()", () => {
-        it("should have instance method 'resolve'", () => {
+        it("should be implemented", () => {
             assert.ok(typeof (new BulkResponse()).resolve === "function",
-                "Instance method 'resolve' not defined");
+                "Instance method 'resolve' was not implemented");
         });
         
         it("should return an instance of native Map class", () => {

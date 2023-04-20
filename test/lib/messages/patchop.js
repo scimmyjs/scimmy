@@ -3,14 +3,16 @@ import path from "path";
 import url from "url";
 import assert from "assert";
 import {Attribute} from "#@/lib/types/attribute.js";
-import {Schema} from "#@/lib/types/schema.js";
 import {PatchOp} from "#@/lib/messages/patchop.js";
-import {createSchemaClass} from "../types/schema.js";
+import {createSchemaClass} from "../../hooks/schemas.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./patchop.json"), "utf8").then((f) => JSON.parse(f));
+// Default parameter values to use in tests
 const params = {id: "urn:ietf:params:scim:api:messages:2.0:PatchOp"};
 const template = {schemas: [params.id]};
+// A Schema class to use in tests
 const TestSchema = createSchemaClass({
     attributes: [
         new Attribute("string", "userName", {required: true}), new Attribute("string", "displayName"),
@@ -139,26 +141,26 @@ describe("SCIMMY.Messages.PatchOp", () => {
     describe("#apply()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new PatchOp({...template, Operations: [{op: "add", value: {}}]})).apply === "function",
-                "Instance method 'apply' not defined");
+                "Instance method 'apply' was not implemented");
         });
         
         it("should expect message to be dispatched before 'apply' is called", async () => {
             await assert.rejects(() => new PatchOp().apply(),
                 {name: "TypeError", message: "PatchOp expected message to be dispatched before calling 'apply' method"},
-                "PatchOp did not expect message to be dispatched before proceeding with 'apply' method");
+                "Instance method 'apply' did not expect message to be dispatched before proceeding");
         });
         
         it("should expect 'resource' parameter to be defined", async () => {
             await assert.rejects(() => new PatchOp({...template, Operations: [{op: "add", value: false}]}).apply(),
                 {name: "TypeError", message: "Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method"},
-                "PatchOp did not expect 'resource' parameter to be defined in 'apply' method");
+                "Instance method 'apply' did not expect 'resource' parameter to be defined");
         });
         
         it("should expect 'resource' parameter to be an instance of SCIMMY.Types.Schema", async () => {
             for (let value of [{}, new Date()]) {
                 await assert.rejects(() => new PatchOp({...template, Operations: [{op: "add", value: false}]}).apply(value),
                     {name: "TypeError", message: "Expected 'resource' to be an instance of SCIMMY.Types.Schema in PatchOp 'apply' method"},
-                    "PatchOp did not verify 'resource' parameter type before proceeding with 'apply' method");
+                    "Instance method 'apply' did not verify 'resource' parameter type before proceeding");
             }
         });
         
@@ -169,7 +171,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
             await assert.rejects(() => message.apply(new TestSchema({id: "1234", userName: "asdf"})),
                 {name: "SCIMError", status: 400, scimType: "invalidSyntax",
                     message: `Invalid operation 'test' for operation 1 in PatchOp request body`},
-                "PatchOp did not throw correct SCIMError at invalid operation with 'op' value 'test' in 'apply' method");
+                "Instance method 'apply' did not throw correct SCIMError at invalid operation with 'op' value 'test'");
         });
         
         for (let op of ["add", "remove", "replace"]) {
@@ -205,7 +207,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                     await assert.rejects(() => message.apply(target),
                         {name: "SCIMError", status: 400, scimType: "invalidValue",
                             message: `Attribute 'value' must be an object when 'path' is empty for '${op}' op of operation 1 in PatchOp request body`},
-                        `PatchOp did not expect 'value' to be an object when 'path' was not specified in '${op}' operations`);
+                        `Instance method 'apply' did not expect 'value' to be an object when 'path' was not specified in '${op}' operations`);
                 });
                 
                 it(`should rethrow extensibility errors as SCIMErrors when 'path' points to nonexistent attribute in '${op}' operations`, async () => {
@@ -232,7 +234,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                         await assert.rejects(() => message.apply(target),
                             {name: "SCIMError", status: 400, scimType: "invalidPath",
                                 message: `Invalid attribute path 'test' in supplied value for '${op}' op of operation 1 in PatchOp request body`},
-                            `PatchOp did not rethrow extensibility error as SCIMError when 'path' pointed to nonexistent attribute in '${op}' operations`);
+                            `Instance method 'apply' did not rethrow extensibility error as SCIMError when 'path' pointed to nonexistent attribute in '${op}' operations`);
                     } finally {
                         TestSchema.definition.truncate(attribute);
                     }
@@ -247,7 +249,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 await assert.rejects(() => message.apply(target),
                     {name: "SCIMError", status: 400, scimType: "mutability",
                         message: `Attribute 'id' already defined and is not mutable for '${op}' op of operation 1 in PatchOp request body`},
-                    `PatchOp did not rethrow SCIMError with added location details in '${op}' operations`);
+                    `Instance method 'apply' did not rethrow SCIMError with added location details in '${op}' operations`);
             });
     
             it(`should rethrow other exceptions as SCIMErrors with location details in '${op}' operations`, async () => {
@@ -270,7 +272,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 await assert.rejects(() => message.apply(target),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: `Failing as requested with value '${details.value?.throws}' for '${op}' op of operation 1 in PatchOp request body`},
-                    `PatchOp did not rethrow other exception as SCIMError with location details in '${op}' operations`);
+                    `Instance method 'apply' did not rethrow other exception as SCIMError with location details in '${op}' operations`);
             });
             
             it(`should respect attribute mutability in '${op}' operations`, async () => {
@@ -281,7 +283,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 await assert.rejects(() => message.apply(target),
                     {name: "SCIMError", status: 400, scimType: "mutability",
                         message: `Attribute 'id' already defined and is not mutable for '${op}' op of operation 1 in PatchOp request body`},
-                    `PatchOp did not respect attribute mutability in '${op}' operations`);
+                    `Instance method 'apply' did not respect attribute mutability in '${op}' operations`);
             });
             
             it(`should not remove required attributes in '${op}' operations`, async () => {
@@ -292,7 +294,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 await assert.rejects(() => message.apply(target),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
                         message: `Required attribute 'userName' is missing for '${op}' op of operation 1 in PatchOp request body`},
-                    `PatchOp removed required attributes in '${op}' operations`);
+                    `Instance method 'apply' removed required attributes in '${op}' operations`);
             });
             
             it(`should expect all targeted attributes to exist in '${op}' operations`, async () => {
@@ -303,7 +305,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 await assert.rejects(() => message.apply(target),
                     {name: "SCIMError", status: 400, scimType: "invalidPath",
                         message: `Invalid path 'test' for '${op}' op of operation 1 in PatchOp request body`},
-                    `PatchOp did not expect target attribute 'test' to exist in '${op}' operations`);
+                    `Instance method 'apply' did not expect target attribute 'test' to exist in '${op}' operations`);
             });
         }
     });

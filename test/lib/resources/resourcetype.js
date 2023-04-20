@@ -5,9 +5,10 @@ import sinon from "sinon";
 import * as Resources from "#@/lib/resources.js";
 import {User} from "#@/lib/resources/user.js";
 import {Group} from "#@/lib/resources/group.js";
-import {ResourcesHooks} from "../resources.js";
+import ResourcesHooks from "../../hooks/resources.js";
 import {ResourceType} from "#@/lib/resources/resourcetype.js";
 
+// Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
 const fixtures = fs.readFile(path.join(basepath, "./resourcetype.json"), "utf8").then((f) => JSON.parse(f));
 
