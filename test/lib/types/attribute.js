@@ -191,6 +191,16 @@ describe("SCIMMY.Types.Attribute", () => {
                 "Instance method 'coerce' was not defined");
         });
         
+        it("should do nothing when 'type' is unrecognised", () => {
+            const target = new Attribute("string", "test");
+            const get = (t, p) => (p === "type" ? "test" : target[p]);
+            const attribute = new Proxy({}, {get});
+            const source = {};
+            
+            assert.strictEqual(attribute.coerce(source), source,
+                "Instance method 'coerce' did not do nothing when 'type' was unrecognised");
+        });
+        
         it("should expect required attributes to have a value", () => {
             for (let type of ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"]) {
                 assert.throws(() => new Attribute(type, "test", {required: true}).coerce(),
