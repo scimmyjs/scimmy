@@ -2,6 +2,7 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
+import sinon from "sinon";
 import SCIMMY from "#@/scimmy.js";
 import {SchemaDefinition} from "#@/lib/types/definition.js";
 import {Attribute} from "#@/lib/types/attribute.js";
@@ -128,7 +129,7 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
     describe("#describe()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SchemaDefinition(...Object.values(params))).describe === "function",
-                "Instance method 'describe' was not defined");
+                "Instance method 'describe' was not implemented");
         });
         
         it("should produce valid SCIM schema definition objects", async () => {
@@ -149,7 +150,7 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
     describe("#attribute()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SchemaDefinition(...Object.values(params))).attribute === "function",
-                "Instance method 'attribute' was not defined");
+                "Instance method 'attribute' was not implemented");
         });
         
         it("should find attributes by name", () => {
@@ -250,7 +251,7 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
     describe("#extend()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SchemaDefinition(...Object.values(params))).extend === "function",
-                "Instance method 'extend' was not defined");
+                "Instance method 'extend' was not implemented");
         });
         
         it("should expect 'extension' argument to be an instance of SchemaDefinition or collection of Attribute instances", () => {
@@ -307,7 +308,7 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
     describe("#truncate()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SchemaDefinition(...Object.values(params))).truncate === "function",
-                "Instance method 'truncate' was not defined");
+                "Instance method 'truncate' was not implemented");
         });
         
         it("should do nothing without arguments", () => {
@@ -375,7 +376,7 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
     describe("#coerce()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SchemaDefinition(...Object.values(params))).coerce === "function",
-                "Instance method 'coerce' was not defined");
+                "Instance method 'coerce' was not implemented");
         });
         
         it("should expect 'data' argument to be an object", () => {
@@ -403,35 +404,80 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
         });
         
         it("should expect coerce to be called on directly included attributes", () => {
-            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", [
-                new Attribute("string", "test", {required: true})
-            ]);
+            const stub = sinon.stub();
+            const get = (t, p) => (p === "coerce" ? (...args) => (stub(...args) ?? t.coerce(...args)) : t[p]);
+            const attribute = new Proxy(new Attribute("string", "test", {required: true}), {get});
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", [attribute]);
             
+            // Make sure attribute 'coerce' method was called even if a value wasn't defined for it
             assert.throws(() => definition.coerce({}),
                 {name: "TypeError", message: "Required attribute 'test' is missing"},
                 "Instance method 'coerce' did not attempt to coerce required attribute 'test'");
+            assert.ok(stub.calledWithExactly(undefined, "both"),
+                "Instance method 'coerce' did not directly call attribute instance method 'coerce'");
+            
+            // Make sure attribute 'coerce' method was called when a value was defined for it
             assert.throws(() => definition.coerce({test: false}),
                 {name: "TypeError", message: "Attribute 'test' expected value type 'string' but found type 'boolean'"},
                 "Instance method 'coerce' did not reject boolean value 'false' for string attribute 'test'");
+            assert.ok(stub.calledWithExactly(false, "both"),
+                "Instance method 'coerce' did not directly call attribute instance method 'coerce'");
+        });
+        
+        it("should expect coerce to be called on included schema extensions", () => {
+            const stub = sinon.stub();
+            const get = (t, p) => (p === "coerce" ? (...args) => (stub(...args) ?? t.coerce(...args)) : t[p]);
+            const extensionId = params.id.replace("Test", "Extension");
+            const attributes = [new Attribute("string", "employeeNumber")];
+            const extension = new SchemaDefinition("Extension", extensionId, "An Extension", attributes).truncate(["schemas", "meta"]);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(new Proxy(extension, {get}), true);
+            const {[extension.id]: actual} = definition.coerce({[`${extension.id}:employeeNumber`]: "1234"});
+            const expected = {employeeNumber: "1234"};
+            
+            assert.ok(stub.calledWithMatch({employeenumber: "1234"}),
+                "Instance method 'coerce' did not call coerce method on included schema extensions");
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Instance method 'coerce' did not correctly coerce included schema extension value");
+            
+        });
+        
+        it("should expect required schema extensions to be defined", () => {
+            const extension = new SchemaDefinition("Extension", params.id.replace("Test", "Extension"), "An Extension", []);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(extension, true);
+            
+            assert.throws(() => definition.coerce({}),
+                {name: "TypeError", message: `Missing values for required schema extension '${extension.id}'`},
+                "Instance method 'coerce' did not attempt to coerce required schema extension");
+            assert.throws(() => definition.coerce({[extension.id]: {}}),
+                {name: "TypeError", message: `Missing values for required schema extension '${extension.id}'`},
+                "Instance method 'coerce' did not attempt to coerce required schema extension");
         });
         
         it("should expect namespaced attributes or extensions to be coerced", () => {
-            const definition = new SchemaDefinition(...Object.values(params))
-                .extend(SCIMMY.Schemas.EnterpriseUser.definition, true);
+            const attribute = new Attribute("string", "employeeNumber");
+            const extension = new SchemaDefinition("Extension", params.id.replace("Test", "Extension"), "An Extension", [attribute]);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(extension, true);
+            const metadata = {schemas: [definition.id, extension.id], meta: {resourceType: definition.name}};
+            const expected = {[extension.id]: {employeeNumber: "1234"}};
             
-            assert.throws(() => definition.coerce({}),
-                {name: "TypeError", message: `Missing values for required schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
-                "Instance method 'coerce' did not attempt to coerce required schema extension");
-            assert.throws(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id]: {}}),
-                {name: "TypeError", message: `Missing values for required schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
-                "Instance method 'coerce' did not attempt to coerce required schema extension");
-            assert.doesNotThrow(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id]: {employeeNumber: "1234"}}),
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(definition.coerce(expected))), {...metadata, ...expected},
                 "Instance method 'coerce' failed to coerce required schema extension value");
-            assert.doesNotThrow(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id + ":employeeNumber"]: "1234"}),
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(definition.coerce({[`${extension.id}:employeeNumber`]: "1234"}))), {...metadata, ...expected},
                 "Instance method 'coerce' failed to coerce required schema extension value");
-            assert.throws(() => definition.coerce({[SCIMMY.Schemas.EnterpriseUser.definition.id + ":employeeNumber"]: false}),
-                {name: "TypeError", message: `Attribute 'employeeNumber' expected value type 'string' but found type 'boolean' in schema extension '${SCIMMY.Schemas.EnterpriseUser.definition.id}'`},
+            assert.throws(() => definition.coerce({[`${extension.id}:employeeNumber`]: false}),
+                {name: "TypeError", message: `Attribute 'employeeNumber' expected value type 'string' but found type 'boolean' in schema extension '${extension.id}'`},
                 "Instance method 'coerce' did not attempt to coerce required schema extension's invalid value");
+        });
+        
+        it("should expect deeply nested namespaced and extension attributes to be merged and coerced", () => {
+            const attributes = [new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])]
+            const extension = new SchemaDefinition("Extension", params.id.replace("Test", "Extension"), "An Extension", attributes);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(extension, true);
+            const {[extension.id]: actual} = definition.coerce({[`${extension.id}:test.value`]: "Test", [extension.id]: {test: {name: "Test"}}});
+            const expected = {test: {name: "Test", value: "Test"}};
+            
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Instance method 'coerce' did not expect deeply nested namespaced and extension attributes to be merged and coerced");
         });
         
         it("should expect the supplied filter to be applied to coerced result", () => {
@@ -445,22 +491,50 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "Instance method 'coerce' included attributes not specified for filter 'testName pr'");
         });
         
-        it("should expect namespaced attributes in the supplied filter to be applied to coerced result", () => {
-            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", [new Attribute("string", "employeeNumber")])
-                .extend(SCIMMY.Schemas.EnterpriseUser.definition);
-            const result = definition.coerce(
-                {
-                    employeeNumber: "Test",
-                    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber": "1234",
-                    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:costCenter": "Test",
-                },
-                undefined, undefined,
-                new Filter("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber pr")
-            );
+        it("should expect negative filters to be applied to coerced results", () => {
+            const attributes = [new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])];
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes);
+            const actual = definition.coerce({test: {name: "Test", value: "False"}}, undefined, undefined, new Filter("test.value np"));
+            const expected = {test: {name: "Test"}}
             
-            assert.strictEqual(result["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].employeeNumber, "1234",
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Instance method 'coerce' did not expect negative filters to be applied to coerced results");
+        });
+        
+        it("should expect complex multi-valued attributes to be filtered positively", () => {
+            const attributes = [new Attribute("complex", "test", {multiValued: true}, [new Attribute("string", "name"), new Attribute("string", "value")])];
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes);
+            const source = {test: [{name: "Test", value: "Test"}, {value: "False"}]};
+            const actual = definition.coerce(source, undefined, undefined, new Filter("test[name pr]"));
+            const expected = {test: [{name: "Test"}]};
+            
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Instance method 'coerce' did not positively filter complex multi-valued attributes");
+        });
+        
+        it("should expect complex multi-valued attributes to be filtered negatively", () => {
+            const attributes = [new Attribute("complex", "test", {multiValued: true}, [new Attribute("string", "name"), new Attribute("string", "value")])];
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes);
+            const source = {test: [{name: "Test", value: "Test"}, {value: "False"}]};
+            const actual = definition.coerce(source, undefined, undefined, new Filter("test[name np]"));
+            const expected = {test: [{value: "Test"}, {value: "False"}]};
+            
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Instance method 'coerce' did not negatively filter complex multi-valued attributes");
+        });
+        
+        it("should expect namespaced attributes in the supplied filter to be applied to coerced result", () => {
+            const attribute = new Attribute("string", "employeeNumber");
+            const attributes = [new Attribute("string", "employeeNumber"), new Attribute("string", "costCenter")];
+            const extension = new SchemaDefinition("Extension", params.id.replace("Test", "Extension"), "An Extension", attributes);
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", [attribute]).extend(extension);
+            const source = {employeeNumber: "Test", [`${extension.id}:employeeNumber`]: "1234", [`${extension.id}:costCenter`]: "Test"};
+            const actual = definition.coerce(source, undefined, undefined, new Filter(`${extension.id}:employeeNumber pr`));
+            const expected = {[extension.id]: {employeeNumber: "1234"}};
+            
+            assert.strictEqual(actual[extension.id].employeeNumber, "1234",
                 "Instance method 'coerce' did not include namespaced attributes for filter");
-            assert.ok(!Object.keys(result).includes("testName"),
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
                 "Instance method 'coerce' included namespaced attributes not specified for filter");
         });
     });
