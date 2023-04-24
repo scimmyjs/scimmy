@@ -29,14 +29,19 @@ export const instantiateFromFixture = ({type, name, mutability: m, uniqueness: u
  * @param {[string, any][]} [fixture.valid=[]] - list of valid coercion inputs to verify
  * @param {[string, string, any][]} [fixture.invalid=[]] - list of invalid coercion inputs to verify
  * @param {Function} [fixture.assertion] - function to call, with invalid input data type, to get expected assertion message
+ * @param {Attribute[]} [fixture.subAttributes] - list of subAttributes to add to the attribute definition
  */
-function typedCoercion(type, {config = {}, multiValued = false, valid= [], invalid = [], assertion} = {}) {
-    const attribute = new Attribute(type, "test", {...config, multiValued});
+function typedCoercion(type, {config = {}, multiValued = false, valid= [], invalid = [], assertion, subAttributes} = {}) {
+    const attribute = new Attribute(type, "test", {...config, multiValued}, subAttributes);
     const target = (multiValued ? attribute.coerce([]) : null);
     
     for (let [label, value] of valid) {
-        assert.doesNotThrow(() => (multiValued ? target.push(value) : attribute.coerce(value)),
-            `Instance method 'coerce' rejected ${label} when attribute type was ${type}`);
+        try {
+            if (multiValued) target.push(value)
+            else attribute.coerce(value);
+        } catch {
+            assert.fail(`Instance method 'coerce' rejected ${label} when attribute type was ${type}`)
+        }
     }
     
     for (let [label, actual, value] of invalid) {
@@ -218,8 +223,12 @@ describe("SCIMMY.Types.Attribute", () => {
         it("should expect value to be an array when attribute is multi-valued", () => {
             const attribute = new Attribute("string", "test", {multiValued: true});
             
-            assert.doesNotThrow(() => attribute.coerce(),
-                "Instance method 'coerce' rejected empty value when attribute was not required");
+            try {
+                attribute.coerce();
+            } catch {
+                assert.fail("Instance method 'coerce' rejected empty value when attribute was not required");
+            }
+            
             assert.ok(Array.isArray(attribute.coerce([])),
                 "Instance method 'coerce' did not produce array when attribute was multi-valued and value was array");
             assert.throws(() => attribute.coerce("a string"),
@@ -233,8 +242,6 @@ describe("SCIMMY.Types.Attribute", () => {
         it("should expect value to be singular when attribute is not multi-valued", () => {
             const attribute = new Attribute("string", "test");
             
-            assert.doesNotThrow(() => attribute.coerce(),
-                "Instance method 'coerce' rejected empty value when attribute was not required");
             assert.throws(() => attribute.coerce(["a string"]),
                 {name: "TypeError", message: "Attribute 'test' is not multi-valued and must not be a collection"},
                 "Instance method 'coerce' did not reject array value ['a string']");
@@ -246,18 +253,26 @@ describe("SCIMMY.Types.Attribute", () => {
         it("should expect value to be canonical when attribute specifies canonicalValues characteristic", () => {
             const attribute = new Attribute("string", "test", {canonicalValues: ["Test"]});
             
-            assert.doesNotThrow(() => attribute.coerce(),
-                "Instance method 'coerce' rejected empty non-canonical value");
+            try {
+                attribute.coerce("Test");
+            } catch {
+                assert.fail("Instance method 'coerce' rejected canonical value 'Test'");
+            }
+            
             assert.throws(() => attribute.coerce("a string"),
                 {name: "TypeError", message: "Attribute 'test' contains non-canonical value"},
                 "Instance method 'coerce' did not reject non-canonical value 'a string'");
-            assert.doesNotThrow(() => attribute.coerce("Test"),
-                "Instance method 'coerce' rejected canonical value 'Test'");
         });
         
         it("should expect all values to be canonical when attribute is multi-valued and specifies canonicalValues characteristic", () => {
             const attribute = new Attribute("string", "test", {multiValued: true, canonicalValues: ["Test"]});
             const target = attribute.coerce([]);
+            
+            try {
+                attribute.coerce(["Test"]);
+            } catch {
+                assert.fail("Instance method 'coerce' rejected canonical value 'Test'");
+            }
             
             assert.throws(() => attribute.coerce(["a string"]),
                 {name: "TypeError", message: "Attribute 'test' contains non-canonical value"},
@@ -265,8 +280,6 @@ describe("SCIMMY.Types.Attribute", () => {
             assert.throws(() => attribute.coerce(["Test", "a string"]),
                 {name: "TypeError", message: "Attribute 'test' contains non-canonical value"},
                 `Instance method 'coerce' did not reject non-canonical value 'a string' with canonical value 'Test'`);
-            assert.doesNotThrow(() => attribute.coerce(["Test"]),
-                "Instance method 'coerce' rejected canonical value 'Test'");
             assert.throws(() => target.push("a string"),
                 {name: "TypeError", message: "Attribute 'test' does not include canonical value 'a string'"},
                 "Instance method 'coerce' did not reject addition of non-canonical value 'a string' to coerced collection");
@@ -407,8 +420,12 @@ describe("SCIMMY.Types.Attribute", () => {
                 "Instance method 'coerce' did not expect reference value when attribute type was reference");
             
             typedCoercion("reference", {
-                config: {referenceTypes: ["uri", "external"]},
-                valid: [["external reference value", "https://example.com"], ["URI reference value", "urn:ietf:params:scim:schemas:Test"]],
+                config: {referenceTypes: ["uri", "external", "Test"]},
+                valid: [
+                    ["external reference value", "https://example.com"],
+                    ["URI reference value", "urn:ietf:params:scim:schemas:Test"],
+                    ["ResourceType reference value", "Test"]
+                ],
                 invalid: [
                     ["number value '1'", "number", 1],
                     ["boolean value 'false'", "boolean", false],
@@ -425,8 +442,12 @@ describe("SCIMMY.Types.Attribute", () => {
             
             typedCoercion("reference", {
                 multiValued: true,
-                config: {referenceTypes: ["uri", "external"]},
-                valid: [["external reference value", "https://example.com"], ["URI reference value", "urn:ietf:params:scim:schemas:Test"]],
+                config: {referenceTypes: ["uri", "external", "Test"]},
+                valid: [
+                    ["external reference value", "https://example.com"],
+                    ["URI reference value", "urn:ietf:params:scim:schemas:Test"],
+                    ["ResourceType reference value", "Test"]
+                ],
                 invalid: [
                     ["number value '1'", "number", 1],
                     ["boolean value 'false'", "boolean", false],
@@ -497,5 +518,32 @@ describe("SCIMMY.Types.Attribute", () => {
                 ]
             })
         ));
+        
+        it("should expect subAttribute values to be wrapped when attribute type is 'complex'", () => {
+            typedCoercion("complex", {
+                subAttributes: [new Attribute("string", "test")],
+                assertion: (type) => `Attribute 'test' expected value type 'string' but found type '${type}' from complex attribute 'test'`,
+                valid: [["complex value", {test: "a string"}]],
+                invalid: [
+                    ["complex value '{test: 1}'", "number", {test: 1}],
+                    ["complex value '{test: true}'", "boolean", {test: true}],
+                    ["complex value '{test: new Date()}'", "dateTime", {test: new Date()}]
+                ]
+            })
+        });
+        
+        it("should expect all subAttribute values to be wrapped when attribute is multi-valued and type is 'complex'", () => {
+            typedCoercion("complex", {
+                multiValued: true,
+                subAttributes: [new Attribute("string", "test")],
+                assertion: (type) => `Attribute 'test' expected value type 'string' but found type '${type}' from complex attribute 'test'`,
+                valid: [["complex value", {test: "a string"}]],
+                invalid: [
+                    ["complex value '{test: 1}'", "number", {test: 1}],
+                    ["complex value '{test: true}'", "boolean", {test: true}],
+                    ["complex value '{test: new Date()}'", "dateTime", {test: new Date()}]
+                ]
+            })
+        });
     });
 });
