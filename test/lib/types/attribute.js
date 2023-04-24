@@ -426,6 +426,41 @@ describe("SCIMMY.Types.Attribute", () => {
             });
         });
         
+        it("should expect value to be a base64 encoded string when attribute type is 'binary'", () => (
+            typedCoercion("binary", {
+                assertion: (type) => (["complex", "dateTime"].includes(type) ? (
+                    `Attribute 'test' expected value type 'binary' but found type '${type}'`
+                ) : (
+                    "Attribute 'test' expected value type 'binary' to be base64 encoded string or binary octet stream"
+                )),
+                valid: [["string value 'a string'", "a string"]],
+                invalid: [
+                    ["number value '1'", "number", 1],
+                    ["complex value", "complex", {}],
+                    ["boolean value 'false'", "boolean", false],
+                    ["Date instance value", "dateTime", new Date()]
+                ]
+            })
+        ));
+        
+        it("should expect all values to be base64 encoded strings when attribute is multi-valued and type is 'binary'", () => (
+            typedCoercion("binary", {
+                multiValued: true,
+                assertion: (type) => (["complex", "dateTime"].includes(type) ? (
+                    `Attribute 'test' expected value type 'binary' but found type '${type}'`
+                ) : (
+                    "Attribute 'test' expected value type 'binary' to be base64 encoded string or binary octet stream"
+                )),
+                valid: [["string value 'a string'", "a string"]],
+                invalid: [
+                    ["number value '1'", "number", 1],
+                    ["complex value", "complex", {}],
+                    ["boolean value 'false'", "boolean", false],
+                    ["Date instance value", "dateTime", new Date()]
+                ]
+            })
+        ));
+        
         it("should expect value to be an object when attribute type is 'complex'", () => (
             typedCoercion("complex", {
                 assertion: (type) => `Complex attribute 'test' expected complex value but found type '${type}'`,

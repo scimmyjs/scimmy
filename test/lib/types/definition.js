@@ -438,7 +438,6 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "Instance method 'coerce' did not call coerce method on included schema extensions");
             assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
                 "Instance method 'coerce' did not correctly coerce included schema extension value");
-            
         });
         
         it("should expect required schema extensions to be defined", () => {
