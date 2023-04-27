@@ -40,7 +40,7 @@ export default {
         it("should validate 'schemas' property of 'resource' parameter if it is defined", () => {
             try {
                 // Add an empty required extension
-                TargetSchema.extend(new SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test"), true);
+                TargetSchema.extend(new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension"), true);
                 
                 assert.throws(() => new TargetSchema({schemas: ["a string"]}),
                     {name: "SCIMError", status: 400, scimType: "invalidSyntax",
@@ -48,11 +48,11 @@ export default {
                     "Schema instance did not validate 'schemas' property of 'resource' parameter");
                 assert.throws(() => new TargetSchema({schemas: [TargetSchema.definition.id]}),
                     {name: "SCIMError", status: 400, scimType: "invalidValue",
-                        message: "The request body is missing schema extension 'urn:ietf:params:scim:schemas:Test' required by this resource type"},
+                        message: "The request body is missing schema extension 'urn:ietf:params:scim:schemas:Extension' required by this resource type"},
                     "Schema instance did not validate required extensions in 'schemas' property of 'resource' parameter");
             } finally {
                 // Remove the extension so it doesn't interfere later
-                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
             }
         });
         
@@ -88,11 +88,11 @@ export default {
         it("should include extension schema attribute property accessor aliases", async () => {
             try {
                 // Add an extension with one attribute
-                TargetSchema.extend(new SchemaDefinition("Test", "urn:ietf:params:scim:schemas:Test", "", [new Attribute("string", "testValue")]));
+                TargetSchema.extend(new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", [new Attribute("string", "testValue")]));
                 
                 // Construct an instance to test against
                 const {constructor = {}} = await fixtures;
-                const target = "urn:ietf:params:scim:schemas:Test:testValue";
+                const target = "urn:ietf:params:scim:schemas:Extension:testValue";
                 const instance = new TargetSchema(constructor);
                 
                 instance[target] = "a string";
@@ -103,7 +103,72 @@ export default {
                     "Schema instance did not include lower-case schema extension attribute aliases");
             } finally {
                 // Remove the extension so it doesn't interfere later
-                TargetSchema.truncate("urn:ietf:params:scim:schemas:Test");
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
+            }
+        });
+        
+        it("should expect errors in extension schema coercion to be rethrown as SCIMErrors", async () => {
+            const attributes = [new Attribute("string", "testValue")];
+            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
+            const {constructor = {}} = await fixtures;
+            const source = {...constructor, [`${extension.id}:testValue`]: "a string"};
+            
+            try {
+                // Add the extension to the target
+                TargetSchema.extend(extension);
+    
+                // Construct an instance to test against
+                const instance = new TargetSchema(source);
+    
+                assert.throws(() => instance[extension.id].test = true,
+                    {name: "TypeError", message: "Cannot add property test, object is not extensible"},
+                    "Schema was extensible after instantiation");
+                assert.throws(() => instance[extension.id] = {test: true},
+                    {name: "SCIMError", status: 400, scimType: "invalidValue",
+                        message: "Cannot add property test, object is not extensible"},
+                    "Schema was extensible after instantiation");
+            } finally {
+                // Remove the extension so it doesn't interfere later
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
+            }
+        });
+        
+        it("should clean up empty extension schema properties", async () => {
+            // Get attributes for the extension ready
+            const attributes = [
+                new Attribute("complex", "testValue", {}, [
+                    new Attribute("string", "stringValue"),
+                    new Attribute("complex", "value", {}, [
+                        new Attribute("string", "value")
+                    ])
+                ])
+            ];
+            
+            // Get the extension and the source data ready
+            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
+            const {constructor = {}} = await fixtures;
+            const source = {
+                ...constructor,
+                [`${extension.id}:testValue.stringValue`]: "a string",
+                [`${extension.id}:testValue.value.value`]: "a string"
+            };
+            
+            try {
+                // Add the extension to the target
+                TargetSchema.extend(extension);
+                
+                // Construct an instance to test against
+                const instance = new TargetSchema(source);
+                
+                // Unset the extension value and check for cleanup
+                instance[`${extension.id}:testValue.value.value`] = undefined;
+                instance[`${extension.id}:testValue.stringValue`] = undefined;
+                
+                assert.strictEqual(instance[extension.id], undefined,
+                    "Schema instance did not clean up empty extension schema properties");
+            } finally {
+                // Remove the extension so it doesn't interfere later
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
             }
         });
         
@@ -120,9 +185,12 @@ export default {
         });
     }),
     definition: (TargetSchema, fixtures) => (() => {
-        it("should have static member 'definition' that is an instance of SchemaDefinition", () => {
+        it("should be defined", () => {
             assert.ok("definition" in TargetSchema,
                 "Static member 'definition' not defined");
+        });
+        
+        it("should be an instance of SchemaDefinition", () => {
             assert.ok(TargetSchema.definition instanceof SchemaDefinition,
                 "Static member 'definition' was not an instance of SchemaDefinition");
         });
