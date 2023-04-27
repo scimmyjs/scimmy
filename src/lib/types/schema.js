@@ -3,6 +3,20 @@ import {Attribute} from "./attribute.js";
 import {SCIMError} from "./error.js";
 
 /**
+ * Define the "toJSON" property for the given target
+ * @param {Object} target - the object to define the "toJSON" property on
+ * @param {SchemaDefinition} definition - the schema definition associated with the target
+ * @param {Object} resource - the underlying resource associated with the target
+ * @returns {Object} the original target object, with the "toJSON" property defined
+ * @private
+ */
+const defineToJSONProperty = (target, definition, resource) => Object.defineProperty(target, "toJSON", {
+    value: () => Object.entries(resource)
+        .filter(([name]) => ![false, "never"].includes(definition.attribute(name)?.config?.returned))
+        .reduce((res, [name, value]) => Object.assign(res, {[name]: value}), {})
+});
+
+/**
  * Deeply check whether a targeted object has any properties with actual values
  * @param {Object} target - object to deeply check for values
  * @returns {Boolean} whether the target object, or any of its object properties, have a value other than undefined
@@ -86,6 +100,8 @@ export class Schema {
         
         // Save the directionality of this instance to a symbol for use elsewhere
         Object.defineProperty(this, Symbol.for("direction"), {value: direction});
+        // Set "toJSON" method on self so attributes can be filtered
+        defineToJSONProperty(this, definition, resource);
         
         // Predefine getters and setters for all possible attributes
         for (let attribute of attributes) Object.defineProperties(this, {
@@ -146,6 +162,8 @@ export class Schema {
                         // Validate the supplied value through schema extension coercion
                         resource[extension.id] = extension.coerce(value, direction);
                         
+                        // Return the value with JSON stringifier attached, marked as 
+                        defineToJSONProperty(resource[extension.id], extension, resource[extension.id]);
                         return Object.assign(Object.preventExtensions(resource[extension.id]), value);
                     } catch (ex) {
                         // Rethrow attribute coercion exceptions as SCIM errors

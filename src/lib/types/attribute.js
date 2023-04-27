@@ -548,6 +548,13 @@ export class Attribute {
                             });
                         }
                         
+                        // Set "toJSON" method on target so subAttributes can be filtered
+                        Object.defineProperty(target, "toJSON", {
+                            value: () => Object.entries(resource)
+                                .filter(([name]) => ![false, "never"].includes(this.subAttributes.find(a => a.name === name).config.returned))
+                                .reduce((res, [name, value]) => Object.assign(res, {[name]: value}), {})
+                        });
+                        
                         // Prevent changes to target
                         Object.freeze(target);
                         
