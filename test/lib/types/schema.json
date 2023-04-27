@@ -1,0 +1,10 @@
+{
+  "constructor": {"aString": "Test"},
+  "definition": {
+    "name": "Test",
+    "id": "urn:ietf:params:scim:schemas:Test",
+    "attributes": [
+      {"name": "aString", "type": "string"}
+    ]
+  }
+}

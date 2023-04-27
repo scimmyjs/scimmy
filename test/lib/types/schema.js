@@ -1,5 +1,14 @@
+import {promises as fs} from "fs";
+import path from "path";
+import url from "url";
 import assert from "assert";
+import SchemasHooks, {createSchemaClass} from "../../hooks/schemas.js";
+import {Attribute} from "#@/lib/types/attribute.js";
 import {Schema} from "#@/lib/types/schema.js";
+
+// Load data to use in tests from adjacent JSON file
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Types.Schema", () => {
     describe(".definition", () => {
@@ -26,6 +35,21 @@ describe("SCIMMY.Types.Schema", () => {
         it("should be implemented", () => {
             assert.ok(typeof Schema.truncate === "function",
                 "Static method 'truncate' was not implemented");
+        });
+    });
+    
+    describe("@constructor", () => {
+        SchemasHooks.construct(createSchemaClass({attributes: [new Attribute("string", "aString")]}), fixtures).call();
+        
+        it("should include 'toJSON' method that strips attributes where returned is marked as 'never'", async () => {
+            const attributes = [new Attribute("string", "aValue"), new Attribute("string", "aString", {returned: false})];
+            const Test = createSchemaClass({attributes});
+            const source = {aValue: "a value"};
+            const actual = new Test({...source, aString: "a string"});
+            const expected = {schemas: [Test.definition.id], meta: {resourceType: Test.definition.name}, ...source};
+            
+            assert.deepStrictEqual(JSON.parse(JSON.stringify(actual)), expected,
+                "Schema instance did not include 'toJSON' method that strips attributes where returned is marked as 'never'");
         });
     });
 });
