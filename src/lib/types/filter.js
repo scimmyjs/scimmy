@@ -35,7 +35,177 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
  * SCIM Filter Type
  * @alias SCIMMY.Types.Filter
  * @summary
- * *   Parses SCIM [filter expressions](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) into object representations of the filter expression, for use in resource retrieval.
+ * *   Parses SCIM [filter expressions](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) into object representations of the filter expression.
+ * @description
+ * This class provides a lexer implementation to tokenise and parse SCIM [filter expression](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) strings into meaningful object representations.  
+ * It is used to automatically parse `attributes`, `excludedAttributes`, and `filter` expressions in the `{@link SCIMMY.Types.Resource}` class, and by extension, each Resource implementation.
+ * The SchemaDefinition `{@link SCIMMY.Types.SchemaDefinition#coerce|#coerce()}` method uses instances of this class, typically sourced
+ * from a Resource instance's `attributes` property, to determine which attributes to include or exclude on coerced resources.
+ * It is also used for resolving complex multi-valued attribute operations in SCIMMY's {@link SCIMMY.Messages.PatchOp|PatchOp} implementation.
+ * 
+ * ### Object Representation
+ * When instantiated with a valid filter expression string, the expression is parsed into an array of objects representing the given expression.
+ * 
+ * The properties of each object are directly sourced from attribute names parsed in the expression.
+ * As the class intentionally has no knowledge of the underlying attribute names associated with a schema,
+ * the properties of the object are case-sensitive, and will match the case of the attribute name provided in the filter.
+ * ```js
+ * // For the filter expressions...
+ * 'userName eq "Test"', and 'uSerName eq "Test"'
+ * // ...the object representations are
+ * [ {userName: ["eq", "Test"]} ], and [ {uSerName: ["eq", "Test"]} ]
+ * ```
+ * 
+ * #### Logical Operations
+ * ##### `and`
+ * For each logical `and` operation in the expression, a new property is added to the object.
+ * ```js
+ * // For the filter expression...
+ * 'userName co "a" and name.formatted sw "Bob" and name.honoraryPrefix eq "Mr"'
+ * // ...the object representation is
+ * [ {userName: ["co", "a"], name: {formatted: ["sw", "Bob"], honoraryPrefix: ["eq", "Mr"]}} ]
+ * ```
+ * 
+ * When an attribute name is specified multiple times in a logical `and` operation, the expressions are combined into a new array containing each individual expression.
+ * ```js
+ * // For the filter expression...
+ * 'userName sw "A" and userName ew "z"'
+ * // ...the object representation is
+ * [ {userName: [["sw", "A"], ["ew", "Z"]]} ]
+ * ```
+ * 
+ * ##### `or`
+ * For each logical `or` operation in the expression, a new object is added to the filter array.
+ * ```js
+ * // For the filter expression...
+ * 'userName eq "Test" or displayName co "Bob"'
+ * // ...the object representation is
+ * [
+ *     {userName: ["eq", "Test"]},
+ *     {displayName: ["co", "Bob"]}
+ * ]
+ * ```
+ * 
+ * When the logical `or` operation is combined with the logical `and` operation, the `and` operation takes precedence.
+ * ```js
+ * // For the filter expression...
+ * 'userName eq "Test" or displayName co "Bob" and quota gt 5'
+ * // ...the object representation is
+ * [
+ *     {userName: ["eq", "Test"]},
+ *     {displayName: ["co", "Bob"], quota: ["gt", 5]}
+ * ]
+ * ```
+ * 
+ * ##### `not`
+ * Logical `not` operations in an expression are added to an object property's array of conditions.
+ * ```js
+ * // For the filter expression...
+ * 'not userName eq "Test"'
+ * // ...the object representation is
+ * [ {userName: ["not", "eq", "Test"]} ]
+ * ```
+ * 
+ * For simplicity, the logical `not` operation is assumed to only apply to the directly following comparison statement in an expression.
+ * ```js
+ * // For the filter expression...
+ * 'userName sw "A" and not userName ew "Z" or displayName co "Bob"'
+ * // ...the object representation is
+ * [
+ *     {userName: [["sw", "A"], ["not", "ew", "Z"]]},
+ *     {displayName: ["co", "Bob"]}
+ * ]
+ * ```
+ * 
+ * If needed, logical `not` operations can be applied to multiple comparison statements using grouping operations.
+ * ```js
+ * // For the filter expression...
+ * 'userName sw "A" and not (userName ew "Z" or displayName co "Bob")'
+ * // ...the object representation is
+ * [
+ *     {userName: [["sw", "A"], ["not", "ew", "Z"]]},
+ *     {userName: ["sw", "A"], displayName: ["not", "co", "Bob"]}
+ * ]
+ * ```
+ * 
+ * #### Grouping Operations
+ * As per the order of operations in the SCIM protocol specification, grouping operations are evaluated ahead of any simpler expressions.
+ * 
+ * In more complex scenarios, expressions can be grouped using `(` and `)` parentheses to change the standard order of operations.  
+ * This is referred to as *precedence grouping*.
+ * ```js
+ * // For the filter expression...
+ * 'userType eq "Employee" and (emails co "example.com" or emails.value co "example.org")'
+ * // ...the object representation is
+ * [
+ *     {userType: ["eq", "Employee"], emails: ["co", "example.com"]},
+ *     {userType: ["eq", "Employee"], emails: {value: ["co", "example.org"]}}
+ * ]
+ * ```
+ * 
+ * Grouping operations can also be applied to complex attributes using the `[` and `]` brackets to create filters that target sub-attributes.  
+ * This is referred to as *complex attribute filter grouping*.
+ * ```js
+ * // For the filter expression...
+ * 'emails[type eq "work" and value co "@example.com"] or ims[type eq "xmpp" and value co "@foo.com"]'
+ * // ...the object representation is
+ * [
+ *     {emails: {type: ["eq", "work"], value: ["co", "@example.com"]}},
+ *     {ims: {type: ["eq", "xmpp"], value: ["co", "@foo.com"]}}
+ * ]
+ * ```
+ * 
+ * Complex attribute filter grouping can also be used to target sub-attribute values of multi-valued attributes with specific values.
+ * ```js
+ * // For the filter expression...
+ * 'emails[type eq "work" or type eq "home"].values[domain ew "@example.org" or domain ew "@example.com"]'
+ * // ...the object representation is
+ * [
+ *     {emails: {type: ["eq", "work"], values: {domain: ["ew", "@example.org"]}}},
+ *     {emails: {type: ["eq", "work"], values: {domain: ["ew", "@example.com"]}}},
+ *     {emails: {type: ["eq", "home"], values: {domain: ["ew", "@example.org"]}}},
+ *     {emails: {type: ["eq", "home"], values: {domain: ["ew", "@example.com"]}}}
+ * ]
+ * ```
+ * 
+ * Precedence and complex attribute filter grouping can also be combined.
+ * ```js
+ * // For the filter expression...
+ * '(userType eq "Employee" or userType eq "Manager") and emails[type eq "work" or (primary eq true and value co "@example.com")].display co "Work"'
+ * // ...the object representation is
+ * [
+ *     {userType: ["eq", "Employee"], emails: {type: ["eq", "work"], display: ["co", "Work"]}},
+ *     {userType: ["eq", "Employee"], emails: {primary: ["eq", true], value: ["co", "@example.com"], display: ["co", "Work"]}},
+ *     {userType: ["eq", "Manager"], emails: {type: ["eq", "work"], display: ["co", "Work"]}},
+ *     {userType: ["eq", "Manager"], emails: {primary: ["eq", true], value: ["co", "@example.com"], display: ["co", "Work"]}}
+ * ]
+ * ```
+ * 
+ * ### Other Implementations
+ * It is not possible to replace internal use of the Filter class inside SCIMMY's {@link SCIMMY.Messages.PatchOp|PatchOp} and `{@link SCIMMY.Types.SchemaDefinition|SchemaDefinition}` implementations.
+ * Replacing use in the `attributes` property of an instance of `{@link SCIMMY.Types.Resource}`, while technically possible, is not recommended,
+ * as it may break attribute filtering in the `{@link SCIMMY.Types.SchemaDefinition#coerce|#coerce()}` method of SchemaDefinition instances.
+ * 
+ * If SCIMMY's filter expression resource matching does not meet your needs, it can be substituted for another implementation
+ * (e.g. [scim2-parse-filter](https://github.com/thomaspoignant/scim2-parse-filter)) when filtering results within your implementation
+ * of each resource type's {@link SCIMMY.Types.Resource.ingress|ingress}/{@link SCIMMY.Types.Resource.egress|egress}/{@link SCIMMY.Types.Resource.degress|degress} handler methods.
+ * See `{@link SCIMMY.Types.Resource~gressHandler}` for more information on implementing handler methods.
+ * ```js
+ * // Import the necessary methods from the other implementation, and for accessing your data source
+ * import {parse, filter} from "scim2-parse-filter";
+ * import {users} from "some-database-client";
+ * 
+ * // Register your ingress/egress/degress handler method
+ * SCIMMY.Resources.User.egress(async (resource) => {
+ *     // Get the original expression string from the resource's filter property...
+ *     const {expression} = resource.filter;
+ *     // ...and parse/handle it with the other implementation
+ *     const f = filter(parse(expression));
+ *     
+ *     // Retrieve the data from your data source, and filter it as necessary
+ *     return await users.find(/some query returning array/).filter(f);
+ * });
+ * ```
  */
 export class Filter extends Array {
     // Make sure derivatives return native arrays
