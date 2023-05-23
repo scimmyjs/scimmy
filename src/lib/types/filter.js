@@ -96,13 +96,13 @@ export class Filter extends Array {
                         if (result === false) break;
                         
                         // Check for negation and extract the comparator and expected values
-                        const negate = (expression[0] === "not");
+                        const negate = (expression[0].toLowerCase() === "not");
                         let [comparator, expected] = expression.slice(((+negate) - expression.length));
                         
                         // Cast true and false strings to boolean values
                         expected = (expected === "false" ? false : (expected === "true" ? true : expected));
                         
-                        switch (comparator) {
+                        switch (comparator.toLowerCase()) {
                             default:
                                 result = false;
                                 break;
@@ -197,8 +197,23 @@ export class Filter extends Array {
                     if (tokens.length && tokens[tokens.length-1].type === "Word" && tokens[tokens.length-1].value.endsWith("."))
                         word = tokens.pop().value + word;
                     
-                    // Store the token, deriving token type by matching against known operators and comparators
-                    tokens.push({type: (operators.includes(word) ? "Operator" : (comparators.includes(word) ? "Comparator" : "Word")), value: word});
+                    // Derive the token's type by matching against known operators and comparators
+                    let type = (operators.includes(word.toLowerCase()) ? "Operator" : (comparators.includes(word.toLowerCase()) ? "Comparator" : "Word"));
+                    
+                    // If there was a previous token, make sure it was accurate
+                    if (tokens.length) {
+                        const previous = tokens[tokens.length-1];
+                        
+                        // If the previous token was also a comparator, it may have actually been a word
+                        if (previous.type === "Comparator" && type === "Comparator") previous.type = "Word";
+                        // If the previous token was also an operator...
+                        if (previous.type === "Operator" && type === "Operator"
+                            // ...and that operator was "not", or this operator is NOT "not", it may have been a word    
+                            && (previous.value.toLowerCase() === "not" || word.toLowerCase() !== "not")) type = "Word";
+                    }
+                    
+                    // Store the token
+                    tokens.push({type, value: word});
                 }
             }
             
@@ -234,7 +249,7 @@ export class Filter extends Array {
         
         for (let token of [...tokens]) {
             // Found the target operator token, push preceding tokens as an operation
-            if (token.type === "Operator" && token.value === operator)
+            if (token.type === "Operator" && token.value.toLowerCase() === operator)
                 operations.push(tokens.splice(0, tokens.indexOf(token) + 1).slice(0, -1));
             // Reached the end, add the remaining tokens as an operation
             else if (tokens.indexOf(token) === tokens.length - 1)
@@ -256,7 +271,7 @@ export class Filter extends Array {
         // Go through every expression in the list, or handle a singular expression if that's what was given  
         for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
             // Check if first token is negative for later evaluation
-            const negative = expression[0] === "not" ? expression.shift() : undefined;
+            const negative = (expression.length === 4 ? expression.shift() : undefined)?.toLowerCase?.();
             // Extract expression parts and derive object path
             const [path, comparator, expected] = expression;
             const parts = path.split(pathSeparator).filter(p => p);
@@ -273,7 +288,7 @@ export class Filter extends Array {
                 else {
                     // Unwrap string and null values, and store the translated expression
                     value = (value === "null" ? null : (String(value).match(/^["].*["]$/) ? value.substring(1, value.length - 1) : value));
-                    const expression = [negative, comparator, value].filter(v => v !== undefined);
+                    const expression = [negative, comparator.toLowerCase(), value].filter(v => v !== undefined);
                     
                     // Either store the single expression, or convert to array if attribute already has an expression defined
                     target[name] = (!Array.isArray(target[name]) ? expression : [...(target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
@@ -301,7 +316,7 @@ export class Filter extends Array {
         
         // If there's no operators or groups, and no nested attribute filters, assume the expression is complete
         if (reallySimple) {
-            results.push(Array.isArray(query) ? tokens.map(t => t.value ?? t) : Filter.#objectify(tokens.splice(0).map(t => t.value ?? t)));
+            results.push(Array.isArray(query) ? tokens.map(t => t.value ?? t) : Filter.#objectify(tokens.splice(0).map(t => t?.value ?? t)));
         }
         // Otherwise, logic and groups need to be evaluated
         else {
@@ -318,13 +333,13 @@ export class Filter extends Array {
                 // Go through every expression and check for nested attribute filters
                 for (let e of expression.splice(0)) {
                     // Check if first token is negative for later evaluation
-                    let negative = e[0].value === "not" ? e.shift() : undefined,
-                        // Extract expression parts and derive object path
-                        [path, comparator, value] = e;
+                    const negative = e[0].type === "Operator" && e[0].value.toLowerCase() === "not" ? e.shift() : undefined;
+                    // Extract expression parts and derive object path
+                    const [path, comparator, value] = e;
                     
                     // If none of the path parts have multi-value filters, put the expression back on the stack
                     if (path.value.split(pathSeparator).filter(p => p).every(t => t === multiValuedFilter.exec(t).slice(1).shift())) {
-                        expression.push([negative, path, comparator, value].filter(v => v !== undefined));
+                        expression.push([negative, path, comparator, value]);
                     }
                     // Otherwise, delve into the path parts for complexities
                     else {
@@ -349,10 +364,10 @@ export class Filter extends Array {
                                     .map(b => b.every(b => b.every(b => Array.isArray(b))) ? b.flat(1) : b)
                                     // Prefix any attribute paths with spent parts
                                     .map((branch) => branch.map(join => {
-                                        const negative = (join[0] === "not" ? join.shift() : undefined);
+                                        const negative = (join.length === 4 || (join.length === 3 && comparators.includes(join[join.length-1].toLowerCase())) ? join.shift() : undefined);
                                         const [path, comparator, value] = join;
                                         
-                                        return [negative, `${spent.join(".")}.${path}`, comparator, value].filter(v => v !== undefined);
+                                        return [negative?.toLowerCase?.(), `${spent.join(".")}.${path}`, comparator, value];
                                     }));
                                 
                                 if (!results.length) {
@@ -371,7 +386,7 @@ export class Filter extends Array {
                             }
                             // No filter, but if we're at the end of the chain, join the last expression with the results
                             else if (parts.indexOf(part) === parts.length - 1) {
-                                for (let result of results) result.push([negative?.value, spent.join("."), comparator?.value, value?.value].filter(v => v !== undefined));
+                                for (let result of results) result.push([negative?.value, spent.join("."), comparator?.value, value?.value]);
                             }
                         }
                         
@@ -403,7 +418,7 @@ export class Filter extends Array {
                             for (let token of (expression.length ? expression : [[]])) {
                                 for (let branch of branches) {
                                     groups.push([
-                                        ...(token.length ? [token.map(t => t.value ?? t)] : []),
+                                        ...(token.length ? [token.map(t => t?.value ?? t)] : []),
                                         ...(group.length ? group : []),
                                         ...Filter.#parse(branch)
                                     ]);
@@ -416,7 +431,7 @@ export class Filter extends Array {
                 // Consider each group its own expression
                 if (groups.length) expressions.push(...groups);
                 // Otherwise, collapse the expression for potential objectification
-                else expressions.push(expression.map(e => e.map(t => t.value ?? t)));
+                else expressions.push(expression.map(e => e.map(t => t?.value ?? t)));
             }
             
             // Push all expressions to results, objectifying if necessary

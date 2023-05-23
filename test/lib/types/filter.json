@@ -2,7 +2,8 @@
   "parse": {
     "simple": [
       {"source": "id pr", "target": [{"id": ["pr"]}]},
-      {"source": "userName eq \"Test\"", "target": [{"userName": ["eq", "Test"]}]},
+      {"source": "pr pr", "target": [{"pr": ["pr"]}]},
+      {"source": "userName Eq \"Test\"", "target": [{"userName": ["eq", "Test"]}]},
       {"source": "displayName co \"Bob\"", "target": [{"displayName": ["co", "Bob"]}]},
       {"source": "name.formatted sw \"Bob\"", "target": [{"name": {"formatted": ["sw", "Bob"]}}]},
       {"source": "quota gt 1.5", "target": [{"quota": ["gt", 1.5]}]},
@@ -11,14 +12,19 @@
       {"source": "emails.primary eq true", "target": [{"emails": {"primary": ["eq", true]}}]}
     ],
     "logical": [
+      {"source": "not eq pr", "target": [{"eq": ["not", "pr"]}]},
+      {"source": "NOT id pr", "target": [{"id": ["not", "pr"]}]},
       {"source": "id pr and userName eq \"Test\"", "target": [{"id": ["pr"], "userName": ["eq", "Test"]}]},
       {"source": "userName eq \"Test\" or displayName co \"Bob\"", "target": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"]}]},
+      {"source": "userName eq \"Test\" or displayName co \"Bob\" and quota gt 5", "target": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"], "quota": ["gt", 5]}]},
       {"source": "email.value ew \"@example.com\" and not userName eq \"Test\"", "target": [{"email": {"value": ["ew", "@example.com"]}, "userName": ["not", "eq", "Test"]}]},
       {"source": "email.type eq \"work\" or not userName ne \"Test\"", "target": [{"email": {"type": ["eq", "work"]}}, {"userName": ["not", "ne", "Test"]}]},
-      {"source": "email.type eq \"work\" and not email.value ew \"@example.com\"", "target": [{"email": {"type": ["eq", "work"], "value": ["not", "ew", "@example.com"]}}]},
+      {"source": "email.type eq \"work\" AND not email.value ew \"@example.com\"", "target": [{"email": {"type": ["eq", "work"], "value": ["not", "ew", "@example.com"]}}]},
+      {"source": "NOT email.type eq \"work\" and not email.value ew \"@example.com\"", "target": [{"email": {"type": ["not", "eq", "work"], "value": ["not", "ew", "@example.com"]}}]},
       {"source": "name.formatted sw \"Bob\" and name.honoraryPrefix eq \"Mr\"", "target": [{"name": {"formatted": ["sw", "Bob"], "honoraryPrefix": ["eq", "Mr"]}}]},
       {"source": "quota gt 1.5 and quota lt 2", "target": [{"quota": [["gt", 1.5], ["lt", 2]]}]},
-      {"source": "userName sw \"A\" and userName ew \"Z\" and userName co \"m\"", "target": [{"userName": [["sw", "A"], ["ew", "Z"], ["co", "m"]]}]}
+      {"source": "userName sw \"A\" and userName ew \"Z\" and userName co \"m\"", "target": [{"userName": [["sw", "A"], ["ew", "Z"], ["co", "m"]]}]},
+      {"source": "NOt not sw \"A\" and userName ew \"Z\" and userName co \"m\"", "target": [{"not": ["not", "sw", "A"], "userName": [["ew", "Z"], ["co", "m"]]}]}
     ],
     "grouping": [
       {
@@ -216,7 +222,7 @@
       ],
       "negations": [
         {"expression": {"userName": ["not", "pr"]}, "expected": []},
-        {"expression": {"userName": ["not", "sw", "A"]}, "expected": [2, 3, 4]},
+        {"expression": {"userName": ["nOt", "sw", "A"]}, "expected": [2, 3, 4]},
         {"expression": {"exists": ["not", "pr"]}, "expected": [2, 4]},
         {"expression": {"date": ["not", "co", "2021-09"]}, "expected": [1, 3]},
         {"expression": {"date": ["not", "le", "2021-09-08T23:02:28.986Z"]}, "expected": [2]}
