@@ -36,10 +36,24 @@
         "target": [{"emails": {"type": ["eq", "work"], "value": ["ew", "@example.org"]}}]
       },
       {
+        "source": "userName sw \"A\" and not (userName ew \"Z\" or displayName co \"Bob\")",
+        "target": [
+          {"userName": [["sw", "A"], ["not", "ew", "Z"]]},
+          {"userName": ["sw", "A"], "displayName": ["not", "co", "Bob"]}
+        ]
+      },
+      {
         "source": "emails[type eq \"work\" or type eq \"home\"].value ew \"@example.org\"",
         "target": [
           {"emails": {"type": ["eq", "work"], "value": ["ew", "@example.org"]}},
           {"emails": {"type": ["eq", "home"], "value": ["ew", "@example.org"]}}
+        ]
+      },
+      {
+        "source": "userType eq \"Employee\" and (emails co \"example.com\" or emails.value co \"example.org\")",
+        "target": [
+          {"userType": ["eq", "Employee"], "emails": ["co", "example.com"]},
+          {"userType": ["eq", "Employee"], "emails": {"value": ["co", "example.org"]}}
         ]
       },
       {
@@ -118,6 +132,15 @@
         "target": [
           {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
           {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
+        ]
+      },
+      {
+        "source": "(userType eq \"Employee\" or userType eq \"Manager\") and emails[type eq \"work\" or (primary eq true and value co \"@example.com\")].display co \"Work\"",
+        "target": [
+          {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Manager"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Manager"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
         ]
       },
       {

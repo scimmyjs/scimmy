@@ -239,12 +239,13 @@ export class Filter extends Array {
     
     /**
      * Divide a list of tokens into sets split by a given logical operator for parsing
-     * @param {Object[]} tokens - list of token objects in a query to divide by the given logical operation
+     * @param {Object[]} input - list of token objects in a query to divide by the given logical operation
      * @param {String} operator - the logical operator to divide the tokens by
      * @returns {Array<Object[]>} the supplied list of tokens split wherever the given operator occurred
      * @private
      */
-    static #operations(tokens, operator) {
+    static #operations(input, operator) {
+        const tokens = [...input];
         const operations = [];
         
         for (let token of [...tokens]) {
