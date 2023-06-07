@@ -160,6 +160,83 @@
       }
     ]
   },
+  "expression": {
+    "simple": [
+      {"source": [{"id": ["pr"]}], "target": "id pr"},
+      {"source": [{"pr": ["pr"]}], "target": "pr pr"},
+      {"source": [{"userName": ["eq", "Test"]}], "target": "userName eq \"Test\""},
+      {"source": [{"displayName": ["co", "Bob"]}], "target": "displayName co \"Bob\""},
+      {"source": [{"name": {"formatted": ["sw", "Bob"]}}], "target": "name.formatted sw \"Bob\""},
+      {"source": [{"quota": ["gt", 1.5]}], "target": "quota gt 1.5"},
+      {"source": [{"userType": ["eq", null]}], "target": "userType eq null"},
+      {"source": [{"active": ["eq", false]}], "target": "active eq false"},
+      {"source": [{"emails": {"primary": ["eq", true]}}], "target": "emails.primary eq true"}
+    ],
+    "logical": [
+      {"source": [{"eq": ["not", "pr"]}], "target": "not eq pr"},
+      {"source": [{"id": ["not", "pr"]}], "target": "not id pr"},
+      {"source": [{"id": ["pr"], "userName": ["eq", "Test"]}], "target": "id pr and userName eq \"Test\""},
+      {"source": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"]}], "target": "userName eq \"Test\" or displayName co \"Bob\""},
+      {"source": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"], "quota": ["gt", 5]}], "target": "userName eq \"Test\" or displayName co \"Bob\" and quota gt 5"},
+      {"source": [{"email": {"value": ["ew", "@example.com"]}, "userName": ["not", "eq", "Test"]}], "target": "email.value ew \"@example.com\" and not userName eq \"Test\""},
+      {"source": [{"email": {"type": ["eq", "work"]}}, {"userName": ["not", "ne", "Test"]}], "target": "email.type eq \"work\" or not userName ne \"Test\""},
+      {"source": [{"email": {"type": ["eq", "work"], "value": ["not", "ew", "@example.com"]}}], "target": "email.type eq \"work\" and not email.value ew \"@example.com\""},
+      {"source": [{"email": {"type": ["not", "eq", "work"], "value": ["not", "ew", "@example.com"]}}], "target": "not email.type eq \"work\" and not email.value ew \"@example.com\""},
+      {"source": [{"name": {"formatted": ["sw", "Bob"], "honoraryPrefix": ["eq", "Mr"]}}], "target": "name.formatted sw \"Bob\" and name.honoraryPrefix eq \"Mr\""},
+      {"source": [{"quota": [["gt", 1.5], ["lt", 2]]}], "target": "quota gt 1.5 and quota lt 2"},
+      {"source": [{"userName": [["sw", "A"], ["ew", "Z"], ["co", "m"]]}], "target": "userName sw \"A\" and userName ew \"Z\" and userName co \"m\""},
+      {"source": [{"not": ["not", "sw", "A"], "userName": [["ew", "Z"], ["co", "m"]]}], "target": "not not sw \"A\" and userName ew \"Z\" and userName co \"m\""}
+    ],
+    "complex": [
+      {
+        "target": "name.familyName eq \"Employee\" and emails.value co \"example.com\" or name.familyName eq \"Employee\" and emails.value co \"example.org\" or name.familyName eq \"Manager\" and emails.value co \"example.com\" or name.familyName eq \"Manager\" and emails.value co \"example.org\"",
+        "source": [
+          {"name": {"familyName": ["eq", "Employee"]}, "emails": {"value": ["co", "example.com"]}},
+          {"name": {"familyName": ["eq", "Employee"]}, "emails": {"value": ["co", "example.org"]}},
+          {"name": {"familyName": ["eq", "Manager"]}, "emails": {"value": ["co", "example.com"]}},
+          {"name": {"familyName": ["eq", "Manager"]}, "emails": {"value": ["co", "example.org"]}}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" and emails.type eq \"work\" or userType eq \"Employee\" and emails.primary eq true and emails.value co \"@example.com\"",
+        "source": [
+          {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"]}},
+          {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"]}}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" and emails.type eq \"work\" and emails.display co \"Work\" or userType eq \"Employee\" and emails.primary eq true and emails.value co \"@example.com\" and emails.display co \"Work\"",
+        "source": [
+          {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" and emails.type eq \"work\" and emails.display co \"Work\" or userType eq \"Employee\" and emails.primary eq true and emails.value co \"@example.com\" and emails.display co \"Work\" or userType eq \"Manager\" and emails.type eq \"work\" and emails.display co \"Work\" or userType eq \"Manager\" and emails.primary eq true and emails.value co \"@example.com\" and emails.display co \"Work\"",
+        "source": [
+          {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Manager"], "emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"userType": ["eq", "Manager"], "emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" or emails.type eq \"work\" and emails.display co \"Work\" or emails.primary eq true and emails.value co \"@example.com\" and emails.display co \"Work\"",
+        "source": [
+          {"userType": ["eq", "Employee"]},
+          {"emails": {"type": ["eq", "work"], "display": ["co", "Work"]}},
+          {"emails": {"primary": ["eq", true], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" or emails.type eq \"work\" and emails.primary eq false and emails.value co \"@example.com\" and emails.display co \"Work\"",
+        "source": [
+          {"userType": ["eq", "Employee"]},
+          {"emails": {"type": ["eq", "work"], "primary": ["eq", false], "value": ["co", "@example.com"], "display": ["co", "Work"]}}
+        ]
+      }
+    ]
+  },
   "match": {
     "source": [
       {

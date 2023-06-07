@@ -319,29 +319,30 @@ export class SchemaDefinition {
         else {
             // Prepare resultant value storage
             const target = {};
+            const filterable = {...filter};
             const inclusions = attributes.map(({name}) => name);
             
             // Check for any negative filters
-            for (let key in {...filter}) {
+            for (let key in {...filterable}) {
                 // Find the attribute by lower case name
                 const {name, config: {returned} = {}} = attributes.find(a => a.name.toLowerCase() === key.toLowerCase()) ?? {};
                 
                 // Mark the property as omitted from the result, and remove the spent filter
-                if (returned !== "always" && Array.isArray(filter[key]) && filter[key][0] === "np") {
+                if (returned !== "always" && Array.isArray(filterable[key]) && filterable[key][0] === "np") {
                     inclusions.splice(inclusions.indexOf(name), 1);
-                    delete filter[key];
+                    delete filterable[key];
                 }
             }
             
             // Check for remaining positive filters
-            if (Object.keys(filter).length) {
+            if (Object.keys(filterable).length) {
                 // If there was a positive filter, ignore the negative filters
                 inclusions.splice(0, inclusions.length);
                 
                 // Mark the positively filtered property as included in the result, and remove the spent filter
-                for (let key in {...filter}) if (Array.isArray(filter[key]) && filter[key][0] === "pr") { 
+                for (let key in {...filterable}) if (Array.isArray(filterable[key]) && filterable[key][0] === "pr") { 
                     inclusions.push(key);
-                    delete filter[key];
+                    delete filterable[key];
                 }
             }
             

@@ -214,9 +214,14 @@ export class Filter extends Array {
     }
     
     /**
+     * The original string that was parsed by the filter, or the stringified representation of filter expression objects
+     * @member {String}
+     */
+    expression;
+    
+    /**
      * Instantiate and parse a new SCIM filter string or expression
-     * @param {String|Object[]} [expression] - the query string to parse, or an existing set of filter expressions
-     * @property {String} [expression] - the raw string that was parsed by the filter
+     * @param {String|Object|Object[]} [expression] - the query string to parse, or an existing filter expression object or set of objects
      */
     constructor(expression = []) {
         // Make sure expression is a string, an object, or an array
@@ -224,7 +229,7 @@ export class Filter extends Array {
             throw new TypeError("Expected 'expression' parameter to be a string, object, or array in Filter constructor");
         
         // Prepare underlying array and reset inheritance
-        super(...(Object(expression) === expression ? Array.isArray(expression) ? expression : [expression] : []));
+        super();
         Object.setPrototypeOf(this, Filter.prototype);
         
         // Handle expression strings
@@ -233,10 +238,16 @@ export class Filter extends Array {
             if (!expression.trim().length)
                 throw new TypeError("Expected 'expression' parameter string value to not be empty in Filter constructor");
             
-            // Save and parse the expression
+            // Parse and save the expression
+            this.push(...Filter.#parse(expression));
             this.expression = expression;
-            this.splice(0, 0, ...Filter.#parse(String(expression)));
+        } else {
+            // Clone and trap expression objects, and get expression string
+            this.push(...Filter.#objectify(Array.isArray(expression) ? expression : [expression]));
+            this.expression = Filter.#stringify(this);
         }
+        
+        Object.freeze(this);
     }
     
     /**
@@ -332,14 +343,55 @@ export class Filter extends Array {
     }
     
     /**
+     * Turn a parsed filter expression object back into a string
+     * @param {SCIMMY.Types.Filter} filter - the SCIMMY filter instance to stringify
+     * @returns {String} the string representation of the given filter expression object
+     * @private
+     */
+    static #stringify(filter) {
+        return filter.map((e) => Object.entries(e)
+            // Create a function that can traverse objects and add prefixes to attribute names
+            .map((function getMapper(prefix = "") {
+                return ([attr, expr]) => {
+                    // If the expression is an array, turn it back into a string
+                    if (Array.isArray(expr)) {
+                        const expressions = [];
+                        
+                        // Handle logical "and" operations applied to a single attribute
+                        for (let e of expr.every(e => Array.isArray(e)) ? expr : [expr]) {
+                            // Copy expression so original isn't modified
+                            const parts = [...e];
+                            // Then check for negations and extract the actual values
+                            const negate = (parts[0].toLowerCase() === "not" ? parts.shift() : undefined);
+                            const [comparator, expected] = parts;
+                            const maybeValue = expected instanceof Date ? expected.toISOString() : expected;
+                            const value = (typeof maybeValue === "string" ? `"${maybeValue}"` : (maybeValue !== undefined ? `${maybeValue}` : maybeValue))
+                            
+                            // Add the stringified expression to the results
+                            expressions.push([negate, `${prefix}${attr}`, comparator, value].filter(v => !!v).join(" "));
+                        }
+                        
+                        return expressions;
+                    }
+                    // Otherwise, go deeper to get the actual expression
+                    else return Object.entries(expr).map(getMapper(`${prefix}${attr}.`));
+                }
+            })())
+            // Turn all joins into a single string...
+            .flat(Infinity).join(" and ")
+        // ...then turn all branches into a single string
+        ).join(" or ");
+    }
+    
+    /**
      * Extract a list of tokens representing the supplied expression
      * @param {String} query - the expression to generate the token list for
      * @returns {Object[]} a set of token objects representing the expression, with details on the token kinds
      * @private
      */
     static #tokenise(query = "") {
-        let tokens = [],
-            token;
+        const tokens = [];
+        let token;
         
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
@@ -432,42 +484,57 @@ export class Filter extends Array {
     
     /**
      * Translate a given set of expressions into their object representation
-     * @param {Array<String[]>} expressions - list of expressions to combine into their object representation
+     * @param {Object|Object[]|Array<String[]>} expressions - list of expressions to translate into their object representation
      * @returns {Object} translated representation of the given set of expressions
      * @private
      */
     static #objectify(expressions = []) {
-        let result = {};
-        
-        // Go through every expression in the list, or handle a singular expression if that's what was given  
-        for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
-            // Check if first token is negative for later evaluation
-            const negative = (expression.length === 4 ? expression.shift() : undefined)?.toLowerCase?.();
-            // Extract expression parts and derive object path
-            const [path, comparator, expected] = expression;
-            const parts = path.split(pathSeparator).filter(p => p);
-            let value = expected, target = result;
+        // If the supplied expression was an object, deeply clone it and trap everything along the way in proxies
+        if (Object.getPrototypeOf(expressions).constructor === Object) {
+            const catchAll = (target, prop) => {throw new TypeError(`Cannot modify property ${prop} of immutable Filter instance`)};
+            const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: catchAll};
             
-            // Construct the object
-            for (let key of parts) {
-                // Fix the attribute name
-                const name = `${key[0].toLowerCase()}${key.slice(1)}`;
+            return new Proxy(Object.entries(expressions).reduce((res, [key, val]) => Object.assign(res, {
+                [key]: Array.isArray(val) ? new Proxy(val.map(v => Array.isArray(v) ? new Proxy([...v], handleTraps) : v), handleTraps) : Filter.#objectify(val)
+            }), {}), handleTraps);
+        }
+        // If every supplied expression was an object, make sure they've all been cloned and proxied
+        else if (expressions.every(e => Object.getPrototypeOf(e).constructor === Object)) {
+            return expressions.map(Filter.#objectify);
+        }
+        // Go through every expression in the list, or handle a singular expression if that's what was given  
+        else {
+            const result = {};
+            
+            for (let expression of (expressions.every(e => Array.isArray(e)) ? expressions : [expressions])) {
+                // Check if first token is negative for later evaluation
+                const negative = (expression.length === 4 ? expression.shift() : undefined)?.toLowerCase?.();
+                // Extract expression parts and derive object path
+                const [path, comparator, expected] = expression;
+                const parts = path.split(pathSeparator).filter(p => p);
+                let value = expected, target = result;
                 
-                // If there's more path to follow, keep digging
-                if (parts.indexOf(key) < parts.length - 1) target = (target[name] = target[name] ?? {});
-                // Otherwise, we've reached our destination
-                else {
-                    // Unwrap string and null values, and store the translated expression
-                    value = (value === "null" ? null : (String(value).match(/^["].*["]$/) ? value.substring(1, value.length - 1) : value));
-                    const expression = [negative, comparator.toLowerCase(), value].filter(v => v !== undefined);
+                // Construct the object
+                for (let key of parts) {
+                    // Fix the attribute name
+                    const name = `${key[0].toLowerCase()}${key.slice(1)}`;
                     
-                    // Either store the single expression, or convert to array if attribute already has an expression defined
-                    target[name] = (!Array.isArray(target[name]) ? expression : [...(target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
+                    // If there's more path to follow, keep digging
+                    if (parts.indexOf(key) < parts.length - 1) target = (target[name] = target[name] ?? {});
+                    // Otherwise, we've reached our destination
+                    else {
+                        // Unwrap string and null values, and store the translated expression
+                        value = (value === "null" ? null : (String(value).match(/^["].*["]$/) ? value.substring(1, value.length - 1) : value));
+                        const expression = [negative, comparator.toLowerCase(), value].filter(v => v !== undefined);
+                        
+                        // Either store the single expression, or convert to array if attribute already has an expression defined
+                        target[name] = (!Array.isArray(target[name]) ? expression : [...(target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
+                    }
                 }
             }
+            
+            return Filter.#objectify(result);
         }
-        
-        return result;
     }
     
     /**
