@@ -10,26 +10,27 @@ const fixtures = fs.readFile(path.join(basepath, "./filter.json"), "utf8").then(
 
 describe("SCIMMY.Types.Filter", () => {
     it("should extend native 'Array' class", () => {
-        assert.ok(new Filter() instanceof Array,
+        assert.ok(new Filter("id pr") instanceof Array,
             "Filter type class did not extend native 'Array' class");
     });
     
     describe("@constructor", () => {
         it("should not require arguments", () => {
-            assert.doesNotThrow(() => new Filter(),
+            assert.doesNotThrow(() => new Filter("id pr"),
                 "Filter type class did not instantiate without arguments");
         });
         
         context("when 'expression' argument is defined", () => {
             const fixtures = [
                 ["a primitive number", "number value '1'", 1],
-                ["a primitive boolean", "boolean value 'false'", false]
+                ["a primitive boolean", "boolean value 'false'", false],
+                ["an instance of Date", "date instance value", new Date()]
             ];
             
             for (let [label, descriptor, value] of fixtures) {
                 it(`should not be ${label}`, () => {
                     assert.throws(() => new Filter(value),
-                        {name: "TypeError", message: "Expected 'expression' parameter to be a string, object, or array in Filter constructor"},
+                        {name: "TypeError", message: "Expected 'expression' parameter to be a string, object, or array of objects in Filter constructor"},
                         `Filter type class did not reject 'expression' parameter ${descriptor}`);
                 });
             }
@@ -107,6 +108,106 @@ describe("SCIMMY.Types.Filter", () => {
                 }
             });
         });
+        
+        context("when 'expression' argument is an object", () => {
+            it("should not be an empty object", () => {
+                assert.throws(() => new Filter({}),
+                    {name: "TypeError", message: "Missing expression properties for Filter expression object #1"},
+                    "Filter type class did not reject an empty object");
+            });
+            
+            it("should expect all properties to be arrays or plain objects", () => {
+                assert.throws(() => new Filter({id: "pr"}),
+                    {name: "TypeError", message: `Expected plain object or expression array in property 'id' of Filter expression object #1`},
+                    "Filter type class did not expect all properties to be arrays or plain objects");
+                assert.throws(() => new Filter({id: ["pr"], name: {formatted: "pr"}}),
+                    {name: "TypeError", message: `Expected plain object or expression array in property 'name.formatted' of Filter expression object #1`},
+                    "Filter type class did not expect all properties to be arrays or plain objects");
+            });
+            
+            it("should expect all object properties to not be empty objects", () => {
+                assert.throws(() => new Filter({id: {}}),
+                    {name: "TypeError", message: `Missing expressions for property 'id' of Filter expression object #1`},
+                    "Filter type class did not expect object properties to not be empty objects");
+                assert.throws(() => new Filter({id: ["pr"], name: {}}),
+                    {name: "TypeError", message: `Missing expressions for property 'name' of Filter expression object #1`},
+                    "Filter type class did not expect object properties to not be empty objects");
+            });
+            
+            it("should expect expression comparators to be defined", () => {
+                assert.throws(() => new Filter({id: []}),
+                    {name: "TypeError", message: `Missing comparator in property 'id' of Filter expression object #1`},
+                    "Filter type class did not expect expression comparators to be defined");
+                assert.throws(() => new Filter({id: ["pr"], name: {formatted: []}}),
+                    {name: "TypeError", message: `Missing comparator in property 'name.formatted' of Filter expression object #1`},
+                    "Filter type class did not expect expression comparators to be defined");
+            });
+            
+            it("should throw when nested arrays are mixed with singular expressions", () => {
+                assert.throws(() => new Filter({id: ["pr", ["sw", "A"]]}),
+                    {name: "TypeError", message: "Unexpected nested array in property 'id' of Filter expression object #1"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+                assert.throws(() => new Filter({name: {formatted: ["pr", ["sw", "A"]]}}),
+                    {name: "TypeError", message: "Unexpected nested array in property 'name.formatted' of Filter expression object #1"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+                assert.throws(() => new Filter({id: ["pr"], name: {formatted: ["pr", ["sw", "A"]]}}),
+                    {name: "TypeError", message: "Unexpected nested array in property 'name.formatted' of Filter expression object #1"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+            });
+        });
+        
+        context("when 'expression' argument is an array of objects", () => {
+            it("should not contain any empty objects", () => {
+                assert.throws(() => new Filter([{id: ["pr"]}, {}]),
+                    {name: "TypeError", message: "Missing expression properties for Filter expression object #2"},
+                    "Filter type class did not reject expression containing empty objects");
+                assert.throws(() => new Filter([{id: ["pr"]}, {name: {formatted: ["pr"]}}, {}]),
+                    {name: "TypeError", message: "Missing expression properties for Filter expression object #3"},
+                    "Filter type class did not reject expression containing empty objects");
+                assert.throws(() => new Filter([{name: {formatted: ["pr"]}}, {}, {id: ["pr"]}]),
+                    {name: "TypeError", message: "Missing expression properties for Filter expression object #2"},
+                    "Filter type class did not reject expression containing empty objects");
+            });
+            
+            it("should expect all properties to be arrays or plain objects", () => {
+                assert.throws(() => new Filter([{id: ["pr"]}, {id: "pr"}]),
+                    {name: "TypeError", message: `Expected plain object or expression array in property 'id' of Filter expression object #2`},
+                    "Filter type class did not expect all properties to be arrays or plain objects");
+                assert.throws(() => new Filter([{id: ["pr"]}, {name: {formatted: "pr"}}]),
+                    {name: "TypeError", message: `Expected plain object or expression array in property 'name.formatted' of Filter expression object #2`},
+                    "Filter type class did not expect all properties to be arrays or plain objects");
+            });
+            
+            it("should expect all object properties to not be empty objects", () => {
+                assert.throws(() => new Filter([{id: ["pr"]}, {id: {}}]),
+                    {name: "TypeError", message: `Missing expressions for property 'id' of Filter expression object #2`},
+                    "Filter type class did not expect object properties to not be empty objects");
+                assert.throws(() => new Filter([{id: ["pr"]}, {name: {}}]),
+                    {name: "TypeError", message: `Missing expressions for property 'name' of Filter expression object #2`},
+                    "Filter type class did not expect object properties to not be empty objects");
+            });
+            
+            it("should expect expression comparators to be defined", () => {
+                assert.throws(() => new Filter([{id: ["pr"]}, {id: []}]),
+                    {name: "TypeError", message: `Missing comparator in property 'id' of Filter expression object #2`},
+                    "Filter type class did not expect expression comparators to be defined");
+                assert.throws(() => new Filter([{id: ["pr"]}, {name: {formatted: []}}]),
+                    {name: "TypeError", message: `Missing comparator in property 'name.formatted' of Filter expression object #2`},
+                    "Filter type class did not expect expression comparators to be defined");
+            });
+            
+            it("should throw when nested arrays are mixed with singular expressions", () => {
+                assert.throws(() => new Filter([{id: ["pr", ["sw", "A"]]}, {id: ["pr"]}]),
+                    {name: "TypeError", message: "Unexpected nested array in property 'id' of Filter expression object #1"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+                assert.throws(() => new Filter({id: ["pr"], name: {formatted: ["pr", ["sw", "A"]]}}),
+                    {name: "TypeError", message: "Unexpected nested array in property 'name.formatted' of Filter expression object #1"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+                assert.throws(() => new Filter([{id: ["pr"]}, {name: {formatted: ["pr", ["sw", "A"]]}}]),
+                    {name: "TypeError", message: "Unexpected nested array in property 'name.formatted' of Filter expression object #2"},
+                    "Filter type class did not throw when nested arrays were mixed with singular expressions");
+            });
+        });
     });
     
     describe("#expression", () => {
@@ -178,7 +279,7 @@ describe("SCIMMY.Types.Filter", () => {
     
     describe("#match()", () => {
         it("should be implemented", () => {
-            assert.ok(typeof (new Filter()).match === "function",
+            assert.ok(typeof (new Filter("id pr")).match === "function",
                 "Instance method 'match' not implemented");
         });
         

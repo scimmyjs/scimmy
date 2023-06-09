@@ -46,6 +46,11 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
  * ### Object Representation
  * When instantiated with a valid filter expression string, the expression is parsed into an array of objects representing the given expression.
  * 
+ * > **Note:**  
+ * > It is also possible to substitute the expression string with an existing or well-formed expression object or set of objects.
+ * > As such, valid filters can be instantiated using any of the object representations below.
+ * > When instantiated this way, the `expression` property is dynamically generated from the supplied expression objects.
+ * 
  * The properties of each object are directly sourced from attribute names parsed in the expression.
  * As the class intentionally has no knowledge of the underlying attribute names associated with a schema,
  * the properties of the object are case-sensitive, and will match the case of the attribute name provided in the filter.
@@ -54,6 +59,15 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
  * 'userName eq "Test"', and 'uSerName eq "Test"'
  * // ...the object representations are
  * [ {userName: ["eq", "Test"]} ], and [ {uSerName: ["eq", "Test"]} ]
+ * ```
+ * 
+ * As SCIM attribute names MUST begin with a lower-case letter, they are the exception to this rule,
+ * and will automatically be cast to lower-case.
+ * ```js
+ * // For the filter expressions...
+ * 'UserName eq "Test"', and 'Name.FamilyName eq "Test"'
+ * // ...the object representations are
+ * [ {userName: ["eq", "Test"]} ], and [ {name: {familyName: ["eq", "Test"]}} ]
  * ```
  * 
  * #### Logical Operations
@@ -221,31 +235,29 @@ export class Filter extends Array {
     
     /**
      * Instantiate and parse a new SCIM filter string or expression
-     * @param {String|Object|Object[]} [expression] - the query string to parse, or an existing filter expression object or set of objects
+     * @param {String|Object|Object[]} expression - the query string to parse, or an existing filter expression object or set of objects
      */
-    constructor(expression = []) {
-        // Make sure expression is a string, an object, or an array
-        if (!["string", "object"].includes(typeof expression))
-            throw new TypeError("Expected 'expression' parameter to be a string, object, or array in Filter constructor");
+    constructor(expression) {
+        // See if we're dealing with an expression string
+        const isString = typeof expression === "string";
+        
+        // Make sure expression is a string, an object, or an array of objects
+        if (!isString && !(Array.isArray(expression) ? expression : [expression]).every(e => Object.getPrototypeOf(e).constructor === Object))
+            throw new TypeError("Expected 'expression' parameter to be a string, object, or array of objects in Filter constructor");
+        // Make sure the expression string isn't empty
+        if (isString && !expression.trim().length)
+            throw new TypeError("Expected 'expression' parameter string value to not be empty in Filter constructor");
         
         // Prepare underlying array and reset inheritance
-        super();
-        Object.setPrototypeOf(this, Filter.prototype);
+        Object.setPrototypeOf(super(), Filter.prototype);
         
-        // Handle expression strings
-        if (typeof expression === "string") {
-            // Make sure the expression string isn't empty
-            if (!expression.trim().length)
-                throw new TypeError("Expected 'expression' parameter string value to not be empty in Filter constructor");
-            
-            // Parse and save the expression
-            this.push(...Filter.#parse(expression));
-            this.expression = expression;
-        } else {
-            // Clone and trap expression objects, and get expression string
-            this.push(...Filter.#objectify(Array.isArray(expression) ? expression : [expression]));
-            this.expression = Filter.#stringify(this);
-        }
+        // Parse the expression if it was a string
+        if (isString) this.push(...Filter.#parse(expression));
+        // Otherwise, clone and trap validated expression objects
+        else this.push(...Filter.#objectify(Filter.#validate(expression)));
+        
+        // Save the original expression string, or stringify expression objects
+        this.expression = (isString ? expression : Filter.#stringify(this));
         
         Object.freeze(this);
     }
@@ -340,6 +352,72 @@ export class Filter extends Array {
                 }
             })))
         );
+    }
+    
+    /**
+     * Check an expression object or set of objects to make sure they are valid
+     * @param {Object|Object[]} expression - the expression object or set of objects to validate
+     * @param {Number} [originIndex] - the index of the original filter expression object for errors thrown while recursively validating
+     * @param {String} [prefix] - the path to prepend to attribute names in thrown errors
+     * @returns {Object[]} the original expression object or objects, wrapped in an array
+     * @private
+     */
+    static #validate(expression, originIndex, prefix = "") {
+        // Wrap expression in array for validating
+        const expressions = Array.isArray(expression) ? expression : [expression];
+        
+        // Go through each expression in the array and validate it
+        for (let e of expressions) {
+            // Preserve the top-level index of the expression for thrown errors
+            const index = originIndex ?? expressions.indexOf(e)+1;
+            const props = Object.entries(e);
+            
+            // Make sure the expression isn't empty... 
+            if (!props.length) {
+                if (!prefix) throw new TypeError(`Missing expression properties for Filter expression object #${index}`);
+                else throw new TypeError(`Missing expressions for property '${prefix.slice(0, -1)}' of Filter expression object #${index}`);
+            }
+            
+            // Actually go through the expressions
+            for (let [attr, expr] of props) {
+                // Include prefix in attribute name of thrown errors
+                const name = `${prefix}${attr}`;
+                
+                // If expression is an array, validate it
+                if (Array.isArray(expr)) {
+                    // See if we're dealing with nesting
+                    const nested = expr.some(e => Array.isArray(e));
+                    
+                    // Make sure expression is either singular or nested, not both
+                    if (nested && expr.length && !expr.every(e => Array.isArray(e)))
+                        throw new TypeError(`Unexpected nested array in property '${name}' of Filter expression object #${index}`);
+                    
+                    // Go through and make sure each expression is valid
+                    for (let e of (nested ? expr : [expr])) {
+                        // Extract comparator and expected value
+                        const [comparator, expected] = e.slice(e[0]?.toLowerCase?.() === "not" ? 1 : 0);
+                        
+                        // Make sure there was a comparator
+                        if (!comparator)
+                            throw new TypeError(`Missing comparator in property '${name}' of Filter expression object #${index}`);
+                        // Make sure presence comparators don't include expected values
+                        if (["pr", "np"].includes(comparator.toLowerCase()) && expected !== undefined)
+                            throw new TypeError(`Unexpected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
+                        // Make sure expected value was defined for any other comparator
+                        if (expected === undefined && !["pr", "np"].includes(comparator.toLowerCase()))
+                            throw new TypeError(`Missing expected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
+                    }
+                }
+                // If expression is an object, traverse it
+                else if (Object.getPrototypeOf(expr).constructor === Object)
+                    Filter.#validate(expr, index, `${name}.`);
+                // Otherwise, the expression is not valid
+                else throw new TypeError(`Expected plain object ${name ? `or expression array in property '${name}' of` : "for"} Filter expression object #${index}`)
+            }
+        }
+        
+        // All looks good, return the expression array
+        return expressions;
     }
     
     /**
