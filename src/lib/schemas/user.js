@@ -64,7 +64,8 @@ export class User extends Types.Schema {
             new Types.Attribute("string", "region", {description: "The state or region component."}),
             new Types.Attribute("string", "postalCode", {description: "The zip code or postal code component."}),
             new Types.Attribute("string", "country", {description: "The country name component."}),
-            new Types.Attribute("string", "type", {canonicalValues: ["work", "home", "other"], description: "A label indicating the attribute's function, e.g. 'work' or 'home'."})
+            new Types.Attribute("string", "type", {canonicalValues: ["work", "home", "other"], description: "A label indicating the attribute's function, e.g. 'work' or 'home'."}),
+            new Types.Attribute("boolean", "primary", {description: "A Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred messenger or primary messenger. The primary attribute value 'true' MUST appear no more than once."})
         ]),
         new Types.Attribute("complex", "groups", {direction: "out", mutable: false, multiValued: true, uniqueness: false, description: "A list of groups to which the user belongs, either through direct membership, through nested groups, or dynamically calculated."}, [
             new Types.Attribute("string", "value", {direction: "out", mutable: false, description: "The identifier of the User's group."}),
