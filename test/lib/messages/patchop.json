@@ -34,6 +34,16 @@
         "ops": [{"op": "replace", "path": "name", "value": {"formatted": "Test"}}]
       },
       {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mrs"}},
+        "ops": [{"op": "replace", "path": "name.honorificPrefix", "value": "Mrs"}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mrs"}},
+        "ops": [{"op": "replace", "value": {"name.honorificPrefix": "Mrs"}}]
+      },
+      {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
         "ops": [{"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}]

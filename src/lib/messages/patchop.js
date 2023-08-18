@@ -264,7 +264,19 @@ export class PatchOp {
             for (let [key, val] of Object.entries(value)) {
                 if (typeof value[key] === "object") this.#add(index, key, value[key]);
                 else try {
-                    this.#target[key] = val;
+                    // In the simple case, we could do `this.#target[key] = val`, but we also need to support
+                    // complex attribute paths like 'name.givenName' too, which, for example, needs to be set as
+                    // `this.#target['name']['givenName']`.
+                    let target = this.#target;
+                    const keys = key.split('.');
+                    const lastKey = keys.pop();
+                    for (const nextKey of keys) {
+                        target = target[nextKey];
+                        if (!target) {
+                            throw new Types.Error(400, "invalidPath", `Attribute path '${key}' not valid`);
+                        }
+                    }
+                    target[lastKey] = val;
                 } catch (ex) {
                     if (ex instanceof Types.Error) {
                         // Add additional context to SCIM errors
