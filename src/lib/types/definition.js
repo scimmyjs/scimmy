@@ -175,24 +175,34 @@ export class SchemaDefinition {
     }
     
     /**
-     * Remove an attribute or subAttribute from a schema or attribute definition
-     * @param {String|String[]|SCIMMY.Types.Attribute|SCIMMY.Types.Attribute[]} attributes - the child attributes to remove from the schema or attribute definition
+     * Remove an attribute, extension schema, or subAttribute from a schema or attribute definition
+     * @param {...String} target - the name, or names, of attributes to remove from the schema definition
+     * @param {...SCIMMY.Types.Attribute} target - the attribute instance, or instances, to remove from the schema definition
+     * @param {...SCIMMY.Types.SchemaDefinition} target - the extension schema, or schemas, to remove from the schema definition
      * @returns {SCIMMY.Types.SchemaDefinition} this schema definition instance for chaining
      */
-    truncate(attributes = []) {
-        for (let attrib of (Array.isArray(attributes) ? attributes : [attributes])) {
-            if (this.attributes.includes(attrib)) {
+    truncate(...target) {
+        const targets = target.flat();
+        
+        for (let t of targets) {
+            if (this.attributes.includes(t)) {
                 // Remove a found attribute from the schema definition
-                const index = this.attributes.indexOf(attrib);
+                const index = this.attributes.indexOf(t);
                 if (index >= 0) this.attributes.splice(index, 1);
-            } else if (typeof attrib === "string") {
+            } else if (typeof t === "string") {
                 // Look for the target attribute to remove, which throws a TypeError if not found
-                const target = this.attribute(attrib);
+                const target = this.attribute(t);
                 
                 // Either try truncate again with the target attribute
-                if (!attrib.includes(".")) this.truncate(target);
+                if (!t.includes(".")) this.truncate(target);
                 // Or find the containing attribute and truncate it from there
-                else this.attribute(attrib.split(".").slice(0, -1).join(".")).truncate(target);
+                else this.attribute(t.split(".").slice(0, -1).join(".")).truncate(target);
+            } else if (t instanceof SchemaDefinition) {
+                // Look for the target schema extension to remove, which throws a TypeError if not found
+                const target = this.attribute(t.id);
+                // Remove a found schema extension from the schema definition
+                const index = this.attributes.indexOf(target);
+                if (index >= 0) this.attributes.splice(index, 1);
             }
         }
         

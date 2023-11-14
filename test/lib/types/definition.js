@@ -317,59 +317,106 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
             const actual = JSON.parse(JSON.stringify(definition.truncate().describe()));
             
             assert.deepStrictEqual(actual, expected,
-                "Instance method 'truncate' modified attributes without arguments");
+                "Instance method 'truncate' modified definition without arguments");
         });
         
-        it("should do nothing when definition does not directly include Attribute instances in 'attributes' argument", () => {
-            const definition = new SchemaDefinition(...Object.values(params));
-            const expected = JSON.parse(JSON.stringify(definition.describe()));
-            const attribute = new Attribute("string", "id");
-            const actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
+        context("when 'targets' argument contains an Attribute instance", () => {
+            it("should do nothing when definition does not directly include the instances", () => {
+                const definition = new SchemaDefinition(...Object.values(params));
+                const expected = JSON.parse(JSON.stringify(definition.describe()));
+                const attribute = new Attribute("string", "id");
+                const actual = JSON.parse(JSON.stringify(definition.truncate([attribute]).describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not do nothing when foreign Attribute instance supplied in 'attributes' parameter");
+            });
             
-            assert.deepStrictEqual(actual, expected,
-                "Instance method 'truncate' did not do nothing when foreign Attribute instance supplied in 'attributes' parameter");
+            it("should remove instances directly included in the definition", () => {
+                const attributes = [new Attribute("string", "test"), new Attribute("string", "other")];
+                const definition = new SchemaDefinition(...Object.values(params), "", attributes);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate(attributes).describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not remove Attribute instances directly included in the definition's attributes");
+            });
         });
         
-        it("should remove Attribute instances directly included in the definition", () => {
-            const attribute = new Attribute("string", "test");
-            const definition = new SchemaDefinition(...Object.values(params), "", [attribute]);
-            const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
-            const actual = JSON.parse(JSON.stringify(definition.truncate(attribute).describe()));
+        context("when 'targets' argument contains an array of Attribute instances", () => {
+            it("should do nothing when definition does not directly include the instances", () => {
+                const definition = new SchemaDefinition(...Object.values(params));
+                const expected = JSON.parse(JSON.stringify(definition.describe()));
+                const attribute = new Attribute("string", "id");
+                const actual = JSON.parse(JSON.stringify(definition.truncate([attribute]).describe()));
             
-            assert.deepStrictEqual(actual, expected,
-                "Instance method 'truncate' did not remove Attribute instances directly included in the definition's attributes");
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not do nothing when foreign Attribute instance supplied in 'attributes' parameter");
+            });
+            
+            it("should remove instances directly included in the definition", () => {
+                const attributes = [new Attribute("string", "test"), new Attribute("string", "other")];
+                const definition = new SchemaDefinition(...Object.values(params), "", attributes);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate(attributes).describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not remove Attribute instances directly included in the definition's attributes");
+            });
         });
         
-        it("should remove named attributes directly included in the definition", () => {
-            const definition = new SchemaDefinition(...Object.values(params), "", [new Attribute("string", "test")]);
-            const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
-            const actual = JSON.parse(JSON.stringify(definition.truncate("test").describe()));
+        context("when 'targets' argument contains a SchemaDefinition instance", () => {
+            it("should expect definition to directly include the instance", () => {
+                const definition = new SchemaDefinition(...Object.values(params));
+                const nested = new SchemaDefinition(params.name, `${params.id}2`);
+                
+                assert.throws(() => definition.truncate(nested),
+                    {name: "TypeError", message: `Schema definition '${params.id}' does not declare schema extension for namespaced target '${params.id}2'`},
+                    "Instance method 'truncate' did not expect schema definition instance to exist");
+            });
             
-            assert.deepStrictEqual(actual, expected,
-                "Instance method 'truncate' did not remove named attribute directly included in the definition");
+            it("should remove instances directly included in the definition", () => {
+                const nested = new SchemaDefinition(params.name, `${params.id}2`);
+                const definition = new SchemaDefinition(...Object.values(params)).extend(nested);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate(nested).describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not remove schema definition instances directly included in the definition's attributes");
+            });
         });
         
-        it("should remove named sub-attributes included in the definition", () => {
-            const definition = new SchemaDefinition(...Object.values(params), "", [new Attribute("complex", "test", {}, [new Attribute("string", "test")])]);
-            const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: [new Attribute("complex", "test").toJSON()]}));
-            const actual = JSON.parse(JSON.stringify(definition.truncate("test.test").describe()));
+        context("when 'targets' argument contains a string", () => {
+            it("should remove named attributes directly included in the definition", () => {
+                const definition = new SchemaDefinition(...Object.values(params), "", [new Attribute("string", "test")]);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: []}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate("test").describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not remove named attribute directly included in the definition");
+            });
             
-            assert.deepStrictEqual(actual, expected,
-                "Instance method 'truncate' did not remove named sub-attribute included in the definition");
-        });
-        
-        it("should expect named attributes and sub-attributes to exist", () => {
-            const definition = new SchemaDefinition(...Object.values(params));
+            it("should remove named sub-attributes included in the definition", () => {
+                const definition = new SchemaDefinition(...Object.values(params), "", [new Attribute("complex", "test", {}, [new Attribute("string", "test")])]);
+                const expected = JSON.parse(JSON.stringify({...definition.describe(), attributes: [new Attribute("complex", "test").toJSON()]}));
+                const actual = JSON.parse(JSON.stringify(definition.truncate("test.test").describe()));
+                
+                assert.deepStrictEqual(actual, expected,
+                    "Instance method 'truncate' did not remove named sub-attribute included in the definition");
+            });
             
-            assert.throws(() => definition.truncate("test"),
-                {name: "TypeError", message: `Schema definition '${params.id}' does not declare attribute 'test'`},
-                "Instance method 'truncate' did not expect named attribute 'test' to exist");
-            assert.throws(() => definition.truncate("id.test"),
-                {name: "TypeError", message: `Attribute 'id' of schema '${params.id}' is not of type 'complex' and does not define any subAttributes`},
-                "Instance method 'truncate' did not expect named sub-attribute 'id.test' to exist");
-            assert.throws(() => definition.truncate("meta.test"),
-                {name: "TypeError", message: `Attribute 'meta' of schema '${params.id}' does not declare subAttribute 'test'`},
-                "Instance method 'truncate' did not expect named sub-attribute 'meta.test' to exist");
+            it("should expect named attributes and sub-attributes to exist", () => {
+                const definition = new SchemaDefinition(...Object.values(params));
+                
+                assert.throws(() => definition.truncate("test"),
+                    {name: "TypeError", message: `Schema definition '${params.id}' does not declare attribute 'test'`},
+                    "Instance method 'truncate' did not expect named attribute 'test' to exist");
+                assert.throws(() => definition.truncate("id.test"),
+                    {name: "TypeError", message: `Attribute 'id' of schema '${params.id}' is not of type 'complex' and does not define any subAttributes`},
+                    "Instance method 'truncate' did not expect named sub-attribute 'id.test' to exist");
+                assert.throws(() => definition.truncate("meta.test"),
+                    {name: "TypeError", message: `Attribute 'meta' of schema '${params.id}' does not declare subAttribute 'test'`},
+                    "Instance method 'truncate' did not expect named sub-attribute 'meta.test' to exist");
+            });
         });
     });
     
