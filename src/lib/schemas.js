@@ -65,6 +65,12 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
  * 
  * // Add custom "mail" attribute to the Group schema definition
  * SCIMMY.Schemas.Group.definition.extend([new SCIMMY.Types.Attribute("string", "mail", {required: true})]);
+ * 
+ * // Extend the User schema definition with the EnterpriseUser schema definition, and make it required
+ * SCIMMY.Schemas.User.definition.extend(SCIMMY.Schemas.EnterpriseUser.definition, true);
+ * 
+ * // Remove the EnterpriseUser extension schema definition from the User schema definition
+ * SCIMMY.Schemas.User.definition.truncate(SCIMMY.Schemas.EnterpriseUser.definition);
  * ```
  */
 export default class Schemas {
