@@ -20,8 +20,7 @@ export class Group extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return Group.#basepath;
-        else if (Group.#basepath === undefined)
-            Group.#basepath = (path.endsWith(Group.endpoint) ? path : `${path}${Group.endpoint}`);
+        else Group.#basepath = (path.endsWith(Group.endpoint) ? path : `${path}${Group.endpoint}`);
         
         return Group;
     }

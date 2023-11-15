@@ -19,8 +19,7 @@ export class ServiceProviderConfig extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return ServiceProviderConfig.#basepath;
-        else if (ServiceProviderConfig.#basepath === undefined)
-            ServiceProviderConfig.#basepath = (path.endsWith(ServiceProviderConfig.endpoint) ? path : `${path}${ServiceProviderConfig.endpoint}`);
+        else ServiceProviderConfig.#basepath = (path.endsWith(ServiceProviderConfig.endpoint) ? path : `${path}${ServiceProviderConfig.endpoint}`);
         
         return ServiceProviderConfig;
     }

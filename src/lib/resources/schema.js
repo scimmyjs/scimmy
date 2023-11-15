@@ -19,8 +19,7 @@ export class Schema extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return Schema.#basepath;
-        else if (Schema.#basepath === undefined)
-            Schema.#basepath = (path.endsWith(Schema.endpoint) ? path : `${path}${Schema.endpoint}`);
+        else Schema.#basepath = (path.endsWith(Schema.endpoint) ? path : `${path}${Schema.endpoint}`);
         
         return Schema;
     }

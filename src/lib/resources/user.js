@@ -20,8 +20,7 @@ export class User extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return User.#basepath;
-        else if (User.#basepath === undefined)
-            User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
+        else User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
         
         return User;
     }

@@ -200,16 +200,14 @@ export default {
                 "Static method 'basepath' was not a function");
         });
         
-        it("should only set basepath once, then do nothing", () => {
-            const expected = `/scim${TargetResource.endpoint}`;
-            
+        it("should be mutable", () => {
             TargetResource.basepath("/scim");
-            assert.ok(TargetResource.basepath() === (expected),
-                "Static method 'basepath' did not set or ignore resource basepath");
+            assert.ok(TargetResource.basepath() === (`/scim${TargetResource.endpoint}`),
+                `Static method 'basepath' did not set resource basepath to '/scim${TargetResource.endpoint}'`);
             
             TargetResource.basepath("/test");
-            assert.ok(TargetResource.basepath() === (expected),
-                "Static method 'basepath' did not do nothing when basepath was already set");
+            assert.ok(TargetResource.basepath() === (`/test${TargetResource.endpoint}`),
+                `Static method 'basepath' did not set resource basepath to '/test${TargetResource.endpoint}'`);
         });
     }),
     construct: (TargetResource, filterable = true) => (() => {

@@ -20,8 +20,7 @@ export class ResourceType extends Types.Resource {
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return ResourceType.#basepath;
-        else if (ResourceType.#basepath === undefined)
-            ResourceType.#basepath = (path.endsWith(ResourceType.endpoint) ? path : `${path}${ResourceType.endpoint}`);
+        else ResourceType.#basepath = (path.endsWith(ResourceType.endpoint) ? path : `${path}${ResourceType.endpoint}`);
         
         return ResourceType;
     }
