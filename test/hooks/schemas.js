@@ -107,10 +107,34 @@ export default {
             }
         });
         
+        // https://github.com/scimmyjs/scimmy/issues/12
+        it("should coerce complex multi-value attributes in schema extensions", async () => {
+            const {constructor = {}} = await fixtures;
+            const subAttribute = new Attribute("string", "name");
+            const attribute = new Attribute("complex", "agencies", {multiValued: true}, [subAttribute]);
+            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", [attribute]);
+            const source = {...constructor, [extension.id]: {[attribute.name]: [{[subAttribute.name]: "value"}]}};
+            
+            try {
+                // Add the extension to the target
+                TargetSchema.extend(extension);
+                
+                // Construct an instance to test against, and get actual value for comparison
+                const instance = new TargetSchema(source);
+                const actual = JSON.parse(JSON.stringify(instance[extension.id][attribute.name]));
+                
+                assert.deepStrictEqual(actual, source[extension.id][attribute.name],
+                    "Schema instance did not coerce complex multi-value attributes from schema extension");
+            } finally {
+                // Remove the extension so it doesn't interfere later
+                TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
+            }
+        });
+        
         it("should expect errors in extension schema coercion to be rethrown as SCIMErrors", async () => {
+            const {constructor = {}} = await fixtures;
             const attributes = [new Attribute("string", "testValue")];
             const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
-            const {constructor = {}} = await fixtures;
             const source = {...constructor, [`${extension.id}:testValue`]: "a string"};
             
             try {
@@ -145,8 +169,8 @@ export default {
             ];
             
             // Get the extension and the source data ready
-            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
             const {constructor = {}} = await fixtures;
+            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
             const source = {
                 ...constructor,
                 [`${extension.id}:testValue.stringValue`]: "a string",

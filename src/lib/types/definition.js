@@ -257,7 +257,7 @@ export class SchemaDefinition {
                 const namespacedValues = Object.keys(source).filter(k => k.startsWith(`${name.toLowerCase()}:`))
                     // Get the actual attribute name and value
                     .map(k => [k.replace(`${name.toLowerCase()}:`, ""), source[k]])
-                    .reduce((res = {}, [name, value]) => {
+                    .reduce((res, [name, value]) => {
                         // Get attribute path parts and actual value
                         const parts = name.toLowerCase().split(".");
                         const target = {[parts.pop()]: value};
@@ -272,7 +272,7 @@ export class SchemaDefinition {
                         // Assign and return
                         Object.assign(parent, target);
                         return res;
-                    }, undefined);
+                    }, {});
                 // Mix the namespaced attribute values in with the extension value
                 const mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
                     // Cast all key names to lower case to eliminate case sensitivity....
@@ -281,8 +281,17 @@ export class SchemaDefinition {
                     // Merge all properties from s into t, joining arrays and objects
                     for (let skey of Object.keys(s)) {
                         const tkey = skey.toLowerCase();
-                        if (Array.isArray(t[tkey]) && Array.isArray(s[skey])) t[tkey].push(...s[skey]);
+                        
+                        // If source is an array...
+                        if (Array.isArray(s[skey])) {
+                            // ...and target is an array, merge them...
+                            if (Array.isArray(t[tkey])) t[tkey].push(...s[skey]);
+                            // ...otherwise, make target an array
+                            else t[tkey] = [...s[skey]];
+                        }
+                        // If source is a primitive value, copy it
                         else if (s[skey] !== Object(s[skey])) t[tkey] = s[skey];
+                        // Finally, if source is neither an array nor primitive, merge it
                         else t[tkey] = merge(t[tkey] ?? {}, s[skey]);
                     }
                     
@@ -297,7 +306,7 @@ export class SchemaDefinition {
                         // Coerce the mixed value, using only namespaced attributes for this extension
                         target[name] = attribute.coerce(mixedSource, direction, basepath, [Object.keys(filter ?? {})
                             .filter(k => k.startsWith(`${name}:`))
-                            .reduce((res, key) => (((res[key.replace(`${name}:`, "")] = filter[key]) || true) && res), {})
+                            .reduce((res, key) => Object.assign(res, {[key.replace(`${name}:`, "")]: filter[key]}), {})
                         ]);
                     } catch (ex) {
                         // Rethrow exception with added context
