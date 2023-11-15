@@ -416,7 +416,7 @@ export class Attribute {
             const {required, multiValued, canonicalValues} = this.config;
             
             // If the attribute is required, make sure it has a value
-            if ((source === undefined || source === null) && required && this.config.direction === direction)
+            if ((source === undefined || source === null) && required && (direction !== "both" || this.config.direction === direction))
                 throw new TypeError(`Required attribute '${this.name}' is missing`);
             // If the attribute is multi-valued, make sure its value is a collection
             if (source !== undefined && !isComplexMultiValue && multiValued && !Array.isArray(source))
