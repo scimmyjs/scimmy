@@ -13,12 +13,12 @@ import Types from "../types.js";
  */
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
-const pathSeparator = /(?!((?<!\w)\d)|(\[.*?))\.(?!(\d(?!\w))|(.*?\]))/g;
+const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
-const multiValuedFilter = /^(.+?)(\[(?:.*?)\])?$/g;
+const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/g;
 
 /**
- * SCIM Patch Operation Message Type
+ * SCIM Patch Operation Message
  * @alias SCIMMY.Messages.PatchOp
  * @summary
  * *   Parses [PatchOp messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2), making sure all specified "Operations" are valid and conform with the SCIM protocol.
@@ -33,8 +33,8 @@ export class PatchOp {
     static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
     
     /**
-     * Whether or not the PatchOp message has been fully formed
-     * Fully formed inbound requests will be considered to have been dispatched
+     * Whether the PatchOp message has been fully formed.
+     * Fully formed inbound requests will be considered to have been dispatched.
      * @type {Boolean}
      * @private
      */
@@ -46,7 +46,7 @@ export class PatchOp {
      * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {
-        let {schemas = [], Operations: operations = []} = request ?? {};
+        const {schemas = [], Operations: operations = []} = request ?? {};
         
         // Determine if message is being prepared (outbound) or has been dispatched (inbound) 
         this.#dispatched = (request !== undefined);
@@ -63,8 +63,8 @@ export class PatchOp {
         
         // Make sure all specified operations are valid
         for (let operation of operations) {
-            let index = (operations.indexOf(operation) + 1),
-                {op, path, value} = operation;
+            const index = (operations.indexOf(operation) + 1);
+            const {op, path, value} = operation;
             
             // Make sure operation is of type 'complex' (i.e. it's an object)
             if (Object(operation) !== operation || Array.isArray(operation))
@@ -130,12 +130,12 @@ export class PatchOp {
         // Store details about the resource being patched
         this.#schema = resource.constructor.definition;
         this.#source = resource;
-        this.#target = new resource.constructor(resource, "out");
+        this.#target = new resource.constructor(resource);
         
         // Go through all specified operations
         for (let operation of this.Operations) {
-            let index = (this.Operations.indexOf(operation) + 1),
-                {op, path, value} = operation;
+            const index = (this.Operations.indexOf(operation) + 1);
+            const {op, path, value} = operation;
             
             // And action it
             switch (op.toLowerCase()) {
@@ -148,18 +148,8 @@ export class PatchOp {
                     break;
                     
                 case "replace":
-                    try {
-                        // Call remove, then call add!
-                        if (path !== undefined) this.#remove(index, path);
-                        // TODO: complex multi-value paths no longer have targets after they're removed...
-                        this.#add(index, path, value);
-                        break;
-                    } catch (ex) {
-                        // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
-                        let forReplaceOp = "for 'replace' op";
-                        ex.message = ex.message.replace("for 'add' op", forReplaceOp).replace("for 'remove' op", forReplaceOp);
-                        throw ex;
-                    }
+                    this.#replace(index, path, value);
+                    break;
                     
                 default:
                     // I don't know how we made it to here, as this should have been checked earlier, but just in case!
@@ -169,7 +159,7 @@ export class PatchOp {
         
         // If finalise is a method, feed it the target to retrieve final representation of resource
         if (typeof finalise === "function")
-            this.#target = new this.#target.constructor(await finalise(this.#target), "out");
+            this.#target = new this.#target.constructor(await finalise(this.#target));
         
         // Only return value if something has changed
         if (!isDeepStrictEqual({...this.#source, meta: undefined}, {...this.#target, meta: undefined}))
@@ -186,9 +176,9 @@ export class PatchOp {
      */
     #resolve(index, path, op) {
         // Work out parts of the supplied path
-        let paths = path.split(pathSeparator).filter(p => p),
-            targets = [this.#target],
-            property, attribute, multiValued;
+        const paths = path.split(pathSeparator).filter(p => p);
+        const targets = [this.#target];
+        let property, attribute, multiValued;
         
         try {
             // Remove any filters from the path and attempt to get targeted attribute definition
@@ -201,9 +191,9 @@ export class PatchOp {
         
         // Traverse the path
         while (paths.length > 0) {
-            let path = paths.shift(),
-                // Work out if path contains a filter expression
-                [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
+            // Work out if path contains a filter expression
+            const path = paths.shift();
+            const [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
             
             // We have arrived at our destination
             if (paths.length === 0) {
@@ -216,7 +206,7 @@ export class PatchOp {
                 if (target !== undefined) try {
                     if (filter !== undefined) {
                         // If a filter is specified, apply it to the target and add results back to targets
-                        targets.push(...(new Types.Filter(filter).match(target[key])));
+                        targets.push(...(new Types.Filter(filter.substring(1, filter.length - 1)).match(target[key])));
                     } else {
                         // Add the traversed value to targets, or back out if already arrived
                         targets.push(paths.length === 0 ? target : target[key] ?? (op === "add" ? ((target[key] = target[key] ?? {}) && target[key]) : undefined));
@@ -241,9 +231,7 @@ export class PatchOp {
          */
         return {
             complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
-            multiValued: multiValued,
-            property: property,
-            targets: targets
+            multiValued, property, targets
         };
     }
     
@@ -261,24 +249,10 @@ export class PatchOp {
                 throw new Types.Error(400, "invalidValue", `Attribute 'value' must be an object when 'path' is empty for 'add' op of operation ${index} in PatchOp request body`);
             
             // Go through and add the data specified by value
-            for (let [key, val] of Object.entries(value)) {
-                if (typeof value[key] === "object") this.#add(index, key, value[key]);
-                else try {
-                    this.#target[key] = val;
-                } catch (ex) {
-                    if (ex instanceof Types.Error) {
-                        // Add additional context to SCIM errors
-                        ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
-                        throw ex;
-                    } else {
-                        // Rethrow other exceptions as SCIM errors
-                        throw new Types.Error(400, "invalidValue", `Value '${val}' not valid for attribute '${key}' of 'add' operation ${index} in PatchOp request body`);
-                    }
-                }
-            }
+            for (let [key, val] of Object.entries(value)) this.#add(index, key, val);
         } else {
             // Validate and extract details about the operation
-            let {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
+            const {targets, property, multiValued, complex} = this.#resolve(index, path, "add");
             
             // Go and apply the operation to matching targets
             for (let target of targets) {
@@ -286,7 +260,7 @@ export class PatchOp {
                     // The target is expected to be a collection
                     if (multiValued) {
                         // Wrap objects as arrays
-                        let values = (Array.isArray(value) ? value : [value]);
+                        const values = (Array.isArray(value) ? value : [value]);
                         
                         // Add the values to the existing collection, or create a new one if it doesn't exist yet
                         if (Array.isArray(target[property])) target[property].push(...values);
@@ -301,8 +275,17 @@ export class PatchOp {
                     // The target is not a collection or a complex attribute - assign the value
                     else target[property] = value;
                 } catch (ex) {
-                    // Rethrow exceptions as SCIM errors
-                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                    if (ex instanceof Types.Error) {
+                        // Add additional context to SCIM errors
+                        ex.message += ` for 'add' op of operation ${index} in PatchOp request body`;
+                        throw ex;
+                    } else if (ex.message?.endsWith?.("object is not extensible")) {
+                        // Handle errors caused by non-existent attributes in complex values
+                        throw new Types.Error(400, "invalidPath", `Invalid attribute path '${property}' in supplied value for 'add' op of operation ${index} in PatchOp request body`);
+                    } else {
+                        // Rethrow exceptions as SCIM errors
+                        throw new Types.Error(400, "invalidValue", ex.message + ` for 'add' op of operation ${index} in PatchOp request body`);
+                    }
                 }
             }
         }
@@ -317,7 +300,7 @@ export class PatchOp {
      */
     #remove(index, path, value) {
         // Validate and extract details about the operation
-        let {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
+        const {targets, property, complex, multiValued} = this.#resolve(index, path, "remove");
         
         // If there's a property defined, we have an easy target for removal
         if (property) {
@@ -326,20 +309,22 @@ export class PatchOp {
                 try {
                     // No value filter defined, or target is not multi-valued - unset the property
                     if (value === undefined || !multiValued) target[property] = undefined;
-                    // Multi-valued target, attempt removal of matching values from attribute
+                    // Multivalued target, attempt removal of matching values from attribute
                     else if (multiValued) {
                         // Make sure filter values is an array for easy use of "includes" comparison when filtering
-                        let values = (Array.isArray(value) ? value : [value]),
-                            // If values are complex, build a filter to match with - otherwise just use values
-                            removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : new Types.Filter(
-                                values.map(f => Object.entries(f)
-                                    // Get rid of any empty values from the filter
-                                    .filter(([, value]) => value !== undefined)
-                                    // Turn it into an equity filter string
-                                    .map(([key, value]) => (`${key} eq ${value}`)).join(" and "))
-                                .join(" or "))
-                                // Get any matching values from the filter
-                                .match(target[property]));
+                        const values = (Array.isArray(value) ? value : [value]);
+                        // If values are complex, build a filter to match with - otherwise just use values
+                        const removals = (!complex || values.every(v => Object.isFrozen(v)) ? values : (
+                            new Types.Filter(values.map(f => Object.entries(f)
+                                // Get rid of any empty values from the filter
+                                .filter(([, value]) => value !== undefined)
+                                // Turn it into an equity filter string
+                                .map(([key, value]) => (`${key} eq ${value}`)).join(" and "))
+                                .join(" or ")
+                            )
+                            // Get any matching values from the filter
+                            .match(target[property])
+                        ));
                         
                         // Filter out any values that exist in removals list
                         target[property] = (target[property] ?? []).filter(v => !removals.includes(v));
@@ -347,18 +332,63 @@ export class PatchOp {
                         if (target[property].length === 0) target[property] = undefined;
                     }
                 } catch (ex) {
-                    // Rethrow exceptions as SCIM errors
-                    throw new Types.Error(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                    if (ex instanceof Types.Error) {
+                        // Add additional context to SCIM errors
+                        ex.message += ` for 'remove' op of operation ${index} in PatchOp request body`;
+                        throw ex;
+                    } else if (ex.message?.endsWith?.("object is not extensible")) {
+                        // Handle errors caused by non-existent attributes in complex values
+                        throw new Types.Error(400, "invalidPath", `Invalid attribute path '${property}' in supplied value for 'remove' op of operation ${index} in PatchOp request body`);
+                    } else {
+                        // Rethrow exceptions as SCIM errors
+                        throw new Types.Error(400, "invalidValue", ex.message + ` for 'remove' op of operation ${index} in PatchOp request body`);
+                    }
                 }
             }
         } else {
             // Get path to the parent attribute having values removed
-            let parentPath = path.split(pathSeparator).filter(v => v)
+            const parentPath = path.split(pathSeparator).filter(v => v)
                 .map((path, index, paths) => (index < paths.length-1 ? path : path.replace(multiValuedFilter, "$1")))
                 .join(".");
             
             // Remove targeted values from parent attributes
             this.#remove(index, parentPath, targets);
+        }
+    }
+    
+    /**
+     * Perform the "replace" operation on the resource
+     * @param {Number} index - the operation's location in the list of operations, for use in error messages
+     * @param {String} path - specifies path to the attribute being replaced
+     * @param {any|any[]} value - value being replaced from the resource or attribute specified by path
+     * @private
+     */
+    #replace(index, path, value) {
+        try {
+            // Call remove, then call add!
+            try {
+                if (path !== undefined) this.#remove(index, path);
+            } catch (ex) {
+                // Only rethrow if error is anything other than target doesn't exist
+                if (ex.scimType !== "noTarget") throw ex;
+            }
+            
+            try {
+                // Try set the value at the path
+                this.#add(index, path, value);
+            } catch (ex) {
+                // If it's a multi-value target that doesn't exist, add to the collection instead
+                if (ex.scimType === "noTarget") {
+                    this.#add(index, path.split(pathSeparator).filter(p => p)
+                        .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+                }
+                // Otherwise, rethrow the error
+                else throw ex;
+            }
+        } catch (ex) {
+            // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
+            ex.message = ex.message.replace(/for '(add|remove)' op/, "for 'replace' op");
+            throw ex;
         }
     }
 }

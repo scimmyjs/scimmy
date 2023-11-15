@@ -8,6 +8,20 @@
           {"op": "add", "value": {"displayName": "asdf", "name": {"honorificPrefix": "Mr"}}},
           {"op": "add", "path": "nickName", "value": "dsaf"}
         ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf"},
+        "target": {"id": "1234", "userName": "asdf", "password": "1234"},
+        "ops": [
+          {"op": "add", "path": "password", "value": "1234"}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr", "formatted": "Test"}},
+        "ops": [
+          {"op": "add", "path": "name", "value": {"formatted": "Test"}}
+        ]
       }
     ],
     "remove": [
@@ -37,6 +51,21 @@
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
         "ops": [{"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}, {"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
+        "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
+        "ops": [{"op": "replace", "path": "emails[type eq \"work\"].value", "value": "test@example.com"}]
       }
     ]
   }

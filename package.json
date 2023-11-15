@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
   "description": "SCIMMY - SCIM m(ade eas)y",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -37,16 +37,35 @@
     "type": "git",
     "url": "git+https://github.com/scimmyjs/scimmy.git"
   },
+  "imports": {
+    "#@/*": {
+      "default": "./src/*"
+    }
+  },
+  "c8": {
+    "all": true,
+    "check-coverage": true,
+    "include": [
+      "src/**/*.js"
+    ],
+    "reporter": [
+      "clover",
+      "lcov"
+    ]
+  },
   "bugs": {
     "url": "https://github.com/scimmyjs/scimmy/issues"
   },
   "devDependencies": {
-    "chalk": "^4.1.2",
-    "classy-template": "^1.0.2",
-    "jsdoc": "^3.6.7",
-    "minimist": "^1.2.5",
-    "mocha": "^9.1.3",
-    "rollup": "^2.60.0",
-    "typescript": "^4.4.4"
+    "@types/node": "^18.15.11",
+    "c8": "^7.13.0",
+    "chalk": "^5.2.0",
+    "classy-template": "^1.2.0",
+    "jsdoc": "^4.0.2",
+    "minimist": "^1.2.8",
+    "mocha": "^10.2.0",
+    "rollup": "^3.20.2",
+    "sinon": "^15.0.3",
+    "typescript": "^5.0.2"
   }
 }

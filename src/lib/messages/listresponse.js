@@ -1,5 +1,5 @@
 /**
- * SCIM List Response Message Type
+ * SCIM List Response Message
  * @alias SCIMMY.Messages.ListResponse
  * @summary
  * *   Formats supplied service provider resources as [ListResponse messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2), handling pagination and sort when required.

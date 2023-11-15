@@ -1,29 +1,35 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import assert from "assert";
+import sinon from "sinon";
+import * as Config from "#@/lib/config.js";
+import ResourcesHooks from "../../hooks/resources.js";
+import {ServiceProviderConfig} from "#@/lib/resources/spconfig.js";
 
-export let ServiceProviderConfigSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
+// Load data to use in tests from adjacent JSON file
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
+
+describe("SCIMMY.Resources.ServiceProviderConfig", () => {
+    const sandbox = sinon.createSandbox();
     
-    it("should include static class 'ServiceProviderConfig'", () => 
-        assert.ok(!!SCIMMY.Resources.ServiceProviderConfig, "Static class 'ServiceProviderConfig' not defined"));
+    after(() => sandbox.restore());
+    before(() => sandbox.stub(Config.default, "get").returns({
+        documentationUri: undefined, authenticationSchemes: [], filter: {supported: false, maxResults: 200},
+        sort: {supported: false}, bulk: {supported: false, maxOperations: 1000, maxPayloadSize: 1048576},
+        patch: {supported: false}, changePassword: {supported: false}, etag: {supported: false}
+    }));
     
-    describe("SCIMMY.Resources.ServiceProviderConfig", () => {
-        it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.ServiceProviderConfig));
-        it("should not implement static member 'schema'", ResourcesHooks.schema(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement static member 'extensions'", ResourcesHooks.extensions(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.ServiceProviderConfig, true));
-        it("should not implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement static method 'degress'", ResourcesHooks.degress(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement instance method 'write'", ResourcesHooks.write(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement instance method 'patch'", ResourcesHooks.patch(SCIMMY.Resources.ServiceProviderConfig, false));
-        it("should not implement instance method 'dispose'", ResourcesHooks.dispose(SCIMMY.Resources.ServiceProviderConfig, false));
-        
-        describe(".basepath()", ResourcesHooks.basepath(SCIMMY.Resources.ServiceProviderConfig));
-        describe("#constructor", ResourcesHooks.construct(SCIMMY.Resources.ServiceProviderConfig, false));
-        describe("#read()", ResourcesHooks.read(SCIMMY.Resources.ServiceProviderConfig, fixtures, false));
-    });
-}
+    describe(".endpoint", ResourcesHooks.endpoint(ServiceProviderConfig));
+    describe(".schema", ResourcesHooks.schema(ServiceProviderConfig, false));
+    describe(".basepath()", ResourcesHooks.basepath(ServiceProviderConfig));
+    describe(".extend()", ResourcesHooks.extend(ServiceProviderConfig, true));
+    describe(".ingress()", ResourcesHooks.ingress(ServiceProviderConfig, false));
+    describe(".egress()", ResourcesHooks.egress(ServiceProviderConfig, false));
+    describe(".degress()", ResourcesHooks.degress(ServiceProviderConfig, false));
+    describe("@constructor", ResourcesHooks.construct(ServiceProviderConfig, false));
+    describe("#read()", ResourcesHooks.read(ServiceProviderConfig, fixtures, false));
+    describe("#write()", ResourcesHooks.write(ServiceProviderConfig, false));
+    describe("#patch()", ResourcesHooks.patch(ServiceProviderConfig, false));
+    describe("#dispose()", ResourcesHooks.dispose(ServiceProviderConfig, false));
+});

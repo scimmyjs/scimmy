@@ -1,21 +1,34 @@
 import assert from "assert";
-import {AttributeSuite} from "./types/attribute.js";
-import {SchemaDefinitionSuite} from "./types/definition.js";
-import {FilterSuite} from "./types/filter.js";
-import {ErrorSuite} from "./types/error.js";
-import {SchemaSuite} from "./types/schema.js";
-import {ResourceSuite} from "./types/resource.js";
+import SCIMMY from "#@/scimmy.js";
 
-export let TypesSuite = (SCIMMY) => {
-    it("should include static class 'Types'", () => 
-        assert.ok(!!SCIMMY.Types, "Static class 'Types' not defined"));
-    
-    describe("SCIMMY.Types", () => {
-        AttributeSuite(SCIMMY);
-        SchemaDefinitionSuite(SCIMMY);
-        FilterSuite(SCIMMY);
-        ErrorSuite(SCIMMY);
-        SchemaSuite(SCIMMY);
-        ResourceSuite(SCIMMY);
+describe("SCIMMY.Types", () => {
+    it("should include static class 'Attribute'", () => {
+        assert.ok(!!SCIMMY.Types.Attribute,
+            "Static class 'Attribute' not defined");
     });
-}
+    
+    it("should include static class 'SchemaDefinition'", () => {
+        assert.ok(!!SCIMMY.Types.SchemaDefinition,
+            "Static class 'SchemaDefinition' not defined");
+    });
+    
+    it("should include static class 'Error'", () => {
+        assert.ok(!!SCIMMY.Types.Error,
+            "Static class 'Error' not defined");
+    });
+    
+    it("should include static class 'Filter'", () => {
+        assert.ok(!!SCIMMY.Types.Filter,
+            "Static class 'Filter' not defined");
+    });
+    
+    it("should include static class 'Resource'", () => {
+        assert.ok(!!SCIMMY.Types.Resource,
+            "Static class 'Resource' not defined");
+    });
+    
+    it("should include static class 'Schema'", () => {
+        assert.ok(!!SCIMMY.Types.Schema,
+            "Static class 'Schema' not defined");
+    });
+});

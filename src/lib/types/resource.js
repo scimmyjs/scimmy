@@ -1,9 +1,10 @@
 import {SCIMError} from "./error.js";
+import {SchemaDefinition} from "./definition.js";
 import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
- * SCIM Resource
+ * SCIM Resource Type
  * @alias SCIMMY.Types.Resource
  * @summary
  * *   Extendable class representing a SCIM Resource Type, which acts as an interface between a SCIM resource type schema, and an app's internal data model.
@@ -38,7 +39,7 @@ export class Resource {
     
     /**
      * Retrieves a resource's core schema
-     * @type {SCIMMY.Types.Schema}
+     * @type {typeof SCIMMY.Types.Schema}
      * @abstract
      */
     static get schema() {
@@ -46,32 +47,13 @@ export class Resource {
     }
     
     /**
-     * List of extensions to a resource's core schema
-     * @type {Object[]}
-     * @private
-     * @abstract
-     */
-    static #extensions;
-    /**
-     * Get the list of registered schema extensions for a resource
-     * @type {Object[]}
-     * @abstract
-     */
-    static get extensions() {
-        throw new TypeError(`Method 'get' for property 'extensions' not implemented by resource '${this.name}'`);
-    }
-    
-    /**
      * Register an extension to the resource's core schema
-     * @param {SCIMMY.Types.Schema} extension - the schema extension to register
-     * @param {Boolean} required - whether or not the extension is required
+     * @param {typeof SCIMMY.Types.Schema} extension - the schema extension to register
+     * @param {Boolean} [required] - whether the extension is required
      * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
      */
     static extend(extension, required) {
-        if (!this.extensions.find(e => e.schema === extension)) {
-            if (extension.prototype instanceof Schema) this.extensions.push({schema: extension, required: required});
-            this.schema.extend(extension, required);
-        }
+        this.schema.extend(extension, required);
         
         return this;
     }
@@ -139,6 +121,13 @@ export class Resource {
      * @returns {SCIMMY.Types.Resource~ResourceType} object describing the resource type implementation 
      */
     static describe() {
+        // Find all schema definitions that extend this resource's definition...
+        const findSchemaDefinitions = (d) => d.attributes.filter(a => a instanceof SchemaDefinition)
+            .map(e => ([e, ...findSchemaDefinitions(e)])).flat(Infinity);
+        // ...so they can be included in the returned description
+        const schemaExtensions = [...new Set(findSchemaDefinitions(this.schema.definition))]
+            .map(({id: schema, required}) => ({schema, required}));
+        
         /**
          * @typedef {Object} SCIMMY.Types.Resource~ResourceType
          * @property {String} id - URN namespace of the resource's SCIM schema definition
@@ -147,14 +136,12 @@ export class Resource {
          * @property {String} description - human-readable description of the resource
          * @property {Object} [schemaExtensions] - schema extensions that augment the resource
          * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
-         * @property {Boolean} schemaExtensions[].required - whether or not resource instances must include the schema extension
+         * @property {Boolean} schemaExtensions[].required - whether resource instances must include the schema extension
          */
         return {
             id: this.schema.definition.name, name: this.schema.definition.name, endpoint: this.endpoint,
             description: this.schema.definition.description, schema: this.schema.definition.id,
-            ...(this.extensions.length === 0 ? {} : {
-                schemaExtensions: this.extensions.map(E => ({schema: E.schema.definition.id, required: E.required}))
-            })
+            ...(schemaExtensions.length ? {schemaExtensions} : {})
         };
     }
     
@@ -180,7 +167,7 @@ export class Resource {
      */
     constructor(id, config) {
         // Unwrap params from arguments
-        let params = (typeof id === "string" || config !== undefined ? config : id) ?? {};
+        const params = (typeof id === "string" || config !== undefined ? config : id) ?? {};
         
         // Make sure params is a valid object
         if (Object(params) !== params || Array.isArray(params))
@@ -197,7 +184,7 @@ export class Resource {
         }
         // Parse the filter if it exists, and wasn't set by ID above
         else if ("filter" in params) {
-            // Bail out if attributes isn't a non-empty string
+            // Bail out if filter isn't a non-empty string
             if (typeof params.filter !== "string" || !params.filter.trim().length)
                 throw new SCIMError(400, "invalidFilter", "Expected filter to be a non-empty string");
             
@@ -226,15 +213,13 @@ export class Resource {
         
         // Handle sort and pagination parameters
         if (["sortBy", "sortOrder", "startIndex", "count"].some(k => k in params)) {
-            let {sortBy, sortOrder, startIndex: sStartIndex, count: sCount} = params,
-                startIndex = Number(sStartIndex ?? undefined),
-                count = Number(sCount ?? undefined);
+            const {sortBy, sortOrder, startIndex, count} = params;
             
             this.constraints = {
-                ...(sortBy !== undefined ? {sortBy: sortBy} : {}),
-                ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder: sortOrder} : {}),
-                ...(!Number.isNaN(startIndex) && Number.isInteger(startIndex) ? {startIndex: startIndex} : {}),
-                ...(!Number.isNaN(count) && Number.isInteger(count) ? {count: count} : {})
+                ...(typeof sortBy === "string" ? {sortBy} : {}),
+                ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder} : {}),
+                ...(!Number.isNaN(Number(startIndex)) && Number.isInteger(startIndex) ? {startIndex} : {}),
+                ...(!Number.isNaN(Number(count)) && Number.isInteger(count) ? {count} : {})
             };
         }
     }

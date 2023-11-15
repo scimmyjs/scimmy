@@ -3,7 +3,29 @@ import {Attribute} from "./attribute.js";
 import {SCIMError} from "./error.js";
 
 /**
- * SCIM Schema
+ * Define the "toJSON" property for the given target
+ * @param {Object} target - the object to define the "toJSON" property on
+ * @param {SchemaDefinition} definition - the schema definition associated with the target
+ * @param {Object} resource - the underlying resource associated with the target
+ * @returns {Object} the original target object, with the "toJSON" property defined
+ * @private
+ */
+const defineToJSONProperty = (target, definition, resource) => Object.defineProperty(target, "toJSON", {
+    value: () => Object.entries(resource)
+        .filter(([name]) => ![false, "never"].includes(definition.attribute(name)?.config?.returned))
+        .reduce((res, [name, value]) => Object.assign(res, {[name]: value}), {})
+});
+
+/**
+ * Deeply check whether a targeted object has any properties with actual values
+ * @param {Object} target - object to deeply check for values
+ * @returns {Boolean} whether the target object, or any of its object properties, have a value other than undefined
+ * @private
+ */
+const hasActualValues = (target) => (Object.values(target).some((v) => typeof v === "object" ? hasActualValues(v) : v !== undefined));
+
+/**
+ * SCIM Schema Type
  * @alias SCIMMY.Types.Schema
  * @summary
  * *   Extendable class which provides the ability to construct resource instances with automated validation of conformity to a resource's schema definition.
@@ -30,18 +52,22 @@ export class Schema {
     /**
      * Extend a schema by mixing in other schemas or attributes
      * @param {SCIMMY.Types.Schema|Array<SCIMMY.Types.Attribute>} extension - the schema extensions or collection of attributes to register
-     * @param {Boolean} [required=false] - if the extension is a schema, whether or not the extension is required
+     * @param {Boolean} [required=false] - if the extension is a schema, whether the extension is required
      */
     static extend(extension, required = false) {
+        if (!(extension instanceof SchemaDefinition) && !(extension?.prototype instanceof Schema)
+            && !(Array.isArray(extension) ? extension : [extension]).every(e => e instanceof Attribute))
+            throw new TypeError("Expected 'extension' to be a Schema class, SchemaDefinition instance, or collection of Attribute instances");
+        
         this.definition.extend((extension.prototype instanceof Schema ? extension.definition : extension), required);
     }
     
     /**
-     * Remove an attribute or subAttribute from the schema definition
-     * @param {String|SCIMMY.Types.Attribute|Array<String|SCIMMY.Types.Attribute>} attributes - the child attributes to remove from the schema definition
+     * Remove an attribute, schema extension, or subAttribute from the schema's definition
+     * @param {SCIMMY.Types.Schema|String|SCIMMY.Types.Attribute|Array<String|SCIMMY.Types.Attribute>} attributes - the child attributes to remove from the schema definition
      */
     static truncate(attributes) {
-        this.definition.truncate(attributes);
+        this.definition.truncate(attributes?.prototype instanceof Schema ? attributes.definition : attributes);
     }
     
     /**
@@ -50,13 +76,13 @@ export class Schema {
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      */
     constructor(data = {}, direction) {
-        let {schemas = []} = data,
-            // Create internally scoped storage object
-            resource = {},
-            // Source attributes and extensions from schema definition
-            {definition} = this.constructor,
-            attributes = definition.attributes.filter(a => a instanceof Attribute),
-            extensions = definition.attributes.filter(a => a instanceof SchemaDefinition);
+        const {schemas = []} = data;
+        // Create internally scoped storage object
+        const resource = {};
+        // Source attributes and extensions from schema definition
+        const {definition} = this.constructor;
+        const attributes = definition.attributes.filter(a => a instanceof Attribute);
+        const extensions = definition.attributes.filter(a => a instanceof SchemaDefinition);
         
         // If schemas attribute is specified, make sure all required schema IDs are present
         if (Array.isArray(schemas) && schemas.length) {
@@ -71,6 +97,11 @@ export class Schema {
                 }
             }
         }
+        
+        // Save the directionality of this instance to a symbol for use elsewhere
+        Object.defineProperty(this, Symbol.for("direction"), {value: direction});
+        // Set "toJSON" method on self so attributes can be filtered
+        defineToJSONProperty(this, definition, resource);
         
         // Predefine getters and setters for all possible attributes
         for (let attribute of attributes) Object.defineProperties(this, {
@@ -87,7 +118,7 @@ export class Schema {
                 // Get and set the value from the internally scoped object
                 get: () => (resource[attribute.name]),
                 set: (value) => {
-                    let {name, config: {mutable}} = attribute;
+                    const {name, config: {mutable}} = attribute;
                     
                     // Check for mutability of attribute before setting the value
                     if (mutable !== true && this[name] !== undefined && this[name] !== value)
@@ -116,29 +147,24 @@ export class Schema {
                 enumerable: true,
                 // Get and set the value from the internally scoped object
                 get: () => {
-                    // Do some cleanup if the extension actually has a value
-                    if (resource[extension.id] !== undefined) {
-                        let target = resource[extension.id];
-                        
-                        for (let key of Object.keys(target)) {
-                            // Go through and delete any undefined properties or complex attributes without actual values
-                            if (target[key] === undefined || (Object(target[key]) === target[key]
-                                && !Object.keys(target[key]).some(k => target[key][k] !== undefined))) {
-                                delete target[key];
-                            }
+                    // Go through and delete any undefined properties or complex attributes without actual values
+                    for (let [key, value] of Object.entries(resource[extension.id] ?? {})) {
+                        if (value === undefined || (Object(value) === value && !hasActualValues(value))) {
+                            delete resource[extension.id][key];
                         }
-                        
-                        // If no attributes with values remaining, delete the extension namespace from the instance
-                        if (!Object.keys(resource[extension.id]).some(k => resource[extension.id][k] !== undefined))
-                            delete resource[extension.id];
                     }
-        
-                    return resource[extension.id];
+                    
+                    // If no attributes with values remaining, return undefined
+                    return !hasActualValues(resource[extension.id] ?? {}) ? undefined : resource[extension.id];
                 },
                 set: (value) => {
                     try {
                         // Validate the supplied value through schema extension coercion
-                        return (resource[extension.id] = extension.coerce(value, direction)) && resource[extension.id];
+                        resource[extension.id] = extension.coerce(value, direction);
+                        
+                        // Return the value with JSON stringifier attached, marked as 
+                        defineToJSONProperty(resource[extension.id], extension, resource[extension.id]);
+                        return Object.assign(Object.preventExtensions(resource[extension.id]), value);
                     } catch (ex) {
                         // Rethrow attribute coercion exceptions as SCIM errors
                         throw new SCIMError(400, "invalidValue", ex.message);
@@ -146,19 +172,52 @@ export class Schema {
                 }
             },
             // Predefine namespaced getters and setters for schema extension attributes
-            ...extension.attributes.reduce((definitions, attribute) => Object.assign(definitions, {
-                // Lower-case getter/setter aliases to work around case sensitivity, as above
-                [`${extension.id.toLowerCase()}:${attribute.name.toLowerCase()}`]: {
-                    get: () => (this[`${extension.id}:${attribute.name}`]),
-                    set: (value) => (this[`${extension.id}:${attribute.name}`] = value)
-                },
-                // Proper-case namespaced extension attributes
-                [`${extension.id}:${attribute.name}`]: {
-                    get: () => (this[extension.id]?.[attribute.name]),
-                    // Trigger setter for the actual schema extension property
-                    set: (value) => (this[extension.id] = Object.assign(this[extension.id] ?? {}, {[attribute.name]: value}))
-                }
-            }), {})
+            ...extension.attributes.reduce((() => {
+                const getExtensionReducer = (path = "") => (definitions, attribute) => Object.assign(definitions, {
+                    // Lower-case getter/setter aliases to work around case sensitivity, as above
+                    [`${extension.id}:${path}${attribute.name}`.toLowerCase()]: {
+                        get: () => (this[`${extension.id}:${path}${attribute.name}`]),
+                        set: (value) => (this[`${extension.id}:${path}${attribute.name}`] = value)
+                    },
+                    // Proper-case namespaced extension attributes
+                    [`${extension.id}:${path}${attribute.name}`]: {
+                        get: () => {
+                            // Get the underlying nested path of the attribute
+                            const paths = path.replace(/([.])$/, "").split(".").filter(p => !!p);
+                            let target = this[extension.id];
+                            
+                            // Go through the attribute path on the extension to find the actual target
+                            while (paths.length) target = target?.[paths.shift()];
+                            
+                            return target?.[attribute.name];
+                        },
+                        // Trigger setter for the actual schema extension property
+                        set: (value) => {
+                            // Get the underlying nested path of the attribute, and a copy of the data to set
+                            const paths = path.replace(/([.])$/, "").split(".").filter(p => !!p);
+                            let target = {...this[extension.id]}, data = target;
+                            
+                            // Go through the attribute path on the extension...
+                            while (paths.length) {
+                                const path = paths.shift();
+                                
+                                // ...and set any missing container paths along the way
+                                target = target[path] = {...(target?.[path] ?? {})};
+                            }
+                            
+                            // Set the actual value
+                            target[attribute.name] = value;
+                            
+                            // Then assign it back to the extension for coercion
+                            return (this[extension.id] = Object.assign(this[extension.id] ?? {}, data));
+                        }
+                    },
+                    // Go through the process again for subAttributes
+                    ...(attribute.subAttributes ? attribute.subAttributes.reduce(getExtensionReducer(`${path}${attribute.name}.`), {}) : {})
+                });
+                
+                return getExtensionReducer();
+            })(), {})
         });
         
         // Prevent attributes from being added or removed

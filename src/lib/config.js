@@ -5,7 +5,7 @@ const catchAll = () => {throw new TypeError("SCIM Configuration can only be chan
 const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: catchAll};
 
 /**
- * SCIM Service Provider Configuration Container Class
+ * SCIMMY Service Provider Configuration Class
  * @namespace SCIMMY.Config
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Config`, that acts as a central store for a SCIM Service Provider's configuration.  
@@ -122,8 +122,9 @@ export default class Config {
      */
     static get() {
         // Wrap all the things in a proxy!
-        return new Proxy(Object.entries(Config.#config)
-            .reduce((res, [key, value]) => (((res[key] = (key === "documentationUri" ? value : new Proxy(value, handleTraps))) || true) && res), {}), handleTraps);
+        return new Proxy(Object.entries(Config.#config).reduce((res, [key, value]) => Object.assign(res, {
+            [key]: (key === "documentationUri" ? value : new Proxy(value, handleTraps))
+        }), {}), handleTraps);
     }
     
     /**
@@ -132,7 +133,7 @@ export default class Config {
      * @param {Object} args - the new configuration to apply to the service provider config instance
      * @param {String} args - the name of the configuration property to set
      * @param {Object|Boolean} args - the new value of the configuration property to set
-     * @returns {Object|SCIMMY.Config} the updated configuration instance, or the config container class for chaining
+     * @returns {Object|typeof SCIMMY.Config} the updated configuration instance, or the config container class for chaining
      */
     static set(...args) {
         // Dereference name and config from supplied parameters
@@ -163,7 +164,7 @@ export default class Config {
                     
                     // Assign documentationUri string
                     if (!!value) Config.#config.documentationUri = Schemas.ServiceProviderConfig.definition.attribute(key).coerce(value);
-                    else delete Config.#config.documentationUri;
+                    else Config.#config.documentationUri = undefined;
                 } else if (Array.isArray(target)) {
                     // Target is multi-valued (authenticationSchemes), add coerced values to config, or reset if empty
                     if (!value || (Array.isArray(value) && value.length === 0)) target.splice(0);

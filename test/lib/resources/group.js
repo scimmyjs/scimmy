@@ -1,29 +1,24 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import assert from "assert";
+import ResourcesHooks from "../../hooks/resources.js";
+import {Group} from "#@/lib/resources/group.js";
 
-export let GroupSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
-    
-    it("should include static class 'Group'", () => 
-        assert.ok(!!SCIMMY.Resources.Group, "Static class 'Group' not defined"));
-    
-    describe("SCIMMY.Resources.Group", () => {
-        it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.Group));
-        it("should implement static member 'schema' that is a Schema", ResourcesHooks.schema(SCIMMY.Resources.Group));
-        it("should implement static member 'extensions' that is an array", ResourcesHooks.extensions(SCIMMY.Resources.Group));
-        it("should not override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.Group, false));
-        it("should implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.Group, fixtures));
-        it("should implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.Group, fixtures));
-        it("should implement static method 'degress'", ResourcesHooks.degress(SCIMMY.Resources.Group, fixtures));
-        
-        describe(".basepath()", ResourcesHooks.basepath(SCIMMY.Resources.Group));
-        describe("#constructor", ResourcesHooks.construct(SCIMMY.Resources.Group));
-        describe("#read()", ResourcesHooks.read(SCIMMY.Resources.Group, fixtures));
-        describe("#write()", ResourcesHooks.write(SCIMMY.Resources.Group, fixtures));
-        describe("#patch()", ResourcesHooks.patch(SCIMMY.Resources.Group, fixtures));
-        describe("#dispose()", ResourcesHooks.dispose(SCIMMY.Resources.Group, fixtures));
-    });
-}
+// Load data to use in tests from adjacent JSON file
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
+
+describe("SCIMMY.Resources.Group", () => {
+    describe(".endpoint", ResourcesHooks.endpoint(Group));
+    describe(".schema", ResourcesHooks.schema(Group));
+    describe(".basepath()", ResourcesHooks.basepath(Group));
+    describe(".extend()", ResourcesHooks.extend(Group, false));
+    describe(".ingress()", ResourcesHooks.ingress(Group, fixtures));
+    describe(".egress()", ResourcesHooks.egress(Group, fixtures));
+    describe(".degress()", ResourcesHooks.degress(Group, fixtures));
+    describe("@constructor", ResourcesHooks.construct(Group));
+    describe("#read()", ResourcesHooks.read(Group, fixtures));
+    describe("#write()", ResourcesHooks.write(Group, fixtures));
+    describe("#patch()", ResourcesHooks.patch(Group, fixtures));
+    describe("#dispose()", ResourcesHooks.dispose(Group, fixtures));
+});

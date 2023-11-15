@@ -1,50 +1,112 @@
 /**
- * Collection of valid attribute type characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidAttributeTypes
- * @memberOf SCIMMY.Types.Attribute
- * @default
+ * Base Attribute configuration, and proxied configuration validation trap handler
+ * @type {{target: SCIMMY.Types.Attribute~AttributeConfig, handler: ProxiedConfigHandler}}
+ * @private
  */
-const types = ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"];
+const BaseConfiguration = {
+    /**
+     * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
+     * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
+     * @property {String} [description=""] - a human-readable description of the attribute
+     * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
+     * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
+     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case-sensitive
+     * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
+     * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
+     * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
+     * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
+     * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
+     */
+    target: {
+        required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
+        description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both"
+    },
+    
+    /**
+     * Proxied configuration validation trap handler
+     * @alias ProxiedConfigHandler
+     * @param {String} errorSuffix - the suffix to use in thrown type errors
+     * @returns {{set: (function(Object, String, *): boolean)}} the handler trap definition to use in the config proxy
+     * @private
+     */
+    handler: (errorSuffix) => ({
+        set: (target, key, value) => {
+            // Make sure required, multiValued, and caseExact are booleans
+            if (["required", "multiValued", "caseExact"].includes(key) && (value !== undefined && typeof value !== "boolean"))
+                throw new TypeError(`Attribute '${key}' value must be either 'true' or 'false' in ${errorSuffix}`);
+            // Make sure canonicalValues and referenceTypes are valid if they are specified
+            if (["canonicalValues", "referenceTypes"].includes(key) && (value !== undefined && value !== false && !Array.isArray(value)))
+                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`);
+            // Make sure mutability, returned, and uniqueness config values are valid
+            if (["mutable", "returned", "uniqueness"].includes(key)) {
+                let label = (key === "mutable" ? "mutability" : key);
+            
+                if ((typeof value === "string" && !CharacteristicValidity[label].includes(value)))
+                    throw new TypeError(`Attribute '${label}' value '${value}' not recognised in ${errorSuffix}`);
+                else if (value !== undefined && !["string", "boolean"].includes(typeof value))
+                    throw new TypeError(`Attribute '${label}' value must be either string or boolean in ${errorSuffix}`);
+            }
+            
+            // Set the value!
+            return (target[key] = value) || true;
+        }
+    })
+};
 
 /**
- * Collection of valid attribute mutability characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidMutabilityValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
+ * Valid values for various Attribute characteristics
+ * @type {{types: ValidAttributeTypes, mutability: ValidMutabilityValues, returned: ValidReturnedValues, uniqueness: ValidUniquenessValues}}
+ * @private
  */
-const mutability = ["readOnly", "readWrite", "immutable", "writeOnly"];
-
-/**
- * Collection of valid attribute returned characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidReturnedValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
- */
-const returned = ["always", "never", "default", "request"];
-
-/**
- * Collection of valid attribute uniqueness characteristic's values
- * @enum
- * @inner
- * @constant
- * @type {String[]}
- * @alias ValidUniquenessValues
- * @memberOf SCIMMY.Types.Attribute
- * @default
- */
-const uniqueness = ["none", "server", "global"];
+const CharacteristicValidity = {
+    /**
+     * Collection of valid attribute type characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidAttributeTypes
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    types: ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"],
+    
+    /**
+     * Collection of valid attribute mutability characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidMutabilityValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    mutability: ["readOnly", "readWrite", "immutable", "writeOnly"],
+    
+    /**
+     * Collection of valid attribute returned characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidReturnedValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    returned: ["always", "never", "default", "request"],
+    
+    /**
+     * Collection of valid attribute uniqueness characteristic's values
+     * @enum
+     * @inner
+     * @constant
+     * @type {String[]}
+     * @alias ValidUniquenessValues
+     * @memberOf SCIMMY.Types.Attribute
+     * @default
+     */
+    uniqueness: ["none", "server", "global"]
+};
 
 /**
  * Attribute value validation method container
@@ -69,7 +131,7 @@ const validate = {
      */
     string: (attrib, value) => {
         if (typeof value !== "string" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
@@ -83,8 +145,8 @@ const validate = {
      * @param {*} value - the value being validated
      */
     date: (attrib, value) => {
-        let date = new Date(value),
-            type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+        const date = new Date(value);
+        const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
         
         // Reject values that definitely aren't dates
         if (["number", "complex", "boolean"].includes(type) || (type === "string" && date.toString() === "Invalid Date"))
@@ -103,10 +165,10 @@ const validate = {
      * @param {*} value - the value being validated
      */
     number: (attrib, value) => {
-        let {type, name} = attrib,
-            isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/),
-            isInt = isNum && !String(value).includes("."),
-            actual = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+        const {type, name} = attrib;
+        const isNum = !!String(value).match(/^-?\d+?(\.\d+)?$/);
+        const isInt = isNum && !String(value).includes(".");
+        const actual = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
         
         if (typeof value === "object" && value !== null) {
             // Catch case where value is an object or array
@@ -134,7 +196,7 @@ const validate = {
         let message;
         
         if (typeof value === "object" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'binary'`;
@@ -161,7 +223,7 @@ const validate = {
      */
     boolean: (attrib, value) => {
         if (typeof value !== "boolean" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch array and object values as they will not cast to string as expected
             throw new TypeError(`Attribute '${attrib.name}' expected ` + (Array.isArray(value)
@@ -175,15 +237,15 @@ const validate = {
      * @param {*} value - the value being validated
      */
     reference: (attrib, value) => {
-        let listReferences = (attrib.config.referenceTypes || []).map(t => `'${t}'`).join(", "),
-            coreReferences = (attrib.config.referenceTypes || []).filter(t => ["uri", "external"].includes(t)),
-            typeReferences = (attrib.config.referenceTypes || []).filter(t => !["uri", "external"].includes(t)),
-            message;
+        const listReferences = (attrib.config.referenceTypes || []).map(t => `'${t}'`).join(", ");
+        const coreReferences = (attrib.config.referenceTypes || []).filter(t => ["uri", "external"].includes(t));
+        const typeReferences = (attrib.config.referenceTypes || []).filter(t => !["uri", "external"].includes(t));
+        let message;
         
         // If there's no value and the attribute isn't required, skip validation
         if (value === undefined && !attrib?.config?.required) return;
         else if (typeof value !== "string" && value !== null) {
-            let type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
+            const type = (value instanceof Date ? "dateTime" : typeof value === "object" ? "complex" : typeof value);
             
             // Catch case where value is an object or array
             if (Array.isArray(value)) message = `Attribute '${attrib.name}' expected single value of type 'reference'`;
@@ -225,26 +287,12 @@ const validate = {
 }
 
 /**
- * SCIM Attribute
+ * SCIM Attribute Type
  * @alias SCIMMY.Types.Attribute
  * @summary
  * *   Defines a SCIM schema attribute, and is used to ensure a given resource's value conforms to the attribute definition.
  */
 export class Attribute {
-    /**
-     * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
-     * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
-     * @property {String} [description=""] - a human-readable description of the attribute
-     * @property {Boolean} [required=false] - whether the attribute is required for the type instance to be valid
-     * @property {Boolean|String[]} [canonicalValues=false] - values the attribute's contents must be set to
-     * @property {Boolean} [caseExact=false] - whether the attribute's contents is case sensitive
-     * @property {Boolean|String} [mutable=true] - whether the attribute's contents is modifiable
-     * @property {Boolean|String} [returned=true] - whether the attribute is returned in a response
-     * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
-     * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
-     * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
-     */
-    
     /**
      * Constructs an instance of a full SCIM attribute definition
      * @param {String} type - the data type of the attribute
@@ -257,60 +305,35 @@ export class Attribute {
      * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
      */
     constructor(type, name, config = {}, subAttributes = []) {
-        let errorSuffix = `attribute definition '${name}'`,
-            // Collect type and name values for validation
-            safelyTyped = [["type", type], ["name", name]],
-            // Collect canonicalValues and referenceTypes values for validation
-            safelyCollected = [["canonicalValues", config.canonicalValues], ["referenceTypes", config.referenceTypes]],
-            // Collect mutability, returned, and uniqueness values for validation
-            safelyConfigured = [
-                ["mutability", config.mutable, mutability],
-                ["returned", config.returned, returned],
-                ["uniqueness", config.uniqueness, uniqueness]
-            ],
-            // Make sure attribute name is valid
-            [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
+        const errorSuffix = `attribute definition '${name}'`;
+        // Check for invalid characters in attribute name
+        const [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
         
-        // Make sure name and type are supplied, and type is valid
-        for (let [param, value] of safelyTyped) if (typeof value !== "string")
+        // Make sure name and type are supplied as strings
+        for (let [param, value] of [["type", type], ["name", name]]) if (typeof value !== "string")
             throw new TypeError(`Required parameter '${param}' missing from Attribute instantiation`);
-        if (!types.includes(type))
+        // Make sure type is valid
+        if (!CharacteristicValidity.types.includes(type))
             throw new TypeError(`Type '${type}' not recognised in ${errorSuffix}`);
+        // Make sure name is valid
         if (!!invalidNameChar)
             throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
-        
-        // Make sure mutability, returned, and uniqueness config values are valid
-        for (let [key, value, values] of safelyConfigured) {
-            if ((typeof value === "string" && !values.includes(value))) {
-                throw new TypeError(`Attribute '${key}' value '${value}' not recognised in ${errorSuffix}`);
-            } else if (value !== undefined && !["string", "boolean"].includes(typeof value)) {
-                throw new TypeError(`Attribute '${key}' value must be either string or boolean in ${errorSuffix}`);
-            }
-        }
-        
-        // Make sure canonicalValues and referenceTypes are valid if they are specified
-        for (let [key, value] of safelyCollected) {
-            if (value !== undefined && value !== false && !Array.isArray(value)) {
-                throw new TypeError(`Attribute '${key}' value must be either a collection or 'false' in ${errorSuffix}`)
-            }
-        }
-        
         // Make sure attribute type is 'complex' if subAttributes are defined
-        if (subAttributes.length && type !== "complex") {
+        if (subAttributes.length && type !== "complex")
             throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified in ${errorSuffix}`);
-        }
+        // Make sure subAttributes are all instances of Attribute
+        if (type === "complex" && !subAttributes.every(a => a instanceof Attribute))
+            throw new TypeError(`Expected 'subAttributes' to be an array of Attribute instances in ${errorSuffix}`);
         
         // Attribute config is valid, proceed
         this.type = type;
         this.name = name;
-        // Prevent addition and removal of properties from config
-        // TODO: intercept values for validation
-        this.config = Object.seal({
-            required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
-            description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both",
-            ...config
-        });
         
+        // Prevent addition and removal of properties from config
+        this.config = Object.seal(Object
+            .assign(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix)), config));
+        
+        // Store subAttributes
         if (type === "complex") this.subAttributes = [...subAttributes];
         
         // Prevent this attribute definition from changing!
@@ -328,7 +351,7 @@ export class Attribute {
             for (let subAttrib of (Array.isArray(subAttributes) ? subAttributes : [subAttributes])) {
                 if (this.subAttributes.includes(subAttrib)) {
                     // Remove found subAttribute from definition
-                    let index = this.subAttributes.indexOf(subAttrib);
+                    const index = this.subAttributes.indexOf(subAttrib);
                     if (index >= 0) this.subAttributes.splice(index, 1);
                 } else if (typeof subAttrib === "string") {
                     // Attempt to find the subAttribute by name and try truncate again
@@ -347,16 +370,18 @@ export class Attribute {
     toJSON() {
         /**
          * @typedef {Object} SCIMMY.Types.Attribute~AttributeDefinition
+         * @alias AttributeDefinition
+         * @memberOf SCIMMY.Types.Attribute
          * @property {String} name - the attribute's name
          * @property {String} type - the attribute's data type
          * @property {String[]} [referenceTypes] - specifies a SCIM resourceType that a reference attribute may refer to
          * @property {Boolean} multiValued - boolean value indicating an attribute's plurality
          * @property {String} description - a human-readable description of the attribute
-         * @property {Boolean} required - boolean value indicating whether or not the attribute is required
+         * @property {Boolean} required - boolean value indicating whether the attribute is required
          * @property {SCIMMY.Types.Attribute~AttributeDefinition[]} [subAttributes] - defines the sub-attributes of a complex attribute
-         * @property {Boolean} [caseExact] - boolean value indicating whether or not a string attribute is case sensitive
+         * @property {Boolean} [caseExact] - boolean value indicating whether a string attribute is case-sensitive
          * @property {String[]} [canonicalValues] - collection of canonical values
-         * @property {String} mutability - indicates whether or not an attribute is modifiable
+         * @property {String} mutability - indicates whether an attribute is modifiable
          * @property {String} returned - indicates when an attribute is returned in a response
          * @property {String} [uniqueness] - indicates how unique a value must be
          */
@@ -387,11 +412,11 @@ export class Attribute {
      */
     coerce(source, direction = "both", isComplexMultiValue = false) {
         // Make sure the direction matches the attribute direction
-        if (["both", direction].includes(this.config.direction)) {
-            let {required, multiValued, canonicalValues} = this.config;
+        if (["both", this.config.direction].includes(direction) || this.config.direction === "both") {
+            const {required, multiValued, canonicalValues} = this.config;
             
             // If the attribute is required, make sure it has a value
-            if ((source === undefined || source === null) && required)
+            if ((source === undefined || source === null) && required && (direction !== "both" || this.config.direction === direction))
                 throw new TypeError(`Required attribute '${this.name}' is missing`);
             // If the attribute is multi-valued, make sure its value is a collection
             if (source !== undefined && !isComplexMultiValue && multiValued && !Array.isArray(source))
@@ -493,7 +518,7 @@ export class Attribute {
                         
                         // Go through each sub-attribute for coercion
                         for (let subAttribute of this.subAttributes) {
-                            let {name} = subAttribute;
+                            const {name} = subAttribute;
                             
                             // Predefine getters and setters for all possible sub-attributes
                             Object.defineProperties(target, {
@@ -522,6 +547,13 @@ export class Attribute {
                                 }
                             });
                         }
+                        
+                        // Set "toJSON" method on target so subAttributes can be filtered
+                        Object.defineProperty(target, "toJSON", {
+                            value: () => Object.entries(resource)
+                                .filter(([name]) => ![false, "never"].includes(this.subAttributes.find(a => a.name === name).config.returned))
+                                .reduce((res, [name, value]) => Object.assign(res, {[name]: value}), {})
+                        });
                         
                         // Prevent changes to target
                         Object.freeze(target);

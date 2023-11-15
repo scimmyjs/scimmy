@@ -1,11 +1,14 @@
 {
-  "plugins": ["plugins/markdown"],
+  "plugins": [
+    "plugins/markdown",
+    "classy-template/plugin"
+  ],
   "source": {
     "include": ["src"]
   },
   "opts": {
     "recurse": true,
-    "template": "./node_modules/classy-template",
+    "template": "classy-template",
     "destination": "./docs",
     "readme": "./README.md",
     "package": "./package.json"

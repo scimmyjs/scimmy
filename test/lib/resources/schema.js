@@ -1,29 +1,37 @@
 import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
-import assert from "assert";
+import sinon from "sinon";
+import * as Schemas from "#@/lib/schemas.js";
+import {User} from "#@/lib/schemas/user.js";
+import {Group} from "#@/lib/schemas/group.js";
+import ResourcesHooks from "../../hooks/resources.js";
+import {Schema} from "#@/lib/resources/schema.js";
 
-export let SchemaSuite = (SCIMMY, ResourcesHooks) => {
-    const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
-    const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
+// Load data to use in tests from adjacent JSON file
+const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
+const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
+
+describe("SCIMMY.Resources.Schema", () => {
+    const sandbox = sinon.createSandbox();
     
-    it("should include static class 'Schema'", () => 
-        assert.ok(!!SCIMMY.Resources.Schema, "Static class 'Schema' not defined"));
-    
-    describe("SCIMMY.Resources.Schema", () => {
-        it("should implement static member 'endpoint' that is a string", ResourcesHooks.endpoint(SCIMMY.Resources.Schema));
-        it("should not implement static member 'schema'", ResourcesHooks.schema(SCIMMY.Resources.Schema, false));
-        it("should not implement static member 'extensions'", ResourcesHooks.extensions(SCIMMY.Resources.Schema, false));
-        it("should override static method 'extend'", ResourcesHooks.extend(SCIMMY.Resources.Schema, true));
-        it("should not implement static method 'ingress'", ResourcesHooks.ingress(SCIMMY.Resources.Schema, false));
-        it("should not implement static method 'egress'", ResourcesHooks.egress(SCIMMY.Resources.Schema, false));
-        it("should not implement static method 'degress'", ResourcesHooks.degress(SCIMMY.Resources.Schema, false));
-        it("should not implement instance method 'write'", ResourcesHooks.write(SCIMMY.Resources.Schema, false));
-        it("should not implement instance method 'patch'", ResourcesHooks.patch(SCIMMY.Resources.Schema, false));
-        it("should not implement instance method 'dispose'", ResourcesHooks.dispose(SCIMMY.Resources.Schema, false));
-        
-        describe(".basepath()", ResourcesHooks.basepath(SCIMMY.Resources.Schema));
-        describe("#constructor", ResourcesHooks.construct(SCIMMY.Resources.Schema, false));
-        describe("#read()", ResourcesHooks.read(SCIMMY.Resources.Schema, fixtures));
+    after(() => sandbox.restore());
+    before(() => {
+        sandbox.stub(Schemas.default, "declared")
+            .returns([User.definition, Group.definition])
+            .withArgs(User.definition.id).returns(User.definition);
     });
-}
+    
+    describe(".endpoint", ResourcesHooks.endpoint(Schema));
+    describe(".schema", ResourcesHooks.schema(Schema, false));
+    describe(".basepath()", ResourcesHooks.basepath(Schema));
+    describe(".extend()", ResourcesHooks.extend(Schema, true));
+    describe(".ingress()", ResourcesHooks.ingress(Schema, false));
+    describe(".egress()", ResourcesHooks.egress(Schema, false));
+    describe(".degress()", ResourcesHooks.degress(Schema, false));
+    describe("@constructor", ResourcesHooks.construct(Schema, false));
+    describe("#read()", ResourcesHooks.read(Schema, fixtures));
+    describe("#write()", ResourcesHooks.write(Schema, false));
+    describe("#patch()", ResourcesHooks.patch(Schema, false));
+    describe("#dispose()", ResourcesHooks.dispose(Schema, false));
+});
