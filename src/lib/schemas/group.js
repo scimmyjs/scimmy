@@ -17,6 +17,7 @@ export class Group extends Types.Schema {
         new Types.Attribute("string", "displayName", {required: true, description: "A human-readable name for the Group. REQUIRED."}),
         new Types.Attribute("complex", "members", {multiValued: true, uniqueness: false, description: "A list of members of the Group."}, [
             new Types.Attribute("string", "value", {mutable: "immutable", description: "Identifier of the member of this Group."}),
+            new Types.Attribute("string", "display", {mutable: "immutable", description: "Human-readable name of the member of this Group."}),
             new Types.Attribute("reference", "$ref", {mutable: "immutable", referenceTypes: ["User", "Group"], description: "The URI corresponding to a SCIM resource that is a member of this Group."}),
             new Types.Attribute("string", "type", {mutable: "immutable", canonicalValues: ["User", "Group"], description: "A label indicating the type of resource, e.g., 'User' or 'Group'."})
         ])

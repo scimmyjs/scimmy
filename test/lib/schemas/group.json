@@ -22,6 +22,11 @@
             "description": "Identifier of the member of this Group."
           },
           {
+            "name": "display", "type": "string", "multiValued": false, "required": false,
+            "caseExact": false, "mutability": "immutable", "returned": "default", "uniqueness": "none",
+            "description": "Human-readable name of the member of this Group."
+          },
+          {
             "name": "$ref", "type": "reference", "referenceTypes": ["User", "Group"], "multiValued": false, "required": false, 
             "caseExact": false, "mutability": "immutable", "returned": "default", "uniqueness": "none",
             "description": "The URI corresponding to a SCIM resource that is a member of this Group."
