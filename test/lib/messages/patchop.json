@@ -44,6 +44,11 @@
     "replace": [
       {
         "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
+        "target": {"id": "1234", "userName": "ghjk", "name": {"honorificPrefix": "Mr"}},
+        "ops": [{"op": "replace", "path": "userName", "value": "ghjk"}]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
         "target": {"id": "1234", "userName": "asdf", "name": {"formatted": "Test"}},
         "ops": [{"op": "replace", "path": "name", "value": {"formatted": "Test"}}]
       },

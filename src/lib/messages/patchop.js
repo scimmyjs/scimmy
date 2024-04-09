@@ -368,9 +368,8 @@ export class PatchOp {
             // Call remove, then call add!
             try {
                 if (path !== undefined) this.#remove(index, path);
-            } catch (ex) {
-                // Only rethrow if error is anything other than target doesn't exist
-                if (ex.scimType !== "noTarget") throw ex;
+            } catch {
+                // Do nothing, as we're immediately adding a new value, which will enforce actual attribute validity
             }
             
             try {
