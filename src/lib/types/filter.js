@@ -203,7 +203,10 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
  * If SCIMMY's filter expression resource matching does not meet your needs, it can be substituted for another implementation
  * (e.g. [scim2-parse-filter](https://github.com/thomaspoignant/scim2-parse-filter)) when filtering results within your implementation
  * of each resource type's {@link SCIMMY.Types.Resource.ingress|ingress}/{@link SCIMMY.Types.Resource.egress|egress}/{@link SCIMMY.Types.Resource.degress|degress} handler methods.
- * See `{@link SCIMMY.Types.Resource~gressHandler}` for more information on implementing handler methods.
+ * 
+ * > **Note:**  
+ * > For more information on implementing handler methods, see the `{@link SCIMMY.Types.Resource~IngressHandler|IngressHandler}/{@link SCIMMY.Types.Resource~EgressHandler|EgressHandler}/{@link SCIMMY.Types.Resource~DegressHandler|DegressHandler}` type definitions of the `SCIMMY.Types.Resource` class.
+ * 
  * ```js
  * // Import the necessary methods from the other implementation, and for accessing your data source
  * import {parse, filter} from "scim2-parse-filter";

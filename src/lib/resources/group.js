@@ -78,7 +78,7 @@ export class Group extends Types.Resource {
                 .map(u => new Schemas.Group(u, "out", Group.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new Schemas.Group((await Group.#egress(this, ctx) ?? []).shift(), "out", Group.basepath(), this.attributes);
+                return new Schemas.Group([await Group.#egress(this, ctx)].flat().shift(), "out", Group.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
                 else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -131,7 +131,7 @@ export class Group extends Types.Resource {
         
         try {
             return await Promise.resolve(new Messages.PatchOp(message)
-                .apply(new Schemas.Group((await Group.#egress(this, ctx) ?? []).shift()), 
+                .apply(new Schemas.Group([await Group.#egress(this, ctx)].flat().shift()), 
                     async (instance) => await Group.#ingress(this, instance, ctx)))
                 .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {

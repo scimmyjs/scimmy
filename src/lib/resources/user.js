@@ -78,7 +78,7 @@ export class User extends Types.Resource {
                 .map(u => new Schemas.User(u, "out", User.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new Schemas.User((await User.#egress(this, ctx) ?? []).shift(), "out", User.basepath(), this.attributes);
+                return new Schemas.User([await User.#egress(this, ctx)].flat().shift(), "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
                 else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -132,7 +132,7 @@ export class User extends Types.Resource {
         
         try {
             return await Promise.resolve(new Messages.PatchOp(message)
-                .apply(new Schemas.User((await User.#egress(this, ctx) ?? []).shift()), 
+                .apply(new Schemas.User([await User.#egress(this, ctx)].flat().shift()), 
                     async (instance) => await User.#ingress(this, instance, ctx)))
                 .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
         } catch (ex) {

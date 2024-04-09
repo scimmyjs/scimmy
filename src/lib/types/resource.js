@@ -62,9 +62,31 @@ export class Resource {
      * Handler for ingress of a resource
      * @callback SCIMMY.Types.Resource~IngressHandler
      * @param {SCIMMY.Types.Resource} resource - the resource performing the ingress
-     * @param {SCIMMY.Types.Schema} [instance] - an instance of the resource type that conforms to the resource's schema
+     * @param {SCIMMY.Types.Schema} instance - an instance of the resource type that conforms to the resource's schema
      * @param {*} [ctx] - external context in which the handler has been called
      * @returns {Object} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @example
+     * // Handle a request to create a new resource, or update an existing resource
+     * async function ingress(resource, instance, ctx) {
+     *     try {
+     *         // Call some external controller to update the resource in your database...
+     *         if (resource.id) return await ResourceController.update(resource.id, instance, ctx);
+     *         // ...or if a resource ID wasn't specified, to create the resource in your database
+     *         else return await ResourceController.create(instance, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...or a SCIM 409 error if a database unique constraint wasn't met...
+     *             case "Not Unique":
+     *                 throw new SCIMMY.Types.Error(409, "uniqueness", "Primary email address is not unique");
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
      */
     
     /**
@@ -89,7 +111,27 @@ export class Resource {
      * @callback SCIMMY.Types.Resource~EgressHandler
      * @param {SCIMMY.Types.Resource} resource - the resource performing the egress
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {Object[]} an array of objects to be used to create new schema instances, whose properties conform to the resource type's schema
+     * @returns {Object} an object, to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @returns {Object[]} an array of objects, to be used to create new schema instances, whose properties conform to the resource type's schema
+     * @example
+     * // Handle a request to retrieve a specific resource, or a list of resources
+     * async function egress(resource, ctx) {
+     *     try {
+     *         // Call some external controller to retrieve the specified resource from your database...
+     *         if (resource.id) return await ResourceController.findOne(resource.id, ctx);
+     *         // ...or if a resource ID wasn't specified, to retrieve a list of matching resources from your database
+     *         else return await ResourceController.findMany(resource.filter, resource.constraints, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
      */
     
     /**
@@ -114,6 +156,23 @@ export class Resource {
      * @callback SCIMMY.Types.Resource~DegressHandler
      * @param {SCIMMY.Types.Resource} resource - the resource performing the degress
      * @param {*} [ctx] - external context in which the handler has been called
+     * @example
+     * // Handle a request to delete a specific resource
+     * async function degress(resource, ctx) {
+     *     try {
+     *         // Call some external controller to delete the resource from your database
+     *         await ResourceController.delete(resource.id, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
      */
     
     /**
@@ -147,6 +206,7 @@ export class Resource {
         
         /**
          * @typedef {Object} SCIMMY.Types.Resource~ResourceType
+         * @description An object describing a resource type's implementation
          * @property {String} id - URN namespace of the resource's SCIM schema definition
          * @property {String} name - friendly name of the resource's SCIM schema definition
          * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
