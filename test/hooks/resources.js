@@ -137,7 +137,7 @@ export default {
                         const target = (!!id ? egress.find(f => f.id === id) : egress);
                         
                         if (!target) throw new Error("Not found");
-                        else return (Array.isArray(target) ? target : [target]);
+                        else return target;
                 }
             };
             

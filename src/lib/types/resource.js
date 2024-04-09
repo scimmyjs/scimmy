@@ -59,22 +59,46 @@ export class Resource {
     }
     
     /**
-     * Handler for ingress/egress/degress of a resource
-     * @callback SCIMMY.Types.Resource~gressHandler
-     * @param {SCIMMY.Types.Resource} resource - the resource performing the ingress/egress/degress
-     * @param {SCIMMY.Types.Schema} [instance] - an instance of the resource type that conforms to the resource's schema
+     * Handler for ingress of a resource
+     * @callback SCIMMY.Types.Resource~IngressHandler
+     * @param {SCIMMY.Types.Resource} resource - the resource performing the ingress
+     * @param {SCIMMY.Types.Schema} instance - an instance of the resource type that conforms to the resource's schema
+     * @param {*} [ctx] - external context in which the handler has been called
+     * @returns {Object} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @example
+     * // Handle a request to create a new resource, or update an existing resource
+     * async function ingress(resource, instance, ctx) {
+     *     try {
+     *         // Call some external controller to update the resource in your database...
+     *         if (resource.id) return await ResourceController.update(resource.id, instance, ctx);
+     *         // ...or if a resource ID wasn't specified, to create the resource in your database
+     *         else return await ResourceController.create(instance, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...or a SCIM 409 error if a database unique constraint wasn't met...
+     *             case "Not Unique":
+     *                 throw new SCIMMY.Types.Error(409, "uniqueness", "Primary email address is not unique");
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
      */
     
     /**
      * Ingress handler method storage property
-     * @type {SCIMMY.Types.Resource~gressHandler}
+     * @type {SCIMMY.Types.Resource~IngressHandler}
      * @private
      * @abstract
      */
     static #ingress;
     /**
      * Sets the method to be called to consume a resource on create
-     * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to consume a resource on create
+     * @param {SCIMMY.Types.Resource~IngressHandler} handler - function to invoke to consume a resource on create
      * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
@@ -83,15 +107,43 @@ export class Resource {
     }
     
     /**
+     * Handler for egress of a resource
+     * @callback SCIMMY.Types.Resource~EgressHandler
+     * @param {SCIMMY.Types.Resource} resource - the resource performing the egress
+     * @param {*} [ctx] - external context in which the handler has been called
+     * @returns {Object} an object, to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @returns {Object[]} an array of objects, to be used to create new schema instances, whose properties conform to the resource type's schema
+     * @example
+     * // Handle a request to retrieve a specific resource, or a list of resources
+     * async function egress(resource, ctx) {
+     *     try {
+     *         // Call some external controller to retrieve the specified resource from your database...
+     *         if (resource.id) return await ResourceController.findOne(resource.id, ctx);
+     *         // ...or if a resource ID wasn't specified, to retrieve a list of matching resources from your database
+     *         else return await ResourceController.findMany(resource.filter, resource.constraints, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
+     */
+    
+    /**
      * Egress handler method storage property
-     * @type {SCIMMY.Types.Resource~gressHandler}
+     * @type {SCIMMY.Types.Resource~EgressHandler}
      * @private
      * @abstract
      */
     static #egress;
     /**
      * Sets the method to be called to retrieve a resource on read
-     * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to retrieve a resource on read
+     * @param {SCIMMY.Types.Resource~EgressHandler} handler - function to invoke to retrieve a resource on read
      * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
@@ -100,15 +152,39 @@ export class Resource {
     }
     
     /**
+     * Handler for degress of a resource
+     * @callback SCIMMY.Types.Resource~DegressHandler
+     * @param {SCIMMY.Types.Resource} resource - the resource performing the degress
+     * @param {*} [ctx] - external context in which the handler has been called
+     * @example
+     * // Handle a request to delete a specific resource
+     * async function degress(resource, ctx) {
+     *     try {
+     *         // Call some external controller to delete the resource from your database
+     *         await ResourceController.delete(resource.id, ctx);
+     *     } catch (ex) {
+     *         switch (ex.message) {
+     *             // Be sure to throw a SCIM 404 error if the specific resource wasn't found...
+     *             case "Not Found":
+     *                 throw new SCIMMY.Types.Error(404, null, `Resource ${resource.id} not found`);
+     *             // ...and also rethrow any other exceptions as SCIM 500 errors
+     *             default:
+     *                 throw new SCIMMY.Types.Error(500, null, ex.message);
+     *         }
+     *     }
+     * }
+     */
+    
+    /**
      * Degress handler method storage property
-     * @type {SCIMMY.Types.Resource~gressHandler}
+     * @type {SCIMMY.Types.Resource~DegressHandler}
      * @private
      * @abstract
      */
     static #degress;
     /**
      * Sets the method to be called to dispose of a resource on delete
-     * @param {SCIMMY.Types.Resource~gressHandler} handler - function to invoke to dispose of a resource on delete
+     * @param {SCIMMY.Types.Resource~DegressHandler} handler - function to invoke to dispose of a resource on delete
      * @returns {SCIMMY.Types.Resource} this resource type class for chaining
      * @abstract
      */
@@ -130,6 +206,7 @@ export class Resource {
         
         /**
          * @typedef {Object} SCIMMY.Types.Resource~ResourceType
+         * @description An object describing a resource type's implementation
          * @property {String} id - URN namespace of the resource's SCIM schema definition
          * @property {String} name - friendly name of the resource's SCIM schema definition
          * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
@@ -227,22 +304,24 @@ export class Resource {
     /**
      * Calls resource's egress method for data retrieval.
      * Wraps the results in valid SCIM list response or single resource syntax.
+     * @param {*} [ctx] - any additional context information to pass to the egress handler
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
      * *   A collection of resources matching instance's configured filter, if no ID was supplied to resource constructor.
      * *   The specifically requested resource instance, if an ID was supplied to resource constructor.
      * @abstract
      */
-    read() {
+    read(ctx) {
         throw new TypeError(`Method 'read' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
      * Calls resource's ingress method for consumption after unwrapping the SCIM resource
      * @param {Object} instance - the raw resource type instance for consumption by ingress method
+     * @param {*} [ctx] - any additional context information to pass to the ingress handler
      * @returns {SCIMMY.Types.Schema} the consumed resource type instance
      * @abstract
      */
-    write(instance) {
+    write(instance, ctx) {
         throw new TypeError(`Method 'write' not implemented by resource '${this.constructor.name}'`);
     }
     
@@ -250,18 +329,20 @@ export class Resource {
      * Retrieves resources via egress method, and applies specified patch operations.
      * Emits patched resources for consumption with resource's ingress method.
      * @param {Object} message - the PatchOp message to apply to the received resource
+     * @param {*} [ctx] - any additional context information to pass to the ingress/egress handlers
      * @returns {SCIMMY.Types.Schema} the resource type instance after patching and consumption by ingress method
      * @abstract
      */
-    patch(message) {
+    patch(message, ctx) {
         throw new TypeError(`Method 'patch' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
      * Calls resource's degress method for disposal of the SCIM resource
+     * @param {*} [ctx] - any additional context information to pass to the degress handler
      * @abstract
      */
-    dispose() {
+    dispose(ctx) {
         throw new TypeError(`Method 'dispose' not implemented by resource '${this.constructor.name}'`);
     }
 }

@@ -72,13 +72,13 @@ export class Group extends Types.Resource {
      * // Retrieve groups with a group name starting with "A"
      * await (new SCIMMY.Resources.Group({filter: 'displayName -sw "A"'})).read();
      */
-    async read() {
+    async read(ctx) {
         if (!this.id) {
-            return new Messages.ListResponse((await Group.#egress(this) ?? [])
+            return new Messages.ListResponse((await Group.#egress(this, ctx) ?? [])
                 .map(u => new Schemas.Group(u, "out", Group.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new Schemas.Group((await Group.#egress(this) ?? []).shift(), "out", Group.basepath(), this.attributes);
+                return new Schemas.Group([await Group.#egress(this, ctx)].flat().shift(), "out", Group.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
                 else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -97,16 +97,15 @@ export class Group extends Types.Resource {
      * // Set members attribute for group with ID "1234"
      * await (new SCIMMY.Resources.Group("1234")).write({members: [{value: "5678"}]});
      */
-    async write(instance) {
+    async write(instance, ctx) {
         if (instance === undefined)
             throw new Types.Error(400, "invalidSyntax", `Missing request body payload for ${!!this.id ? "PUT" : "POST"} operation`);
         if (Object(instance) !== instance || Array.isArray(instance))
             throw new Types.Error(400, "invalidSyntax", `Operation ${!!this.id ? "PUT" : "POST"} expected request body payload to be single complex value`);
         
         try {
-            // TODO: handle incoming read-only and immutable attribute tests
             return new Schemas.Group(
-                await Group.#ingress(this, new Schemas.Group(instance, "in")),
+                await Group.#ingress(this, new Schemas.Group(instance, "in"), ctx),
                 "out", Group.basepath(), this.attributes
             );
         } catch (ex) {
@@ -124,7 +123,7 @@ export class Group extends Types.Resource {
      * // Add member to group with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
      * await (new SCIMMY.Resources.Group("1234")).patch({Operations: [{op: "add", path: "members", value: {value: "5678"}}]});
      */
-    async patch(message) {
+    async patch(message, ctx) {
         if (message === undefined)
             throw new Types.Error(400, "invalidSyntax", "Missing message body from PatchOp request");
         if (Object(message) !== message || Array.isArray(message))
@@ -132,8 +131,8 @@ export class Group extends Types.Resource {
         
         try {
             return await Promise.resolve(new Messages.PatchOp(message)
-                .apply(new Schemas.Group((await Group.#egress(this) ?? []).shift()), 
-                    async (instance) => await Group.#ingress(this, instance)))
+                .apply(new Schemas.Group([await Group.#egress(this, ctx)].flat().shift()), 
+                    async (instance) => await Group.#ingress(this, instance, ctx)))
                 .then(instance => !instance ? undefined : new Schemas.Group(instance, "out", Group.basepath(), this.attributes));
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
@@ -148,12 +147,12 @@ export class Group extends Types.Resource {
      * // Delete group with ID "1234"
      * await (new SCIMMY.Resources.Group("1234")).dispose();
      */
-    async dispose() {
+    async dispose(ctx) {
         if (!this.id)
             throw new Types.Error(404, null, "DELETE operation must target a specific resource");
         
         try {
-            await Group.#degress(this);
+            await Group.#degress(this, ctx);
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
             else if (ex instanceof TypeError) throw new Types.Error(500, null, ex.message);
