@@ -9,16 +9,18 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Resources.Group", () => {
-    describe(".endpoint", ResourcesHooks.endpoint(Group));
-    describe(".schema", ResourcesHooks.schema(Group));
-    describe(".basepath()", ResourcesHooks.basepath(Group));
-    describe(".extend()", ResourcesHooks.extend(Group, false));
-    describe(".ingress()", ResourcesHooks.ingress(Group, fixtures));
-    describe(".egress()", ResourcesHooks.egress(Group, fixtures));
-    describe(".degress()", ResourcesHooks.degress(Group, fixtures));
-    describe("@constructor", ResourcesHooks.construct(Group));
-    describe("#read()", ResourcesHooks.read(Group, fixtures));
-    describe("#write()", ResourcesHooks.write(Group, fixtures));
-    describe("#patch()", ResourcesHooks.patch(Group, fixtures));
-    describe("#dispose()", ResourcesHooks.dispose(Group, fixtures));
+    const hooks = new ResourcesHooks(Group, fixtures);
+    
+    describe(".schema", hooks.schema(true));
+    describe(".endpoint", hooks.endpoint());
+    describe(".basepath()", hooks.basepath());
+    describe(".extend()", hooks.extend(true));
+    describe(".ingress()", hooks.ingress(true));
+    describe(".egress()", hooks.egress(true));
+    describe(".degress()", hooks.degress(true));
+    describe("@constructor", hooks.construct(true));
+    describe("#read()", hooks.read(true, true));
+    describe("#write()", hooks.write(true));
+    describe("#patch()", hooks.patch(true));
+    describe("#dispose()", hooks.dispose(true));
 });

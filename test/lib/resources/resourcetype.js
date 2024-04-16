@@ -13,6 +13,7 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./resourcetype.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Resources.ResourceType", () => {
+    const hooks = new ResourcesHooks(ResourceType, fixtures);
     const sandbox = sinon.createSandbox();
     
     after(() => sandbox.restore());
@@ -22,16 +23,16 @@ describe("SCIMMY.Resources.ResourceType", () => {
             .withArgs(User.schema.definition.name).returns(User);
     });
     
-    describe(".endpoint", ResourcesHooks.endpoint(ResourceType));
-    describe(".schema", ResourcesHooks.schema(ResourceType, false));
-    describe(".basepath()", ResourcesHooks.basepath(ResourceType));
-    describe(".extend()", ResourcesHooks.extend(ResourceType, true));
-    describe(".ingress()", ResourcesHooks.ingress(ResourceType, false));
-    describe(".egress()", ResourcesHooks.egress(ResourceType, false));
-    describe(".degress()", ResourcesHooks.degress(ResourceType, false));
-    describe("@constructor", ResourcesHooks.construct(ResourceType, false));
-    describe("#read()", ResourcesHooks.read(ResourceType, fixtures));
-    describe("#write()", ResourcesHooks.write(ResourceType, false));
-    describe("#patch()", ResourcesHooks.patch(ResourceType, false));
-    describe("#dispose()", ResourcesHooks.dispose(ResourceType, false));
+    describe(".schema", hooks.schema(false));
+    describe(".endpoint", hooks.endpoint());
+    describe(".basepath()", hooks.basepath());
+    describe(".extend()", hooks.extend(false));
+    describe(".ingress()", hooks.ingress(false));
+    describe(".egress()", hooks.egress(false));
+    describe(".degress()", hooks.degress(false));
+    describe("@constructor", hooks.construct(false));
+    describe("#read()", hooks.read(true));
+    describe("#write()", hooks.write(false));
+    describe("#patch()", hooks.patch(false));
+    describe("#dispose()", hooks.dispose(false));
 });

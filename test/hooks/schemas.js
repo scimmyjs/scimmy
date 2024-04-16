@@ -23,8 +23,19 @@ export const createSchemaClass = ({name = "Test", id = "urn:ietf:params:scim:sch
     }
 );
 
-export default {
-    construct: (TargetSchema, fixtures) => (() => {
+export default class ResourcesHooks {
+    #target;
+    #fixtures;
+    
+    constructor(TargetResource, fixtures) {
+        this.#target = TargetResource;
+        this.#fixtures = fixtures;
+    }
+    
+    construct = () => (() => {
+        const TargetSchema = this.#target;
+        const fixtures = this.#fixtures;
+        
         it("should require 'resource' parameter to be an object at instantiation", () => {
             assert.throws(() => new TargetSchema(),
                 {name: "TypeError", message: "Expected 'data' parameter to be an object in SchemaDefinition instance"},
@@ -207,8 +218,12 @@ export default {
                 {name: "TypeError", message: `Cannot delete property 'meta' of #<${instance.constructor.name}>`},
                 "Schema was not sealed after instantiation");
         });
-    }),
-    definition: (TargetSchema, fixtures) => (() => {
+    });
+    
+    definition = () => (() => {
+        const TargetSchema = this.#target;
+        const fixtures = this.#fixtures;
+        
         it("should be defined", () => {
             assert.ok("definition" in TargetSchema,
                 "Static member 'definition' not defined");
@@ -225,5 +240,5 @@ export default {
             assert.deepStrictEqual(JSON.parse(JSON.stringify(TargetSchema.definition.describe("/Schemas"))), definition,
                 "Definition did not match sample schema defined in RFC7643");
         });
-    })
+    });
 };

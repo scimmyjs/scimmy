@@ -11,6 +11,7 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Resources.ServiceProviderConfig", () => {
+    const hooks = new ResourcesHooks(ServiceProviderConfig, fixtures);
     const sandbox = sinon.createSandbox();
     
     after(() => sandbox.restore());
@@ -20,16 +21,16 @@ describe("SCIMMY.Resources.ServiceProviderConfig", () => {
         patch: {supported: false}, changePassword: {supported: false}, etag: {supported: false}
     }));
     
-    describe(".endpoint", ResourcesHooks.endpoint(ServiceProviderConfig));
-    describe(".schema", ResourcesHooks.schema(ServiceProviderConfig, false));
-    describe(".basepath()", ResourcesHooks.basepath(ServiceProviderConfig));
-    describe(".extend()", ResourcesHooks.extend(ServiceProviderConfig, true));
-    describe(".ingress()", ResourcesHooks.ingress(ServiceProviderConfig, false));
-    describe(".egress()", ResourcesHooks.egress(ServiceProviderConfig, false));
-    describe(".degress()", ResourcesHooks.degress(ServiceProviderConfig, false));
-    describe("@constructor", ResourcesHooks.construct(ServiceProviderConfig, false));
-    describe("#read()", ResourcesHooks.read(ServiceProviderConfig, fixtures, false));
-    describe("#write()", ResourcesHooks.write(ServiceProviderConfig, false));
-    describe("#patch()", ResourcesHooks.patch(ServiceProviderConfig, false));
-    describe("#dispose()", ResourcesHooks.dispose(ServiceProviderConfig, false));
+    describe(".schema", hooks.schema(false));
+    describe(".endpoint", hooks.endpoint());
+    describe(".basepath()", hooks.basepath());
+    describe(".extend()", hooks.extend(false));
+    describe(".ingress()", hooks.ingress(false));
+    describe(".egress()", hooks.egress(false));
+    describe(".degress()", hooks.degress(false));
+    describe("@constructor", hooks.construct(false));
+    describe("#read()", hooks.read(false));
+    describe("#write()", hooks.write(false));
+    describe("#patch()", hooks.patch(false));
+    describe("#dispose()", hooks.dispose(false));
 });

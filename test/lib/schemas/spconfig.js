@@ -9,6 +9,8 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Schemas.ServiceProviderConfig", () => {
-    describe(".definition", SchemasHooks.definition(ServiceProviderConfig, fixtures));
-    describe("@constructor", SchemasHooks.construct(ServiceProviderConfig, fixtures));
+    const hooks = new SchemasHooks(ServiceProviderConfig, fixtures);
+    
+    describe(".definition", hooks.definition());
+    describe("@constructor", hooks.construct());
 });

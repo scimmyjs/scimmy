@@ -9,6 +9,8 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./group.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Schemas.Group", () => {
-    describe(".definition", SchemasHooks.definition(Group, fixtures));
-    describe("@constructor", SchemasHooks.construct(Group, fixtures));
+    const hooks = new SchemasHooks(Group, fixtures);
+    
+    describe(".definition", hooks.definition());
+    describe("@constructor", hooks.construct());
 });

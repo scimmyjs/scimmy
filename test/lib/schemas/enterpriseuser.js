@@ -9,6 +9,8 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./enterpriseuser.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Schemas.EnterpriseUser", () => {
-    describe(".definition", SchemasHooks.definition(EnterpriseUser, fixtures));
-    describe("@constructor", SchemasHooks.construct(EnterpriseUser, fixtures));
+    const hooks = new SchemasHooks(EnterpriseUser, fixtures);
+    
+    describe(".definition", hooks.definition());
+    describe("@constructor", hooks.construct());
 });
