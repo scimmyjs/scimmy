@@ -27,11 +27,11 @@ export class ListResponse {
      * @property {Number} itemsPerPage - maximum number of items returned in this list response
      */
     constructor(request = [], params = {}) {
-        let outbound = Array.isArray(request),
-            resources = (outbound ? request : request?.Resources ?? []),
-            totalResults = (outbound ? resources.totalResults ?? resources.length : request.totalResults),
-            {sortBy, sortOrder = "ascending"} = params ?? {},
-            {startIndex = 1, count = 20, itemsPerPage = count} = (outbound ? params : request);
+        const outbound = Array.isArray(request);
+        const resources = (outbound ? request : request?.Resources ?? []);
+        const totalResults = (outbound ? resources.totalResults ?? resources.length : request.totalResults);
+        const {sortBy, sortOrder = "ascending"} = params ?? {};
+        const {startIndex = 1, count = 20, itemsPerPage = count} = (outbound ? params : request);
         
         // Verify the ListResponse contents are valid
         if (!outbound && Array.isArray(request.schemas) && (!request.schemas.includes(ListResponse.#id) || request.schemas.length > 1))
@@ -52,14 +52,14 @@ export class ListResponse {
         
         // Handle sorting if sortBy is defined
         if (sortBy !== undefined) {
-            let paths = sortBy.split(".");
+            const paths = sortBy.split(".");
             
             // Do the sort!
             this.Resources = this.Resources.sort((a, b) => {
                 // Resolve target sort values for each side of the comparison (either the "primary" entry, or first entry, in a multi-valued attribute, or the target value)
-                let ta = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), a),
-                    tb = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), b),
-                    list = [ta, tb];
+                const ta = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), a);
+                const tb = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), b);
+                const list = [ta, tb];
                 
                 // If some or all of the targets are unspecified, sort specified value above unspecified value
                 if (list.some(t => ((t ?? undefined) === undefined)))
@@ -80,9 +80,14 @@ export class ListResponse {
             if (sortOrder === "descending") this.Resources.reverse();
         }
         
+        // If startIndex is within results, offset results to startIndex
+        if ((this.Resources.length >= this.startIndex) && (this.totalResults !== this.Resources.length + this.startIndex - 1)) {
+            this.Resources = this.Resources.slice(this.startIndex-1);
+        }
+        
         // If there are more resources than items per page, paginate the resources
-        if (this.Resources.length > itemsPerPage) {
-            this.Resources = this.Resources.slice(startIndex-1, startIndex+itemsPerPage-1);
+        if (this.Resources.length > this.itemsPerPage) {
+            this.Resources.length = this.itemsPerPage;
         }
     }
 }

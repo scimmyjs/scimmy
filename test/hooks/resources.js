@@ -5,6 +5,7 @@ import {Resource} from "#@/lib/types/resource.js";
 import {SCIMError} from "#@/lib/types/error.js";
 import {ListResponse} from "#@/lib/messages/listresponse.js";
 import {createSchemaClass} from "./schemas.js";
+import exp from "node:constants";
 
 /**
  * Create a class that extends SCIMMY.Types.Resource, for use in tests
@@ -421,6 +422,30 @@ export default class ResourcesHooks {
                         "Instance method 'read' did not call egress handler with supplied context");
                 });
                 
+                (skip ? it.skip : it)("should treat length of array returned by egress method as 'totalResults' value in ListResponse if resource was instantiated without an ID", async () => {
+                    const {egress: resources} = await fixtures;
+                    const expected = 1000;
+                    
+                    handler.callsFake(() => Object.assign([...resources], {length: expected}));
+                    
+                    assert.strictEqual((await new TargetResource().read()).totalResults, expected,
+                        "Instance method 'read' did not treat length of array returned by egress method as 'totalResults' value");
+                });
+                
+                (skip ? it.skip : it)("should honour 'startIndex' constraint in ListResponse if resource was instantiated without an ID", async () => {
+                    await fixtures.then(({egress}) => Array.from(new Array(5), () => egress).flat())
+                        .then((resources) => handler.callsFake(() => resources));
+                    
+                    const expected = {startIndex: 18, resourceIds: ["2", "3", "4"]}
+                    const resource = new TargetResource({startIndex: expected.startIndex});
+                    const actual = await resource.read();
+                    
+                    assert.strictEqual(actual.startIndex, expected.startIndex,
+                        "Instance method 'read' did not pass 'startIndex' constraint to ListResponse");
+                    assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected.resourceIds,
+                        "Instance method 'read' did not offset results in ListResponse to honour 'startIndex'");
+                });
+                
                 (skip ? it.skip : it)("should rethrow SCIMErrors thrown by handler", async () => {
                     handler.throws(() => new SCIMError(500, "invalidVers", "Failing as requested"));
                     
@@ -820,8 +845,12 @@ export default class ResourcesHooks {
                 const {egress: resources, egress: [target]} = await fixtures;
                 const resource = new TargetResource(target.id);
                 
-                await assert.doesNotReject(() => resource.dispose(),
-                    "Instance method 'dispose' rejected a valid degress request");
+                try {
+                    await resource.dispose();
+                } catch {
+                    assert.fail("Instance method 'dispose' rejected a valid degress request");
+                }
+                
                 assert.ok(handler.calledWith(sinon.match.same(resource)),
                     "Instance method 'dispose' did not call degress handler");
                 assert.ok(!resources.includes(target),
