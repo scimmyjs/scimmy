@@ -31,7 +31,7 @@ describe("SCIMMY.Messages.ListResponse", () => {
         it("should expect 'startIndex' parameter to be a positive integer", () => {
             for (let value of ["a string", -1, 1.5]) {
                 assert.throws(() => new ListResponse([], {startIndex: value}),
-                    {name: "TypeError", message: "Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor"},
+                    {name: "TypeError", message: "Expected 'startIndex' parameter to be a positive integer in ListResponse message constructor"},
                     `ListResponse instantiated with invalid 'startIndex' parameter value '${value}'`);
             }
         });
@@ -39,7 +39,7 @@ describe("SCIMMY.Messages.ListResponse", () => {
         it("should expect 'itemsPerPage' parameter to be a positive integer", () => {
             for (let value of ["a string", -1, 1.5]) {
                 assert.throws(() => new ListResponse([], {itemsPerPage: value}),
-                    {name: "TypeError", message: "Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor"},
+                    {name: "TypeError", message: "Expected 'itemsPerPage' parameter to be a non-negative integer in ListResponse message constructor"},
                     `ListResponse instantiated with invalid 'itemsPerPage' parameter value '${value}'`);
             }
         });
@@ -68,20 +68,19 @@ describe("SCIMMY.Messages.ListResponse", () => {
             const {outbound: {source}} = await fixtures;
             const list = new ListResponse(source, {sortOrder: "descending"});
             
-            for (let item of source) {
-                assert.ok(item.id === list.Resources[source.indexOf(item)]?.id,
-                    "ListResponse unexpectedly sorted resources when 'sortBy' parameter was not supplied");
-            }
+            assert.deepStrictEqual(list.Resources, source,
+                "ListResponse unexpectedly sorted resources when 'sortBy' parameter was not supplied");
         });
         
         it("should correctly sort resources if 'sortBy' parameter is supplied", async () => {
-            const {outbound: {source, targets: suite}} = await fixtures;
+            const {outbound: {source, targets: {sortBy: suite}}} = await fixtures;
             
             for (let fixture of suite) {
-                const list = new ListResponse(source, {sortBy: fixture.sortBy, sortOrder: fixture.sortOrder});
+                const {expected, sortBy, sortOrder} = fixture;
+                const actual = new ListResponse(source, {sortBy, sortOrder});
                 
-                assert.deepStrictEqual(list.Resources.map(r => r.id), fixture.expected,
-                    `ListResponse did not correctly sort outbound target #${suite.indexOf(fixture)+1} by 'sortBy' value '${fixture.sortBy}'`);
+                assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected,
+                    `ListResponse did not correctly sort outbound sortBy target #${suite.indexOf(fixture)+1} by 'sortBy' value '${sortBy}'`);
             }
         });
     });
@@ -122,13 +121,36 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "Instance member 'startIndex' was not a positive integer");
         });
         
-        it("should equal 'startIndex' value included in inbound requests", async () => {
-            const {inbound: suite} = await fixtures;
+        context("when parsing inbound messages", () => {
+            it("should equal 'startIndex' value included in message", async () => {
+                const {inbound: suite} = await fixtures;
+                
+                for (let fixture of suite) {
+                    assert.strictEqual((new ListResponse(fixture, {startIndex: 20})).startIndex, fixture.startIndex,
+                        `Instance member 'startIndex' did not equal 'startIndex' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
+                }
+            });
+        });
+        
+        context("when preparing outbound messages", () => {
+            it("should be honoured if 'totalResults' is less than 'itemsPerPage'", async () => {
+                const {outbound: {source}} = await fixtures;
+                
+                assert.strictEqual(new ListResponse(source, {startIndex: source.length}).Resources.length, 1,
+                    "ListResponse did not honour 'startIndex' when 'totalResults' was less than 'itemsPerPage'");
+            });
             
-            for (let fixture of suite) {
-                assert.ok((new ListResponse(fixture, {startIndex: 20})).startIndex === fixture.startIndex,
-                    `Instance member 'startIndex' did not equal 'startIndex' value included in inbound fixture #${suite.indexOf(fixture)+1}`);
-            }
+            it("should be honoured if results are not already paginated", async () => {
+                const {outbound: {source, targets: {startIndex: suite}}} = await fixtures;
+                
+                for (let fixture of suite) {
+                    const {expected, length = source.length, sourceRange: [from = 1, to = length] = [], startIndex, itemsPerPage} = fixture;
+                    const actual = new ListResponse(Object.assign(source.slice(from-1, to), {length}), {startIndex, itemsPerPage});
+                    
+                    assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected,
+                        `ListResponse startIndex outbound target #${suite.indexOf(fixture)+1} did not honour 'startIndex' value '${startIndex}'`);
+                }
+            });
         });
     });
     
@@ -151,7 +173,7 @@ describe("SCIMMY.Messages.ListResponse", () => {
             const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                assert.ok((new ListResponse(fixture, {itemsPerPage: 200})).itemsPerPage === fixture.itemsPerPage,
+                assert.strictEqual((new ListResponse(fixture, {itemsPerPage: 200})).itemsPerPage, fixture.itemsPerPage,
                     `Instance member 'itemsPerPage' did not equal 'itemsPerPage' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
             }
         });
@@ -176,7 +198,7 @@ describe("SCIMMY.Messages.ListResponse", () => {
             const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                assert.ok((new ListResponse(fixture, {totalResults: 200})).totalResults === fixture.totalResults,
+                assert.strictEqual((new ListResponse(fixture, {totalResults: 200})).totalResults, fixture.totalResults,
                     `Instance member 'totalResults' did not equal 'totalResults' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
             }
         });

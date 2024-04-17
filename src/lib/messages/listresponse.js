@@ -36,19 +36,26 @@ export class ListResponse {
         // Verify the ListResponse contents are valid
         if (!outbound && Array.isArray(request.schemas) && (!request.schemas.includes(ListResponse.#id) || request.schemas.length > 1))
             throw new TypeError(`ListResponse request body messages must exclusively specify schema as '${ListResponse.#id}'`);
-        if ([startIndex, itemsPerPage].some((v) => (typeof v !== "number" || !Number.isInteger(v) || v < 1)))
-            throw new TypeError("Expected 'startIndex' and 'itemsPerPage' parameters to be positive integers in ListResponse message constructor");
         if (sortBy !== undefined && typeof sortBy !== "string")
             throw new TypeError("Expected 'sortBy' parameter to be a string in ListResponse message constructor");
         if (sortBy !== undefined && !["ascending", "descending"].includes(sortOrder))
             throw new TypeError("Expected 'sortOrder' parameter to be either 'ascending' or 'descending' in ListResponse message constructor");
         
+        // Check supplied itemsPerPage and startIndex are valid integers...
+        for (let [key, val, min] of Object.entries({itemsPerPage, startIndex}).map(([key, val], index) => ([key, val, index]))) {
+            // ...but only expect actual number primitives when preparing an outbound list response
+            if (Number.isNaN(Number.parseInt(val)) || !`${val}`.match(/^-?\d*$/) || (outbound && (typeof val !== "number" || !Number.isInteger(val) || val < min))) {
+                throw new TypeError(`Expected '${key}' parameter to be a ${min ? "positive" : "non-negative"} integer in ListResponse message constructor`);
+            }
+        }
+        
         // Construct the ListResponse message
         this.schemas = [ListResponse.#id];
         this.totalResults = totalResults;
         this.Resources = resources.filter(r => r);
-        this.startIndex = startIndex;
-        this.itemsPerPage = itemsPerPage;
+        // Constrain integer properties to their minimum values
+        this.startIndex = Math.max(Number.parseInt(startIndex), 1);
+        this.itemsPerPage = Math.max(Number.parseInt(itemsPerPage), 0);
         
         // Handle sorting if sortBy is defined
         if (sortBy !== undefined) {

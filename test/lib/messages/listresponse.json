@@ -84,6 +84,12 @@
           "itemsPerPage": 5,
           "sourceRange": [6],
           "expected": [6, 7, 8, 9, 10]
+        },
+        {
+          "startIndex": 6,
+          "itemsPerPage": 0,
+          "sourceRange": [6],
+          "expected": []
         }
       ]
     }
