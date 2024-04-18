@@ -176,6 +176,15 @@ describe("SCIMMY.Types.Attribute", () => {
                     `Attribute 'toJSON' fixture #${suite.indexOf(fixture)+1} did not produce valid SCIM attribute definition object`);
             }
         });
+        
+        it("should not include shadow sub-attributes", () => {
+            const subAttributes = [new Attribute("string", "hidden", {shadow: true}), new Attribute("string", "visible")];
+            const attribute = new Attribute("complex", "test", {}, subAttributes);
+            const [hidden] = subAttributes;
+            
+            assert.ok(!attribute.toJSON().subAttributes.includes(hidden),
+                "Instance method 'toJSON' unexpectedly included shadow sub-attribute");
+        });
     });
     
     describe("#truncate()", () => {

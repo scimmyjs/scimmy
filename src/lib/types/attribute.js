@@ -16,9 +16,10 @@ const BaseConfiguration = {
      * @property {Boolean|String[]} [referenceTypes=false] - list of referenced types if attribute type is reference
      * @property {String|Boolean} [uniqueness="none"] - the attribute's uniqueness characteristic
      * @property {String} [direction="both"] - whether the attribute should be present for inbound, outbound, or bidirectional requests
+     * @property {Boolean} [shadow=false] - whether the attribute should be hidden from schemas presented by the resource type endpoint
      */
     target: {
-        required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
+        shadow: false, required: false, mutable: true, multiValued: false, caseExact: false, returned: true,
         description: "", canonicalValues: false, referenceTypes: false, uniqueness: "none", direction: "both"
     },
     
@@ -32,7 +33,7 @@ const BaseConfiguration = {
     handler: (errorSuffix) => ({
         set: (target, key, value) => {
             // Make sure required, multiValued, and caseExact are booleans
-            if (["required", "multiValued", "caseExact"].includes(key) && (value !== undefined && typeof value !== "boolean"))
+            if (["required", "multiValued", "caseExact", "shadow"].includes(key) && (value !== undefined && typeof value !== "boolean"))
                 throw new TypeError(`Attribute '${key}' value must be either 'true' or 'false' in ${errorSuffix}`);
             // Make sure canonicalValues and referenceTypes are valid if they are specified
             if (["canonicalValues", "referenceTypes"].includes(key) && (value !== undefined && value !== false && !Array.isArray(value)))
@@ -399,7 +400,7 @@ export class Attribute {
             multiValued: this.config.multiValued,
             description: this.config.description,
             required: this.config.required,
-            ...(this.type === "complex" ? {subAttributes: this.subAttributes} : {}),
+            ...(this.type === "complex" ? {subAttributes: this.subAttributes.filter(a => (!a.config.shadow))} : {}),
             ...(this.config.caseExact === true || ["string", "reference", "binary"].includes(this.type) ? {caseExact: this.config.caseExact} : {}),
             ...(Array.isArray(this.config.canonicalValues) ? {canonicalValues: this.config.canonicalValues} : {}),
             mutability: (typeof this.config.mutable === "string" ? this.config.mutable
