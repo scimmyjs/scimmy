@@ -132,6 +132,34 @@ describe("SCIMMY.Types.Attribute", () => {
         });
     });
     
+    describe("#subAttributes", () => {
+        it("should not be defined when type is not 'complex'", () => {
+            assert.ok(!("subAttributes" in new Attribute("string", "test")),
+                "Instance member 'subAttributes' unexpectedly defined for non-complex attribute");
+        });
+        
+        it("should be an array when type is 'complex'", () => {
+            assert.ok("subAttributes" in new Attribute("complex", "test"),
+                "Instance member 'subAttributes' not defined for complex attribute type");
+            assert.ok(Array.isArray(new Attribute("complex", "test").subAttributes),
+                "Instance member 'subAttributes' not an array for complex attribute type");
+        });
+        
+        it("should expect new values to be Attribute instances", () => {
+            for (let value of ["test", undefined, false, 12]) {
+                assert.throws(() => new Attribute("complex", "test").subAttributes.push("test"),
+                    {name: "TypeError", message: "Complex attribute 'test' expected new subAttributes to be Attribute instances"},
+                    `Instance member 'subAttributes' did not prevent addition of new value '${value}'`);
+            }
+            
+            try {
+                new Attribute("complex", "test").subAttributes.push(new Attribute("string", "test"));
+            } catch (ex) {
+                assert.fail(`Instance member 'subAttributes' unexpectedly rejected addition of new Attribute instance\r\n${ex.stack}`);
+            }
+        });
+    });
+    
     describe("#toJSON()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new Attribute("string", "test")).toJSON === "function",
@@ -170,22 +198,63 @@ describe("SCIMMY.Types.Attribute", () => {
         it("should do nothing when type is not 'complex'", () => {
             const attribute = new Attribute("string", "test");
             const before = JSON.parse(JSON.stringify(attribute));
-            const after = JSON.parse(JSON.stringify(attribute.truncate()));
+            const after = JSON.parse(JSON.stringify(attribute.truncate("test")));
             
             assert.deepStrictEqual(after, before,
                 "Instance method 'truncate' modified non-complex attribute");
         });
         
-        it("should remove specified sub-attribute from 'subAttributes' collection", async () => {
+        it("should do nothing when specified sub-attribute instance does not exist", async () => {
+            const {truncate: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                const source = fixture.subAttributes.at(0);
+                const target = instantiateFromFixture({...source, name: `${source.name}_test`});
+                const expected = instantiateFromFixture(fixture);
+                const actual = instantiateFromFixture(fixture);
+                
+                try {
+                    actual.truncate(target.name);
+                } catch (ex) {
+                    assert.fail(`Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not ignore non-existent sub-attribute name '${target.name}'\r\n${ex.stack}`);
+                }
+                
+                try {
+                    actual.truncate(target);
+                } catch (ex) {
+                    assert.fail(`Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not ignore non-existent sub-attribute instance '${target.name}'\r\n${ex.stack}`);
+                }
+                
+                assert.deepStrictEqual(actual, expected,
+                    `Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} unexpectedly removed non-existent sub-attribute '${target.name}'`);
+            }
+        });
+        
+        it("should remove specified sub-attribute instance from 'subAttributes' collection", async () => {
             const {truncate: suite} = await fixtures;
             
             for (let fixture of suite) {
                 const attribute = instantiateFromFixture(fixture);
-                const comparison = {...fixture, subAttributes: [...fixture.subAttributes ?? []]};
-                const target = comparison.subAttributes.shift()?.name;
+                const expected = instantiateFromFixture({...fixture, subAttributes: (fixture.subAttributes ?? []).slice(1)});
+                const target = attribute.subAttributes.at(0);
+                const actual = attribute.truncate(target);
                 
-                assert.deepStrictEqual(JSON.parse(JSON.stringify(attribute.truncate(target))), comparison,
-                    `Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not remove specified sub-attribute '${target}'`);
+                assert.deepStrictEqual(actual, expected,
+                    `Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not remove specified sub-attribute '${target.name}'`);
+            }
+        });
+        
+        it("should find sub-attribute instance by name and remove from 'subAttributes' collection", async () => {
+            const {truncate: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                const attribute = instantiateFromFixture(fixture);
+                const expected = instantiateFromFixture({...fixture, subAttributes: (fixture.subAttributes ?? []).slice(1)});
+                const target = attribute.subAttributes.at(0).name;
+                const actual = attribute.truncate(target);
+                
+                assert.deepStrictEqual(actual, expected,
+                    `Attribute 'truncate' fixture #${suite.indexOf(fixture) + 1} did not find and remove specified sub-attribute by name '${target}'`);
             }
         });
     });
@@ -225,8 +294,8 @@ describe("SCIMMY.Types.Attribute", () => {
             
             try {
                 attribute.coerce();
-            } catch {
-                assert.fail("Instance method 'coerce' rejected empty value when attribute was not required");
+            } catch (ex) {
+                assert.fail(`Instance method 'coerce' rejected empty value when attribute was not required\r\n${ex.stack}`);
             }
             
             assert.ok(Array.isArray(attribute.coerce([])),
@@ -255,8 +324,8 @@ describe("SCIMMY.Types.Attribute", () => {
             
             try {
                 attribute.coerce("Test");
-            } catch {
-                assert.fail("Instance method 'coerce' rejected canonical value 'Test'");
+            } catch (ex) {
+                assert.fail(`Instance method 'coerce' rejected canonical value 'Test'\r\n${ex.stack}`);
             }
             
             assert.throws(() => attribute.coerce("a string"),
@@ -270,8 +339,8 @@ describe("SCIMMY.Types.Attribute", () => {
             
             try {
                 attribute.coerce(["Test"]);
-            } catch {
-                assert.fail("Instance method 'coerce' rejected canonical value 'Test'");
+            } catch (ex) {
+                assert.fail(`Instance method 'coerce' rejected canonical value 'Test'\r\n${ex.stack}`);
             }
             
             assert.throws(() => attribute.coerce(["a string"]),

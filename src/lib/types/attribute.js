@@ -333,8 +333,15 @@ export class Attribute {
         this.config = Object.seal(Object
             .assign(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix)), config));
         
-        // Store subAttributes
-        if (type === "complex") this.subAttributes = [...subAttributes];
+        // Store subAttributes, and make sure any additions are also attribute instances
+        if (type === "complex") this.subAttributes = new Proxy([...subAttributes], {
+            set: (target, key, value) => {
+                if (key === "length" || value instanceof Attribute) target[key] = value;
+                else throw new TypeError(`Complex attribute '${this.name}' expected new subAttributes to be Attribute instances`);
+                
+                return key === "length" || target.includes(value);
+            }
+        });
         
         // Prevent this attribute definition from changing!
         // Note: config and subAttributes can still be modified, just not replaced.
