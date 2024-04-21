@@ -45,7 +45,7 @@ SCIMMY.Resources.declare(class MyResourceType extends SCIMMY.Types.Resource {
           
 *   **Will this work with cloud service X/Y/Z?**
     *   Hopefully, but if not, feel free to open an issue with details of the cloud service you are integrating with.
-        SCIMMY has been tested against Azure AD, which didn't appear to have any issues.
+        SCIMMY has been tested against Microsoft Entra ID (formerly Azure AD), which didn't appear to have any issues.
         
 *   **What about the actual SCIM protocol HTTP endpoints?** 
     *   That's up to you, as we can't be sure exactly how you'd like to integrate SCIM in your code, 
