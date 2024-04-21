@@ -37,7 +37,7 @@ const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: 
  * *   Formats exceptions to conform to the [HTTP Status and Error Response Handling](https://datatracker.ietf.org/doc/html/rfc7644#section-3.12) section of the SCIM protocol, ensuring HTTP status codes and scimType error detail keyword pairs are valid.
  * *   When used to parse service provider responses, throws a new instance of `SCIMMY.Types.Error` with details sourced from the message.
  */
-export class Error {
+export class ErrorMessage extends Error {
     /**
      * SCIM Error Message Schema ID
      * @type {String}
@@ -57,11 +57,13 @@ export class Error {
      */
     constructor(ex = {}) {
         // Dereference parts of the exception
-        let {schemas = [], status = 500, scimType, message, detail = message} = ex,
-            errorSuffix = "SCIM Error Message constructor";
+        const {schemas = [], status = 500, scimType, message, detail = message} = ex;
+        const errorSuffix = "SCIM Error Message constructor";
+        
+        super(message, {cause: ex});
         
         // Rethrow SCIM Error messages when error message schema ID is present
-        if (schemas.includes(Error.#id))
+        if (schemas.includes(ErrorMessage.#id))
             throw new Types.Error(status, scimType, detail);
         // Validate the supplied parameters
         if (!validStatusCodes.includes(Number(status)))
@@ -72,7 +74,7 @@ export class Error {
             throw new TypeError(`HTTP status code '${Number(status)}' not valid for detail error keyword '${scimType}' in ${errorSuffix}`);
         
         // No exceptions thrown, assign the parameters to the instance
-        this.schemas = [Error.#id];
+        this.schemas = [ErrorMessage.#id];
         this.status = String(status);
         if (!!scimType) this.scimType = String(scimType);
         if (!!detail) this.detail = detail;

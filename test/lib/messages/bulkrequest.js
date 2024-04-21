@@ -6,7 +6,7 @@ import sinon from "sinon";
 import * as Resources from "#@/lib/resources.js";
 import {SCIMError} from "#@/lib/types/error.js";
 import {Resource} from "#@/lib/types/resource.js";
-import {Error as ErrorMessage} from "#@/lib/messages/error.js";
+import {ErrorMessage} from "#@/lib/messages/error.js";
 import {User} from "#@/lib/resources/user.js";
 import {Group} from "#@/lib/resources/group.js";
 import {BulkRequest} from "#@/lib/messages/bulkrequest.js";

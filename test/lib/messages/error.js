@@ -2,7 +2,7 @@ import {promises as fs} from "fs";
 import path from "path";
 import url from "url";
 import assert from "assert";
-import {Error as ErrorMessage} from "#@/lib/messages/error.js";
+import {ErrorMessage} from "#@/lib/messages/error.js";
 
 // Load data to use in tests from adjacent JSON file
 const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(import.meta.url)));
@@ -12,6 +12,11 @@ const params = {id: "urn:ietf:params:scim:api:messages:2.0:Error"};
 const template = {schemas: [params.id], status: "500"};
 
 describe("SCIMMY.Messages.Error", () => {
+    it("should extend native 'Error' class", () => {
+        assert.ok(new ErrorMessage() instanceof Error,
+            "SCIM Error message class did not extend native 'Error' class");
+    });
+    
     describe("@constructor", () => {
         it("should not require arguments", () => {
             assert.deepStrictEqual({...(new ErrorMessage())}, template,

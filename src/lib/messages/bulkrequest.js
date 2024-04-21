@@ -1,4 +1,4 @@
-import {Error as ErrorMessage} from "./error.js";
+import {ErrorMessage} from "./error.js";
 import {BulkResponse} from "./bulkresponse.js";
 import Types from "../types.js";
 import Resources from "../resources.js";
@@ -108,8 +108,8 @@ export class BulkRequest {
         const bulkIdTransients = [...bulkIds.keys()];
         
         // Establish error handling for the entire list of operations
+        const errorLimit = this.failOnErrors;
         let errorCount = 0,
-            errorLimit = this.failOnErrors,
             lastErrorIndex = this.Operations.length + 1;
         
         for (let op of this.Operations) results.push((async () => {
@@ -195,7 +195,7 @@ export class BulkRequest {
                     // If the reference is also waiting on us, we have ourselves a circular reference!
                     if (bulkId && !id && reference.referencedBy.includes(bulkId) && (bulkIdTransients.indexOf(bulkId) < referenceIndex)) {
                         // Attempt to POST self without reference so referenced operation can complete and give us its ID!
-                        let {id} = await new TargetResource().write(Object.entries(data)
+                        const {id} = await new TargetResource().write(Object.entries(data)
                             // Remove any values that reference a bulkId
                             .filter(([,v]) => !JSON.stringify(v).includes("bulkId:"))
                             .reduce((res, [k, v]) => Object.assign(res, {[k]: v}), {}));
