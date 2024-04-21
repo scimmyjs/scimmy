@@ -220,7 +220,7 @@ export class BulkRequest {
                 }
                 
                 // Get ready
-                const resource = new TargetResource(data?.id ?? id);
+                const resource = new TargetResource(method.toUpperCase() === "POST" ? undefined : id ?? data?.id);
                 let value;
                 
                 // Do the thing!
@@ -257,7 +257,10 @@ export class BulkRequest {
                 errorCount++;
                 
                 // Also reject the pending bulkId promise as no resource ID can exist
-                if (bulkId && bulkIds.has(bulkId)) bulkIds.get(bulkId).reject(error);
+                if (bulkId && bulkIds.has(bulkId)) {
+                    bulkIds.get(bulkId).reject(error);
+                    bulkIds.get(bulkId).catch(() => {});
+                }
             }
             
             return result;
