@@ -352,7 +352,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
             
             await (new BulkRequest({...template, Operations})).apply([TestStubbed]);
             
-            assert.ok(stub.called && stub.getCall(0)?.args?.length === 0, 
+            assert.ok(stub.calledOnce,
                 "Instance method 'apply' did not dispose of newly created resource when circular bulkId operation failed");
         });
         
@@ -384,7 +384,7 @@ describe("SCIMMY.Messages.BulkRequest", () => {
                 
                 await (new BulkRequest({...template, Operations})).apply([TestStubbed]);
                 
-                assert.ok(method !== "DELETE" ? stub.calledWithMatch(data) : stub.getCall(0)?.args?.length === 0,
+                assert.ok(method !== "DELETE" ? stub.calledWith(sinon.match.same(data)) : stub.calledOnce,
                     `Instance method 'apply' did not call resource instance '${fn}' method when 'method' attribute value was ${method}`);
             });
         }

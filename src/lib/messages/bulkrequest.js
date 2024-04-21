@@ -76,9 +76,10 @@ export class BulkRequest {
     /**
      * Apply the operations specified by the supplied BulkRequest 
      * @param {typeof SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing bulk operations, defaults to declared resources
+     * @param {*} [ctx] - any additional context information to pass to the ingress, egress, and degress handlers
      * @returns {SCIMMY.Messages.BulkResponse} a new BulkResponse Message instance with results of the requested operations 
      */
-    async apply(resourceTypes = Object.values(Resources.declared())) {
+    async apply(resourceTypes = Object.values(Resources.declared()), ctx) {
         // Bail out if BulkRequest message has already been applied
         if (this.#dispatched) 
             throw new TypeError("BulkRequest 'apply' method must not be called more than once");
@@ -198,7 +199,7 @@ export class BulkRequest {
                         const {id} = await new TargetResource().write(Object.entries(data)
                             // Remove any values that reference a bulkId
                             .filter(([,v]) => !JSON.stringify(v).includes("bulkId:"))
-                            .reduce((res, [k, v]) => Object.assign(res, {[k]: v}), {}));
+                            .reduce((res, [k, v]) => Object.assign(res, {[k]: v}), {}), ctx);
                         
                         // Set the ID for future use and resolve pending references
                         Object.assign(data, {id})
@@ -210,7 +211,7 @@ export class BulkRequest {
                         data = Object.assign(JSON.parse(jsonData.replaceAll(`bulkId:${referenceId}`, await reference)), {id: data.id});
                     } catch (ex) {
                         // Referenced POST operation precondition failed, remove any created resource and bail out
-                        if (bulkId && data.id) await new TargetResource(data.id).dispose();
+                        if (bulkId && data.id) await new TargetResource(data.id).dispose(ctx);
                         
                         // If we're following on from a prior failure, no need to explain why, otherwise, explain the failure
                         if (ex instanceof ErrorMessage && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
@@ -226,16 +227,16 @@ export class BulkRequest {
                 switch (method.toUpperCase()) {
                     case "POST":
                     case "PUT":
-                        value = await resource.write(data);
+                        value = await resource.write(data, ctx);
                         if (bulkId && !resource.id && value?.id) bulkIds.get(bulkId).resolve(value?.id); 
                         break;
                         
                     case "PATCH":
-                        value = await resource.patch(data);
+                        value = await resource.patch(data, ctx);
                         break;
                         
                     case "DELETE":
-                        await resource.dispose();
+                        await resource.dispose(ctx);
                         break;
                 }
                 

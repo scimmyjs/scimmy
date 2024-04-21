@@ -105,9 +105,10 @@ export class SearchRequest {
     /**
      * Apply a search request operation, retrieving results from specified resource types
      * @param {typeof SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing the search request, defaults to declared resources
+     * @param {*} [ctx] - any additional context information to pass to the egress handler
      * @returns {SCIMMY.Messages.ListResponse} a ListResponse message with results of the search request 
      */
-    async apply(resourceTypes = Object.values(Resources.declared())) {
+    async apply(resourceTypes = Object.values(Resources.declared()), ctx) {
         // Make sure all specified resource types extend the Resource type class so operations can be processed correctly 
         if (!Array.isArray(resourceTypes) || !resourceTypes.every(r => r.prototype instanceof Types.Resource))
             throw new TypeError("Expected 'resourceTypes' parameter to be an array of Resource type classes in 'apply' method of SearchRequest");
@@ -122,12 +123,12 @@ export class SearchRequest {
         // If only one resource type, just read from it
         if (resourceTypes.length === 1) {
             const [Resource] = resourceTypes;
-            return new Resource({...this, ...request}).read();
+            return new Resource({...this, ...request}).read(ctx);
         }
         // Otherwise, read from all resources and return collected results
         else {
             // Read from, and unwrap results for, supplied resource types
-            const results = await Promise.all(resourceTypes.map((Resource) => new Resource(request).read()))
+            const results = await Promise.all(resourceTypes.map((Resource) => new Resource(request).read(ctx)))
                 .then((r) => r.map((l) => l.Resources));
             
             // Collect the results in a list response with specified constraints
