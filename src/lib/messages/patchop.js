@@ -1,4 +1,4 @@
-import {isDeepStrictEqual} from "util";
+import isDeepStrictEqual from "fast-deep-equal";
 import Types from "../types.js";
 
 /**
