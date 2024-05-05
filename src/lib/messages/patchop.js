@@ -1,4 +1,3 @@
-import {isDeepStrictEqual} from "util";
 import Types from "../types.js";
 
 /**
@@ -16,6 +15,37 @@ const validOps = ["add", "remove", "replace"];
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
 const multiValuedFilter = /^(.+?)(\[(?:.*?)])?$/g;
+
+/**
+ * Deeply compare two objects, arrays, or primitive values to see if there are any differences 
+ * @param {Object} original - object with original property values to compare against 
+ * @param {*} original - original value to test equality against 
+ * @param {Object} current - object with potentially changed property values to search for
+ * @param {*} current - current value to test equality against
+ * @param {String[]} [keys] - unused placeholder for storing object keys to avoid multiple calls to Object.keys 
+ * @returns {Boolean} whether any properties or values at any level are different
+ * @private
+ */
+const hasChanges = (original, current, keys) => (
+    // If the values are the same, they are unchanged...
+    original === current ? false :
+    // If the original value is an array...
+    Array.isArray(original) ? (
+        // ...make sure the current value is also an array with matching length, then see if any values have changed
+        (original.length !== (current ?? []).length) || (original.some((v, i) => hasChanges(v, current[i])))
+    // Otherwise, if the original and current values are both non-null objects, compare property values
+    ) : (original !== null && current !== null && typeof original === "object" && typeof current === "object") ? (
+        // Compare underlying value of Date instances, since they are also "objects"
+        original instanceof Date ? original.valueOf() !== current.valueOf() :
+        // Cheaply see if key lengths differ...
+        (keys = Object.keys(original)).length !== Object.keys(current).length ? true :
+        // ...before expensively traversing object properties for changes    
+        (keys.some((k) => (!(k in current) || hasChanges(original[k], current[k]))))
+    ) : (
+        // Fall back on whether both values are NaN
+        (original === original && current === current)
+    )
+);
 
 /**
  * SCIM Patch Operation Message
@@ -162,7 +192,7 @@ export class PatchOp {
             this.#target = new this.#target.constructor(await finalise(this.#target));
         
         // Only return value if something has changed
-        if (!isDeepStrictEqual({...this.#source, meta: undefined}, {...this.#target, meta: undefined}))
+        if (hasChanges({...this.#source, meta: undefined}, {...this.#target, meta: undefined}))
             return this.#target;
     }
     
@@ -218,7 +248,7 @@ export class PatchOp {
         }
         
         // No targets, bail out!
-        if (targets.length === 0)
+        if (targets.length === 0 && op !== "remove")
             throw new Types.Error(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
         
         /**

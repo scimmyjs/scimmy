@@ -19,7 +19,7 @@ const TestSchema = createSchemaClass({
         new Attribute("string", "nickName"), new Attribute("string", "password", {direction: "in", returned: false}),
         new Attribute("complex", "name", {}, [new Attribute("string", "formatted"), new Attribute("string", "honorificPrefix")]),
         new Attribute("complex", "emails", {multiValued: true}, [new Attribute("string", "value"), new Attribute("string", "type")]),
-        new Attribute("string", "throws")
+        new Attribute("string", "throws"), new Attribute("dateTime", "date")
     ]
 });
 
@@ -172,6 +172,21 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 {name: "SCIMError", status: 400, scimType: "invalidSyntax",
                     message: `Invalid operation 'test' for operation 1 in PatchOp request body`},
                 "Instance method 'apply' did not throw correct SCIMError at invalid operation with 'op' value 'test'");
+        });
+        
+        it("should return nothing when applied PatchOp does not modify resource", async () => {
+            const instance = new TestSchema({id: "1234", userName: "asdf", date: "2017-06-16T21:36:48.362Z", emails: [{type: "work", value: "test@example.org"}]});
+            const message = new PatchOp({
+                ...template, Operations: [
+                    {op: "remove", path: "date"},
+                    {op: "remove", path: `emails[type eq "work" and value ew "example.com"]`},
+                    {op: "add", value: {date: "2017-06-16T21:36:48.362Z"}},
+                    {op: "replace", path: "date", value: "2017-06-16T21:36:48.362Z"}
+                ]
+            });
+            
+            assert.deepStrictEqual(await message.apply(instance), undefined,
+                "Instance method 'apply' did not return nothing when resource was not modified");
         });
         
         for (let op of ["add", "remove", "replace"]) {
