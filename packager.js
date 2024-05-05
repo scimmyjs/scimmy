@@ -29,7 +29,7 @@ export class Packager {
      */
     static #assets = {
         entry: "scimmy.js",
-        externals: ["util"],
+        externals: [],
         chunks: {
             "lib/config": [`${Packager.paths.src}/lib/config.js`],
             "lib/types": [`${Packager.paths.src}/lib/types.js`],
