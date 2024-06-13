@@ -21,9 +21,9 @@ export class EnterpriseUser extends Types.Schema {
         new Types.Attribute("string", "division", {description: "Identifies the name of a division."}),
         new Types.Attribute("string", "department", {description: "Identifies the name of a department."}),
         new Types.Attribute("complex", "manager", {uniqueness: false, description: "The User's manager.  A complex type that optionally allows service providers to represent organizational hierarchy by referencing the 'id' attribute of another User."}, [
-            new Types.Attribute("string", "value", {required: true, description: "The id of the SCIM resource representing the User's manager.  REQUIRED."}),
-            new Types.Attribute("reference", "$ref", {referenceTypes: ["User"], description: "The URI of the SCIM resource representing the User's manager.  REQUIRED."}),
-            new Types.Attribute("string", "displayName", {mutable: false, description: "The displayName of the User's manager. OPTIONAL and READ-ONLY."})
+            new Types.Attribute("string", "value", {description: "The id of the SCIM resource representing the User's manager."}),
+            new Types.Attribute("reference", "$ref", {referenceTypes: ["User"], description: "The URI of the SCIM resource representing the User's manager."}),
+            new Types.Attribute("string", "displayName", {mutable: false, description: "The displayName of the User's manager."})
         ])
     ]);
     
