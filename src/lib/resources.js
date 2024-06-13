@@ -23,8 +23,8 @@ import Schemas from "./schemas.js";
  * This method will add the given resource type implementation to the list of declared resource types, and automatically
  * declare the resource type's schema, and any schema extensions it may have, to the `{@link SCIMMY.Schemas}` class.
  * ```
- * // Declare several resource types at once 
- * SCIMMY.Resources.declare(SCIMMY.Resources.User).declare(SCIMMY.Resources.Group);
+ * // Declare several resource types at once
+ * SCIMMY.Resources.declare(SCIMMY.Resources.User, {}).declare(SCIMMY.Resources.Group, {});
  * ```
  * 
  * Once declared, resource type implementations are made available to the `{@link SCIMMY.Resources.ResourceType}`
