@@ -1,0 +1,20 @@
+name: CI Report
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+permissions:
+  contents: read
+  actions: read
+  checks: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dorny/test-reporter@v1
+        with:
+          artifact: test-results
+          name: Report on Unit Tests
+          path: test/results-report.json
+          reporter: mocha-json

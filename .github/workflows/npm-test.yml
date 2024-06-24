@@ -1,12 +1,12 @@
-name: Run NPM Test
-
+name: CI
 on:
   pull_request:
   push:
-
+    branches:
+      - main
 jobs:
   test-ci:
-    name: Run CI Unit Tests
+    name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,12 +14,10 @@ jobs:
         with:
           node-version: 20
       - run: |
-          npm install --ignore-scripts true
+          npm ci
           npm run test:ci
-      - name: Test Report
-        uses: dorny/test-reporter@v1
+      - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: Report on Unit Tests
+          name: test-results
           path: test/results-report.json
-          reporter: mocha-json
