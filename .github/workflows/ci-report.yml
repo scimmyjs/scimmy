@@ -10,11 +10,17 @@ permissions:
   checks: write
 jobs:
   report:
+    name: Report on Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: dorny/test-reporter@v1
+      - id: report
+        uses: dorny/test-reporter@v1
         with:
           artifact: test-results
-          name: Report on Unit Tests
-          path: test/results-report.json
+          name: Unit Test Results
+          path: results-report.json
           reporter: mocha-json
+      - run: |
+          echo ":white_check_mark: ${{ steps.report.outputs.passed }} passed / :x: ${{ steps.report.outputs.failed }} failed / :white_circle: ${{ steps.report.outputs.skipped }} skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Full Report](${{ steps.report.outputs.url_html }})" >> $GITHUB_STEP_SUMMARY
