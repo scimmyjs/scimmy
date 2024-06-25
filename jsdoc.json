@@ -19,6 +19,7 @@
   "templates": {
     "classy": {
       "name": "SCIMMY",
+      "icon": "assets/icon.svg",
       "logo": "assets/logo.svg",
       "showName": false,
       "apiEntry": "SCIMMY"
