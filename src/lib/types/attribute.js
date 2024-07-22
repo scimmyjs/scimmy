@@ -308,7 +308,7 @@ export class Attribute {
     constructor(type, name, config = {}, subAttributes = []) {
         const errorSuffix = `attribute definition '${name}'`;
         // Check for invalid characters in attribute name
-        const [, invalidNameChar] = /^(?:.*?)([^$\-_a-zA-Z0-9])(?:.*?)$/g.exec(name) ?? [];
+        const [, invalidNameChar, invalidNameStart] = /([^-$\w])|(^[^$\w])/g.exec(name) ?? [];
         
         // Make sure name and type are supplied as strings
         for (let [param, value] of [["type", type], ["name", name]]) if (typeof value !== "string")
@@ -316,7 +316,10 @@ export class Attribute {
         // Make sure type is valid
         if (!CharacteristicValidity.types.includes(type))
             throw new TypeError(`Type '${type}' not recognised in ${errorSuffix}`);
-        // Make sure name is valid
+        // Make sure first character in name is valid
+        if (!!invalidNameStart)
+            throw new TypeError(`Invalid leading character '${invalidNameStart}' in name of ${errorSuffix}`);
+        // Make sure rest of name is valid
         if (!!invalidNameChar)
             throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
         // Make sure attribute type is 'complex' if subAttributes are defined

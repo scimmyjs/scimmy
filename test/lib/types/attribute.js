@@ -71,20 +71,34 @@ describe("SCIMMY.Types.Attribute", () => {
                 [".", "invalid.name"],
                 ["@", "invalid@name"],
                 ["=", "invalid=name"],
-                ["%", "invalid%name"]
+                [",", "invalid,name"],
+                ["%", "invalid%name"],
+                ["%", "%invalidName"],
+                ["-", "-invalidName"]
             ];
             
             for (let [char, name] of invalidNames) {
                 assert.throws(() => new Attribute("string", name),
-                    {name: "TypeError", message: `Invalid character '${char}' in name of attribute definition '${name}'`},
-                    "Attribute instantiated with invalid 'name' argument");
+                    {name: "TypeError", message: `Invalid ${name.startsWith("-") ? "leading character" : "character"} '${char}' in name of attribute definition '${name}'`},
+                    `Attribute instantiated with invalid 'name' argument '${name}'`);
             }
             
-            for (let name of ["validName", "$ref", "valid$Name"]) {
+            const validNames = [
+                "validName",
+                "$validName",
+                "valid$name",
+                "_validName",
+                "valid_name",
+                "valid-name",
+                "00validName",
+                "valid00name"
+            ];
+            
+            for (let name of validNames) {
                 try {
                     new Attribute("string", name);
                 } catch (ex) {
-                    assert.fail(`Attribute did not instantiate with valid 'name' argument '${name}'\r\n${ex.stack}`);
+                    assert.fail(`Attribute did not instantiate with valid 'name' argument '${name}'\r\n[cause]: ${ex}`);
                 }
             }
         });
