@@ -8,12 +8,15 @@
       {"source": "name.formatted sw \"Bob\"", "target": [{"name": {"formatted": ["sw", "Bob"]}}]},
       {"source": "quota gt 1.5", "target": [{"quota": ["gt", 1.5]}]},
       {"source": "UserType eq null", "target": [{"userType": ["eq", null]}]},
+      {"source": "$ref eq null", "target": [{"$ref": ["eq", null]}]},
+      {"source": "valid$Name eq null", "target": [{"valid$Name": ["eq", null]}]},
       {"source": "active eq false", "target": [{"active": ["eq", false]}]},
       {"source": "emails.primary eq true", "target": [{"emails": {"primary": ["eq", true]}}]}
     ],
     "logical": [
       {"source": "not eq pr", "target": [{"eq": ["not", "pr"]}]},
       {"source": "NOT id pr", "target": [{"id": ["not", "pr"]}]},
+      {"source": "$ref eq null and value eq \"f648f8d5ea4e4cd38e9c\"", "target": [{"$ref": ["eq", null], "value": ["eq", "f648f8d5ea4e4cd38e9c"]}]},
       {"source": "id pr and userName eq \"Test\"", "target": [{"id": ["pr"], "userName": ["eq", "Test"]}]},
       {"source": "userName eq \"Test\" or displayName co \"Bob\"", "target": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"]}]},
       {"source": "userName eq \"Test\" or displayName co \"Bob\" and quota gt 5", "target": [{"userName": ["eq", "Test"]}, {"displayName": ["co", "Bob"], "quota": ["gt", 5]}]},

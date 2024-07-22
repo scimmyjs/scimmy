@@ -23,7 +23,7 @@ const operators = ["and", "or", "not"];
  */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 // Parsing Pattern Matcher
-const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(false|true)+|(null)+|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)][.]?)|(\w[-\w._:\/%]*))/;
+const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(false|true)+|(null)+|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)][.]?)|([\w$][-\w$._:\/%]*))/;
 // Split a path by fullstops when they aren't in a filter group or decimal
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
