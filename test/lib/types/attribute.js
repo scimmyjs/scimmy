@@ -73,13 +73,12 @@ describe("SCIMMY.Types.Attribute", () => {
                 ["=", "invalid=name"],
                 [",", "invalid,name"],
                 ["%", "invalid%name"],
-                ["%", "%invalidName"],
-                ["-", "-invalidName"]
+                ["%", "%invalidName"]
             ];
             
             for (let [char, name] of invalidNames) {
                 assert.throws(() => new Attribute("string", name),
-                    {name: "TypeError", message: `Invalid ${name.startsWith("-") ? "leading character" : "character"} '${char}' in name of attribute definition '${name}'`},
+                    {name: "TypeError", message: `Invalid character '${char}' in name of attribute definition '${name}'`},
                     `Attribute instantiated with invalid 'name' argument '${name}'`);
             }
             
@@ -89,6 +88,7 @@ describe("SCIMMY.Types.Attribute", () => {
                 "valid$name",
                 "_validName",
                 "valid_name",
+                "-validName",
                 "valid-name",
                 "00validName",
                 "valid00name"

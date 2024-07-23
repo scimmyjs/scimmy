@@ -308,7 +308,7 @@ export class Attribute {
     constructor(type, name, config = {}, subAttributes = []) {
         const errorSuffix = `attribute definition '${name}'`;
         // Check for invalid characters in attribute name
-        const [, invalidNameChar, invalidNameStart] = /([^-$\w])|(^[^$\w])/g.exec(name) ?? [];
+        const [, invalidNameChar, invalidNameStart] = /([^-$\w])|(^[^-$\w])/g.exec(name) ?? [];
         
         // Make sure name and type are supplied as strings
         for (let [param, value] of [["type", type], ["name", name]]) if (typeof value !== "string")
