@@ -10,6 +10,7 @@
       {"source": "UserType eq null", "target": [{"userType": ["eq", null]}]},
       {"source": "$ref eq null", "target": [{"$ref": ["eq", null]}]},
       {"source": "valid$Name eq null", "target": [{"valid$Name": ["eq", null]}]},
+      {"source": "-valid$Name eq -null", "target": [{"-valid$Name": ["eq", "-null"]}]},
       {"source": "active eq false", "target": [{"active": ["eq", false]}]},
       {"source": "emails.primary eq true", "target": [{"emails": {"primary": ["eq", true]}}]}
     ],
