@@ -26,7 +26,7 @@ const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr",
 // Regular expressions that represent filter syntax
 const lexicon = [
     // White Space, Number Values
-    /(\s+)/, /([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)/,
+    /(\s+)/, /([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)(?![\w+-])/,
     // Boolean Values, Empty Values, String Values
     /(false|true)+/, /(null)+/, /("(?:[^"]|\\.|\n)*")/,
     // Logical Groups, Complex Attribute Value Filters

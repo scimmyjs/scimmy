@@ -7,12 +7,16 @@
       {"source": "displayName co \"Bob\"", "target": [{"displayName": ["co", "Bob"]}]},
       {"source": "name.formatted sw \"Bob\"", "target": [{"name": {"formatted": ["sw", "Bob"]}}]},
       {"source": "quota gt 1.5", "target": [{"quota": ["gt", 1.5]}]},
+      {"source": "quota gt 2e2", "target": [{"quota": ["gt", 2e2]}]},
       {"source": "UserType eq null", "target": [{"userType": ["eq", null]}]},
       {"source": "$ref eq null", "target": [{"$ref": ["eq", null]}]},
       {"source": "valid$Name eq null", "target": [{"valid$Name": ["eq", null]}]},
       {"source": "-valid$Name eq -null", "target": [{"-valid$Name": ["eq", "-null"]}]},
       {"source": "active eq false", "target": [{"active": ["eq", false]}]},
-      {"source": "emails.primary eq true", "target": [{"emails": {"primary": ["eq", true]}}]}
+      {"source": "emails.primary eq true", "target": [{"emails": {"primary": ["eq", true]}}]},
+      {"source": "value eq 123abc", "target": [{"value": ["eq", "123abc"]}]},
+      {"source": "value eq 123", "target": [{"value": ["eq", 123]}]},
+      {"source": "value eq 123abc5e4", "target": [{"value": ["eq", "123abc5e4"]}]}
     ],
     "logical": [
       {"source": "not eq pr", "target": [{"eq": ["not", "pr"]}]},
