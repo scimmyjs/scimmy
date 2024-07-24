@@ -22,55 +22,115 @@
         "ops": [
           {"op": "add", "path": "name", "value": {"formatted": "Test"}}
         ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"value": "123abc"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"value": "123abc", "$ref": "User"}]},
+        "ops": [
+          {"op": "add", "path": "members[value eq 123abc].$ref", "value": "User"}
+        ]
       }
     ],
     "remove": [
       {
         "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
         "target": {"id": "1234", "userName": "asdf"},
-        "ops": [{"op": "remove", "path": "name"}]
+        "ops": [
+          {"op": "remove", "path": "name"}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}, {"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
-        "ops": [{"op": "remove", "path": "emails", "value": {"type": "home"}}]
+        "ops": [
+          {"op": "remove", "path": "emails", "value": {"type": "home"}}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
         "target": {"id": "1234", "userName": "asdf"},
-        "ops": [{"op": "remove", "path": "emails[type eq \"work\"]"}]
+        "ops": [
+          {"op": "remove", "path": "emails[type eq \"work\"]"}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"$ref": "User", "value": "f648f8d5ea4e4cd38e9c"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"$ref": "User", "value": "f648f8d5ea4e4cd38e9c"}]},
+        "ops": [
+          {"op": "remove", "path": "members", "value": [{"$ref": null, "value": "f648f8d5ea4e4cd38e9c"}]}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"$ref": "User", "value": "f648f8d5ea4e4cd38e9c"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"$ref": "User", "value": "f648f8d5ea4e4cd38e9c"}]},
+        "ops": [
+          {"op": "remove", "path": "members[$ref eq null and value eq \"f648f8d5ea4e4cd38e9c\"]"}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"value": "123abc"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}]},
+        "ops": [
+          {"op": "remove", "path": "members", "value": [{"value": "123abc"}]}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"value": "123abc"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}]},
+        "ops": [
+          {"op": "remove", "path": "members[value eq \"123abc\"]"}
+        ]
+      },
+      {
+        "source": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}, {"value": "123abc"}]},
+        "target": {"id": "1234", "userName": "asdf", "members": [{"value": "f648f8d5ea4e4cd38e9c"}]},
+        "ops": [
+          {"op": "Remove", "path": "members[value eq 123abc]"}
+        ]
       }
     ],
     "replace": [
       {
         "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
         "target": {"id": "1234", "userName": "ghjk", "name": {"honorificPrefix": "Mr"}},
-        "ops": [{"op": "replace", "path": "userName", "value": "ghjk"}]
+        "ops": [
+          {"op": "replace", "path": "userName", "value": "ghjk"}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "name": {"honorificPrefix": "Mr"}},
         "target": {"id": "1234", "userName": "asdf", "name": {"formatted": "Test"}},
-        "ops": [{"op": "replace", "path": "name", "value": {"formatted": "Test"}}]
+        "ops": [
+          {"op": "replace", "path": "name", "value": {"formatted": "Test"}}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
-        "ops": [{"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}]
+        "ops": [
+          {"op": "replace", "path": "emails", "value": {"type": "work", "value": "test@example.com"}}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "home", "value": "asdf@dsaf.com"}, {"type": "work", "value": "test@example.com"}]},
-        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+        "ops": [
+          {"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
-        "ops": [{"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}]
+        "ops": [
+          {"op": "replace", "path": "emails[type eq \"work\"]", "value": {"type": "work", "value": "test@example.com"}}
+        ]
       },
       {
         "source": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "asdf@dsaf.com"}]},
         "target": {"id": "1234", "userName": "asdf", "emails": [{"type": "work", "value": "test@example.com"}]},
-        "ops": [{"op": "replace", "path": "emails[type eq \"work\"].value", "value": "test@example.com"}]
+        "ops": [
+          {"op": "replace", "path": "emails[type eq \"work\"].value", "value": "test@example.com"}
+        ]
       }
     ]
   }

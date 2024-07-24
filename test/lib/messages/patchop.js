@@ -19,7 +19,13 @@ const TestSchema = createSchemaClass({
         new Attribute("string", "nickName"), new Attribute("string", "password", {direction: "in", returned: false}),
         new Attribute("complex", "name", {}, [new Attribute("string", "formatted"), new Attribute("string", "honorificPrefix")]),
         new Attribute("complex", "emails", {multiValued: true}, [new Attribute("string", "value"), new Attribute("string", "type")]),
-        new Attribute("string", "throws"), new Attribute("dateTime", "date")
+        new Attribute("string", "throws"), new Attribute("dateTime", "date"),
+        new Attribute("complex", "members", {multiValued: true, uniqueness: false}, [
+            new Attribute("string", "value", {mutable: "immutable"}),
+            new Attribute("string", "display", {mutable: "immutable"}),
+            new Attribute("reference", "$ref", {mutable: "immutable", referenceTypes: ["User", "Group"]}),
+            new Attribute("string", "type", {mutable: "immutable", canonicalValues: ["User", "Group"]})
+        ])
     ]
 });
 

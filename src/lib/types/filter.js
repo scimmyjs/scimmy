@@ -26,7 +26,7 @@ const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr",
 // Regular expressions that represent filter syntax
 const lexicon = [
     // White Space, Number Values
-    /(\s+)/, /([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)/,
+    /(\s+)/, /([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)(?![\w+-])/,
     // Boolean Values, Empty Values, String Values
     /(false|true)+/, /(null)+/, /("(?:[^"]|\\.|\n)*")/,
     // Logical Groups, Complex Attribute Value Filters
@@ -311,8 +311,9 @@ export class Filter extends Array {
                         const negate = (expression[0].toLowerCase() === "not");
                         let [comparator, expected] = expression.slice(((+negate) - expression.length));
                         
-                        // Cast true and false strings to boolean values
-                        expected = (expected === "false" ? false : (expected === "true" ? true : expected));
+                        // For equality tests, cast true and false strings to boolean values, maintaining EntraID support
+                        if (["eq", "ne"].includes(comparator.toLowerCase()) && typeof actual === "boolean" && typeof expected === "string")
+                            expected = (expected.toLowerCase() === "false" ? false : (expected.toLowerCase() === "true" ? true : expected));
                         
                         switch (comparator.toLowerCase()) {
                             default:
@@ -320,11 +321,11 @@ export class Filter extends Array {
                                 break;
                             
                             case "eq":
-                                result = (actual === expected);
+                                result = (actual === (expected ?? undefined));
                                 break;
                             
                             case "ne":
-                                result = (actual !== expected);
+                                result = (actual !== (expected ?? undefined));
                                 break;
                             
                             case "co":
