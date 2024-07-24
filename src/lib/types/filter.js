@@ -311,8 +311,9 @@ export class Filter extends Array {
                         const negate = (expression[0].toLowerCase() === "not");
                         let [comparator, expected] = expression.slice(((+negate) - expression.length));
                         
-                        // Cast true and false strings to boolean values
-                        expected = (expected === "false" ? false : (expected === "true" ? true : expected));
+                        // For equality tests, cast true and false strings to boolean values, maintaining EntraID support
+                        if (["eq", "ne"].includes(comparator.toLowerCase()) && typeof actual === "boolean" && typeof expected === "string")
+                            expected = (expected.toLowerCase() === "false" ? false : (expected.toLowerCase() === "true" ? true : expected));
                         
                         switch (comparator.toLowerCase()) {
                             default:

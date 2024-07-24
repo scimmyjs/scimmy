@@ -293,7 +293,10 @@
         {"expression": {"userName": ["np"]}, "expected": []},
         {"expression": {"exists": ["np"]}, "expected": [2, 4]},
         {"expression": {"exists": ["eq", null]}, "expected": [2, 4]},
-        {"expression": {"exists": ["ne", null]}, "expected": [1, 3]}
+        {"expression": {"exists": ["ne", null]}, "expected": [1, 3]},
+        {"expression": {"exists": ["eq", true]}, "expected": [1]},
+        {"expression": {"exists": ["eq", "True"]}, "expected": [1]},
+        {"expression": {"exists": ["eq", "False"]}, "expected": [3]}
       ],
       "nesting": [
         {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
