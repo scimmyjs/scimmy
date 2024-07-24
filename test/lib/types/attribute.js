@@ -70,18 +70,37 @@ describe("SCIMMY.Types.Attribute", () => {
             const invalidNames = [
                 [".", "invalid.name"],
                 ["@", "invalid@name"],
-                ["=", "invalid=name"], 
-                ["%", "invalid%name"]
+                ["=", "invalid=name"],
+                [",", "invalid,name"],
+                ["%", "invalid%name"],
+                ["%", "%invalidName"]
             ];
             
             for (let [char, name] of invalidNames) {
                 assert.throws(() => new Attribute("string", name),
                     {name: "TypeError", message: `Invalid character '${char}' in name of attribute definition '${name}'`},
-                    "Attribute instantiated with invalid 'name' argument");
+                    `Attribute instantiated with invalid 'name' argument '${name}'`);
             }
             
-            assert.ok(new Attribute("string", "validName"),
-                "Attribute did not instantiate with valid 'name' argument");
+            const validNames = [
+                "validName",
+                "$validName",
+                "valid$name",
+                "_validName",
+                "valid_name",
+                "-validName",
+                "valid-name",
+                "00validName",
+                "valid00name"
+            ];
+            
+            for (let name of validNames) {
+                try {
+                    new Attribute("string", name);
+                } catch (ex) {
+                    assert.fail(`Attribute did not instantiate with valid 'name' argument '${name}'\r\n[cause]: ${ex}`);
+                }
+            }
         });
         
         it("should not accept 'subAttributes' argument if type is not 'complex'", () => {

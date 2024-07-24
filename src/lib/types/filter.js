@@ -22,8 +22,24 @@ const operators = ["and", "or", "not"];
  * @default
  */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
+
+// Regular expressions that represent filter syntax
+const lexicon = [
+    // White Space, Number Values
+    /(\s+)/, /([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)/,
+    // Boolean Values, Empty Values, String Values
+    /(false|true)+/, /(null)+/, /("(?:[^"]|\\.|\n)*")/,
+    // Logical Groups, Complex Attribute Value Filters
+    /(\((?:.*?)\))/, /(\[(?:.*?)][.]?)/,
+    // Logical Operators and Comparators
+    new RegExp(`(${operators.join("|")})(?=[^a-zA-Z0-9]|$)`),
+    new RegExp(`(${comparators.join("|")})(?=[^a-zA-Z0-9]|$)`),
+    // All other "words"
+    /([-$\w][-$\w._:\/%]*)/
+];
+
 // Parsing Pattern Matcher
-const patterns = /^(?:(\s+)|(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(false|true)+|(null)+|("(?:[^"]|\\.|\n)*")|(\((?:.*?)\))|(\[(?:.*?)][.]?)|(\w[-\w._:\/%]*))/;
+const patterns = new RegExp(`^(?:${lexicon.map(({source}) => source).join("|")})`, "i");
 // Split a path by fullstops when they aren't in a filter group or decimal
 const pathSeparator = /(?<![^\w]\d)\.(?!\d[^\w]|[^[]*])/g;
 // Extract attributes and filter strings from path parts
@@ -477,7 +493,7 @@ export class Filter extends Array {
         // Cycle through the query and tokenise it until it can't be tokenised anymore
         while (token = patterns.exec(query)) {
             // Extract the different matches from the token
-            const [literal, space, number, boolean, empty, string, grouping, attribute, maybeWord] = token;
+            const [literal, space, number, boolean, empty, string, grouping, complex, operator, comparator, maybeWord] = token;
             let word = maybeWord;
             
             // If the token isn't whitespace, handle it!
@@ -488,35 +504,40 @@ export class Filter extends Array {
                 if (boolean !== undefined) tokens.push({type: "Boolean", value: boolean === "true"});
                 if (empty !== undefined) tokens.push({type: "Empty", value: "null"});
                 
+                // Handle logical operators and comparators
+                if (operator !== undefined) tokens.push({type: "Operator", value: operator});
+                if (comparator !== undefined) tokens.push({type: "Comparator", value: comparator});
+                
                 // Handle grouped filters
                 if (grouping !== undefined) tokens.push({type: "Group", value: grouping.substring(1, grouping.length - 1)});
                 
-                // Handle attribute filters inline
-                if (attribute !== undefined) word = tokens.pop().value + attribute;
+                // Treat complex attribute filters as words
+                if (complex !== undefined) word = tokens.pop().value + complex;
                 
-                // Handle operators, comparators, and attribute names
+                // Handle attribute names (words), and unescaped string values
                 if (word !== undefined) {
-                    // Compound words when last token was a word ending with "."
-                    if (tokens.length && tokens[tokens.length-1].type === "Word" && tokens[tokens.length-1].value.endsWith("."))
-                        word = tokens.pop().value + word;
-                    
-                    // Derive the token's type by matching against known operators and comparators
-                    let type = (operators.includes(word.toLowerCase()) ? "Operator" : (comparators.includes(word.toLowerCase()) ? "Comparator" : "Word"));
+                    // Start by assuming the token actually is a word
+                    let current = {type: "Word", value: word};
                     
                     // If there was a previous token, make sure it was accurate
                     if (tokens.length) {
                         const previous = tokens[tokens.length-1];
                         
-                        // If the previous token was also a comparator, it may have actually been a word
-                        if (previous.type === "Comparator" && type === "Comparator") previous.type = "Word";
-                        // If the previous token was also an operator...
-                        if (previous.type === "Operator" && type === "Operator"
-                            // ...and that operator was "not", or this operator is NOT "not", it may have been a word    
-                            && (previous.value.toLowerCase() === "not" || word.toLowerCase() !== "not")) type = "Word";
+                        // Compound words when last token was a word ending with "."
+                        if (previous.type === "Word" && previous.value.endsWith("."))
+                            current.value = tokens.pop().value + word;
+                        // If the previous token was a comparator...
+                        else if (previous.type === "Comparator")
+                            // ...this one is almost certainly an unescaped string
+                            current = {type: "Value", value: `"${String(word)}"`};
+                        // If a word does not follow a logical operator...
+                        else if (previous.type !== "Operator")
+                            // It is invalid, so skip all further traversal
+                            break;
                     }
                     
-                    // Store the token
-                    tokens.push({type, value: word});
+                    // If all looks good, store the token
+                    tokens.push(current);
                 }
             }
             
