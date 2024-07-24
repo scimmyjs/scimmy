@@ -320,11 +320,11 @@ export class Filter extends Array {
                                 break;
                             
                             case "eq":
-                                result = (actual === expected);
+                                result = (actual === (expected ?? undefined));
                                 break;
                             
                             case "ne":
-                                result = (actual !== expected);
+                                result = (actual !== (expected ?? undefined));
                                 break;
                             
                             case "co":
