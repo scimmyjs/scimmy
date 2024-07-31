@@ -1,6 +1,9 @@
 import {Attribute} from "./attribute.js";
 import {Filter} from "./filter.js";
 
+// Deeply inspect a filter object to see if it represents attributes to be excluded from a coerced value
+const isExcludedAttributesFilter = (v) => Array.isArray(v) ? v[0] === "np" : Object.values(v).every(isExcludedAttributesFilter);
+
 /**
  * SCIM Schema Definition Type
  * @alias SCIMMY.Types.SchemaDefinition
@@ -317,78 +320,89 @@ export class SchemaDefinition {
             }
         }
         
-        return SchemaDefinition.#filter(target, filter && {...filter}, this.attributes);
+        return SchemaDefinition.#filter(this, filter && {...filter}, target);
     }
     
     /**
      * Filter out desired or undesired attributes from a coerced schema value
-     * @param {Object|Object[]} [data] - the data to filter attributes from
+     * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition requesting the filtering
      * @param {Object} [filter] - the filter to apply to the coerced value
-     * @param {SCIMMY.Types.Attribute[]} [attributes] - set of attributes to match against
+     * @param {Object|Object[]} [data={}] - the data to filter attributes from
+     * @param {String} [prefix=""] - prefix to use when filtering on complex value subAttributes
      * @returns {Object} the coerced value with desired or undesired attributes filtered out
      * @private
      */
-    static #filter(data = {}, filter, attributes) {
+    static #filter(definition, filter, data = {}, prefix = "") {
         // If there's no filter, just return the data
-        if (filter === undefined) return data;
+        if (filter === undefined || !Object.keys(filter).length)
+            return data;
         // If the data is a set, only get values that match the filter
         else if (Array.isArray(data))
-            return data.map(data => SchemaDefinition.#filter(data, {...filter}, attributes)).filter(v => Object.keys(v).length);
+            return data.map(data => SchemaDefinition.#filter(definition, {...filter}, data, prefix)).filter(v => Object.keys(v).length);
         // Otherwise, filter the data!
         else {
             // Prepare resultant value storage
             const target = {};
-            const filterable = {...filter};
-            const inclusions = attributes.map(({name}) => name);
+            const inclusions = [];
+            const exclusions = [];
             
-            // Check for any negative filters
-            for (let key in {...filterable}) {
-                // Find the attribute by lower case name
-                const {name, config: {returned} = {}} = attributes.find(a => a.name.toLowerCase() === key.toLowerCase()) ?? {};
+            for (let key in filter) try {
+                // Find the attribute or extension definition using the filter key
+                const attribute = definition.attribute(prefix ? `${prefix}.${key}` : key);
                 
-                // Mark the property as omitted from the result, and remove the spent filter
-                if (returned !== "always" && Array.isArray(filterable[key]) && filterable[key][0] === "np") {
-                    inclusions.splice(inclusions.indexOf(name), 1);
-                    delete filterable[key];
+                // Only be concerned with filter expressions for attributes or extensions directly for now
+                if (Array.isArray(filter[key]) && (attribute instanceof SchemaDefinition || !key.startsWith("urn:"))) {
+                    const name = (attribute instanceof SchemaDefinition ? attribute.id : attribute.name);
+                    
+                    // Mark the positively filtered property as included in the result
+                    if (filter[key][0] === "pr")
+                        inclusions.push(name);
+                    // Mark the negatively filtered property as excluded from the result
+                    else if (filter[key][0] === "np")
+                        exclusions.push(name);
+                }
+            } catch {
+                // If we've reached here, the filter refers to an unknown attribute and should be ignored
+            }
+            
+            // If there were no explicit inclusions, and all filter expressions were negative...
+            if (!inclusions.length && isExcludedAttributesFilter(filter)) {
+                // ...go through all subAttributes, or extension attributes...
+                for (let attribute of (prefix ? definition.attribute(prefix).subAttributes : definition.attributes)) {
+                    // ...and assume they should be included, if they weren't explicitly excluded
+                    if (attribute instanceof Attribute && !exclusions.includes(attribute.name)) inclusions.push(attribute.name);
                 }
             }
             
-            // Check for remaining positive filters
-            if (Object.keys(filterable).length) {
-                // If there was a positive filter, ignore the negative filters
-                inclusions.splice(0, inclusions.length);
-                
-                // Mark the positively filtered property as included in the result, and remove the spent filter
-                for (let key in {...filterable}) if (Array.isArray(filterable[key]) && filterable[key][0] === "pr") { 
-                    inclusions.push(key);
-                    delete filterable[key];
-                }
-            }
-            
-            // Go through every value in the data and filter attributes
+            // Go through every value in the data and filter it
             for (let key in data) {
-                if (key.toLowerCase().startsWith("urn:")) {
-                    // If there is data in a namespaced key, and a filter for it, include it
-                    if (Object.keys(data[key]).length && inclusions.some(k => k.toLowerCase().startsWith(`${key.toLowerCase()}:`)))
+                // Get the matching attribute or extension definition for the key
+                const attribute = definition.attribute(prefix ? `${prefix}.${key}` : key) ?? {};
+                
+                if (attribute instanceof SchemaDefinition) {
+                    // If there is data in a namespaced key and no namespace filter, or there's an explicit inclusion filter...
+                    if ((Object.keys(data[key]).length && !Array.isArray(filter[key])) || (key in filter && !exclusions.includes(key)))
+                        // ...include the extension data
                         target[key] = data[key];
                 } else {
-                    // Get the matching attribute definition and some relevant config values
-                    const attribute = attributes.find(a => a.name === key) ?? {};
-                    const {type, config: {returned, multiValued} = {}, subAttributes} = attribute;
+                    // Get some relevant config values from the attribute
+                    const {name, type, config: {returned, multiValued} = {}} = attribute;
                     
                     // If the attribute is always returned, add it to the result
                     if (returned === "always") target[key] = data[key];
                     // Otherwise, if the attribute was requested and ~can~ be returned, process it
                     else if (![false, "never"].includes(returned)) {
-                        // If there was a simple presence filter for the attribute, assign it
-                        if (inclusions.includes(key) && data[key] !== undefined) target[key] = data[key];
-                        // Otherwise, if there's an unhandled filter for a complex attribute, evaluate it
-                        else if (key in filter && type === "complex") {
-                            const value = SchemaDefinition.#filter(data[key], filter[key], subAttributes);
+                        // If there's a filter for a complex attribute, evaluate it
+                        if (key in filter && !Array.isArray(filter[key]) && type === "complex") {
+                            const value = SchemaDefinition.#filter(definition, filter[key], data[key], key);
                             
                             // Only set the value if it isn't empty
                             if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
                                 target[key] = value;
+                        }
+                        // Otherwise, if there was a simple presence filter for the attribute, assign it
+                        else if (inclusions.includes(name) && data[key] !== undefined) {
+                            target[key] = data[key];
                         }
                     }
                 }
