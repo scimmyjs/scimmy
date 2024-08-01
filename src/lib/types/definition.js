@@ -352,13 +352,15 @@ export class SchemaDefinition {
                 
                 // Only be concerned with filter expressions for attributes or extensions directly for now
                 if (Array.isArray(filter[key]) && (attribute instanceof SchemaDefinition || !key.startsWith("urn:"))) {
+                    // Get real name and handle potentially overlapping filter conditions
                     const name = (attribute instanceof SchemaDefinition ? attribute.id : attribute.name);
+                    const condition = filter[key].map(c => Array.isArray(c) ? c[0] : c);
                     
                     // Mark the positively filtered property as included in the result
-                    if (filter[key][0] === "pr")
+                    if (condition.includes("pr"))
                         inclusions.push(name);
                     // Mark the negatively filtered property as excluded from the result
-                    else if (filter[key][0] === "np")
+                    else if (condition.includes("np"))
                         exclusions.push(name);
                 }
             } catch {
@@ -381,7 +383,7 @@ export class SchemaDefinition {
                 
                 if (attribute instanceof SchemaDefinition) {
                     // If there is data in a namespaced key and no namespace filter, or there's an explicit inclusion filter...
-                    if ((Object.keys(data[key]).length && !Array.isArray(filter[key])) || (key in filter && !exclusions.includes(key)))
+                    if ((Object.keys(data[key]).length && !Array.isArray(filter[key])) || (key in filter && inclusions.includes(key)))
                         // ...include the extension data
                         target[key] = data[key];
                 } else {

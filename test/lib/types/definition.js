@@ -537,71 +537,49 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "Instance method 'coerce' included attributes not specified for filter 'testName pr'");
         });
         
-        it("should expect negative filters to be applied to coerced results", () => {
-            const attributes = [new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])];
-            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes).truncate(["schemas", "meta"]);
-            const actual = definition.coerce({test: {name: "Test", value: "False"}}, undefined, undefined, new Filter("test.value np"));
-            const expected = {test: {name: "Test"}}
+        it("should expect positive filters to be preferred over negative filters", () => {
+            const source = {testName: "a string", testValue: "another string", employeeNumber: "Test", costCenter: "Test"};
+            const attributes = [new Attribute("string", "testName"), new Attribute("string", "testValue"), new Attribute("string", "employeeNumber"), new Attribute("string", "costCenter")];
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes);
+            const actual = definition.coerce(source, undefined, undefined, new Filter("employeeNumber np and testName np and testName pr"));
+            const expected = {testName: "a string"};
             
             assert.deepStrictEqual({...actual}, expected,
-                "Instance method 'coerce' did not expect negative filters to be applied to coerced results");
+                "Instance method 'coerce' did not prefer positive filters over negative filters");
         });
         
         it("should expect missing attributes in a filter to be ignored", () => {
             const attributes = [new Attribute("string", "employeeNumber"), new Attribute("string", "costCenter")];
             const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes).truncate(["schemas", "meta"]);
-            const source = {employeeNumber: "Test", costCenter: "Test"};
-            const actual = definition.coerce(source, undefined, undefined, new Filter("userName np"));
             const expected = {employeeNumber: "Test", costCenter: "Test"};
+            const actual = definition.coerce(expected, undefined, undefined, new Filter("userName np"));
             
             assert.deepStrictEqual({...actual}, expected,
                 "Instance method 'coerce' did not ignore missing attributes specified in filter");
         });
         
-        it("should expect complex multi-valued attributes to be filtered positively", () => {
-            const attributes = [new Attribute("complex", "test", {multiValued: true}, [new Attribute("string", "name"), new Attribute("string", "value")])];
+        for (let [target, outcome, unexpected, expected, filter, multiValued] of [
+            ["complex attributes", "filtered positively", "unexpectedly included", {test: {value: "False"}}, "test.value pr"],
+            ["complex attributes", "filtered negatively", "unexpectedly excluded", {test: {name: "Test"}}, "test.value np"],
+            ["complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test"}]}, "test.name pr", true],
+            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true]
+        ]) it(`should expect ${target} to be ${outcome}`, () => {
+            const source = {test: multiValued ? [{name: "Test", value: "Test"}, {value: "False"}] : {name: "Test", value: "False"}};
+            const attributes = [new Attribute("complex", "test", {multiValued}, [new Attribute("string", "name"), new Attribute("string", "value")])];
             const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes).truncate(["schemas", "meta"]);
-            const source = {test: [{name: "Test", value: "Test"}, {value: "False"}]};
-            const actual = definition.coerce(source, undefined, undefined, new Filter("test.name pr"));
-            const expected = {test: [{name: "Test"}]};
             
-            assert.deepStrictEqual({...actual}, expected,
-                "Instance method 'coerce' did not positively filter complex multi-valued attributes");
+            assert.deepStrictEqual({...definition.coerce(source, undefined, undefined, new Filter(filter))}, expected,
+                `Instance method 'coerce' ${unexpected} ${target} not specified for filter`);
         });
         
-        it("should expect complex multi-valued attributes to be filtered negatively", () => {
-            const attributes = [new Attribute("complex", "test", {multiValued: true}, [new Attribute("string", "name"), new Attribute("string", "value")])];
-            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes).truncate(["schemas", "meta"]);
-            const source = {test: [{name: "Test", value: "Test"}, {value: "False"}]};
-            const actual = definition.coerce(source, undefined, undefined, new Filter("test.name np"));
-            const expected = {test: [{value: "Test"}, {value: "False"}]};
-            
-            assert.deepStrictEqual({...actual}, expected,
-                "Instance method 'coerce' did not negatively filter complex multi-valued attributes");
-        });
-        
-        for (let [target, outcome, filter, unexpected, expected] of [
-            ["namespaced attributes", "present in coerced result",
-                "employeeNumber np", "unexpectedly excluded",
-                {costCenter: "Test", [extensionId]: {employeeNumber: "1234", costCenter: "Test"}}],
-            ["namespaced attributes", "filtered positively",
-                `${extensionId}:employeeNumber pr`, "unexpectedly included",
-                {[extensionId]: {employeeNumber: "1234"}}],
-            ["namespaced attributes", "filtered negatively",
-                `${extensionId}:employeeNumber np`, "unexpectedly excluded",
-                {employeeNumber: "Test", costCenter: "Test", [extensionId]: {costCenter: "Test"}}],
-            ["extension namespaces", "filtered positively",
-                `${extensionId} pr`, "unexpectedly included",
-                {[extensionId]: {employeeNumber: "1234", costCenter: "Test"}}],
-            ["extension namespaces", "filtered negatively",
-                `${extensionId} np`, "unexpectedly excluded",
-                {employeeNumber: "Test", costCenter: "Test"}],
-            ["direct and namespaced attributes", "filtered positively",
-                `costCenter pr and ${extensionId}:employeeNumber pr`, "unexpectedly included",
-                {costCenter: "Test", [extensionId]: {employeeNumber: "1234"}}],
-            ["direct and namespaced attributes", "filtered negatively",
-                `costCenter np and ${extensionId}:employeeNumber np`, "unexpectedly excluded",
-                {employeeNumber: "Test", [extensionId]: {costCenter: "Test"}}]
+        for (let [target, outcome, unexpected, expected, filter] of [
+            ["namespaced attributes", "present in coerced result", "unexpectedly excluded", {costCenter: "Test", [extensionId]: {employeeNumber: "1234", costCenter: "Test"}}, "employeeNumber np"],
+            ["namespaced attributes", "filtered positively", "unexpectedly included", {[extensionId]: {employeeNumber: "1234"}}, `${extensionId}:employeeNumber pr`],
+            ["namespaced attributes", "filtered negatively", "unexpectedly excluded", {employeeNumber: "Test", costCenter: "Test", [extensionId]: {costCenter: "Test"}}, `${extensionId}:employeeNumber np`],
+            ["extension namespaces", "filtered positively", "unexpectedly included", {[extensionId]: {employeeNumber: "1234", costCenter: "Test"}}, `${extensionId} pr`],
+            ["extension namespaces", "filtered negatively", "unexpectedly excluded", {employeeNumber: "Test", costCenter: "Test"}, `${extensionId} np`],
+            ["direct and namespaced attributes", "filtered positively", "unexpectedly included", {costCenter: "Test", [extensionId]: {employeeNumber: "1234"}}, `costCenter pr and ${extensionId}:employeeNumber pr`],
+            ["direct and namespaced attributes", "filtered negatively", "unexpectedly excluded", {employeeNumber: "Test", [extensionId]: {costCenter: "Test"}}, `costCenter np and ${extensionId}:employeeNumber np`]
         ]) it(`should expect ${target} to be ${outcome}`, () => {
             const source = {employeeNumber: "Test", costCenter: "Test", [`${extensionId}:employeeNumber`]: "1234", [`${extensionId}:costCenter`]: "Test"};
             const attributes = [new Attribute("string", "employeeNumber"), new Attribute("string", "costCenter")];
