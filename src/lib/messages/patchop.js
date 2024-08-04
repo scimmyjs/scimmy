@@ -130,14 +130,14 @@ export class PatchOp {
     
     /**
      * Original SCIM Schema resource instance being patched
-     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @type {SCIMMY.Types.Schema}
      * @private
      */
     #source;
     
     /**
      * Target SCIM Schema resource instance to apply patches to
-     * @type {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]}
+     * @type {SCIMMY.Types.Schema}
      * @private
      */
     #target;
@@ -146,7 +146,7 @@ export class PatchOp {
      * Apply patch operations to a resource as defined by the PatchOp instance
      * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
-     * @returns {SCIMMY.Types.Schema|SCIMMY.Types.Schema[]} an instance of the resource modified as per the included patch operations
+     * @returns {Promise<SCIMMY.Types.Schema>} an instance of the resource modified as per the included patch operations
      */
     async apply(resource, finalise) {
         // Bail out if message has not been dispatched (i.e. it's not ready yet)

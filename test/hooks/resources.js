@@ -422,6 +422,16 @@ export default class ResourcesHooks {
             });
             
             if (callsEgress) {
+                (skip ? it.skip : it)("should throw exception for empty values returned by handler", async () => {
+                    handler.reset();
+                    handler.returns(undefined);
+                    
+                    await assert.rejects(() => new TargetResource("placeholder").read(),
+                        {name: "SCIMError", status: 500, scimType: null,
+                            message: "Unexpected empty value returned by handler"},
+                        "Instance method 'read' did not throw exception for empty values returned by handler");
+                });
+                
                 (skip ? it.skip : it)("should call egress handler method with originating resource instance as an argument", async () => {
                     const resource = new TargetResource();
                     
@@ -555,6 +565,18 @@ export default class ResourcesHooks {
                 }
             });
             
+            (skip ? it.skip : it)("should throw exception for empty values returned by handler", async () => {
+                const {ingress: source} = await fixtures;
+                
+                handler.reset();
+                handler.returns(undefined);
+                
+                await assert.rejects(() => new TargetResource().write(source),
+                    {name: "SCIMError", status: 500, scimType: null,
+                        message: "Unexpected empty value returned by handler"},
+                    "Instance method 'write' did not throw exception for empty values returned by handler");
+            });
+            
             (skip ? it.skip : it)("should call ingress to create new resources when resource instantiated without ID", async () => {
                 const {ingress: source, egress: resources} = await fixtures;
                 const actual = await (new TargetResource()).write(source);
@@ -664,13 +686,13 @@ export default class ResourcesHooks {
                     ["array value", []]
                 ];
                 
-                await assert.rejects(() => new TargetResource().patch(),
+                await assert.rejects(() => new TargetResource("test").patch(),
                     {name: "SCIMError", status: 400, scimType: "invalidSyntax",
                         message: "Missing message body from PatchOp request"},
                     "Instance method 'patch' did not expect 'message' parameter to exist");
                 
                 for (let [label, value] of fixtures) {
-                    await assert.rejects(() => new TargetResource().patch(value),
+                    await assert.rejects(() => new TargetResource("test").patch(value),
                         {name: "SCIMError", status: 400, scimType: "invalidSyntax",
                             message: "PatchOp request expected message body to be single complex value"},
                         `Instance method 'patch' did not reject 'message' parameter ${label}`);
@@ -693,7 +715,7 @@ export default class ResourcesHooks {
                 const {egress: [fixture]} = await fixtures;
                 const [, target] = Object.keys(fixture);
                 const expected = {...fixture, [target]: "Test"};
-                const actual = await (new TargetResource(fixture.id)).patch({
+                const actual = await new TargetResource(fixture.id).patch({
                     schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                     Operations: [{op: "add", path: target, value: "Test"}]
                 });
@@ -719,7 +741,7 @@ export default class ResourcesHooks {
                     const {egress: [fixture]} = await fixtures;
                     const [, target] = Object.keys(fixture);
                     
-                    await new TargetResource().patch({
+                    await new TargetResource(fixture.id).patch({
                         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                         Operations: [{op: "add", path: target, value: "Test"}]
                     });
@@ -728,10 +750,26 @@ export default class ResourcesHooks {
                         `Instance method 'patch' did not call ${method} handler exactly once`);
                 });
                 
+                (skip ? it.skip : it)(`should rethrow exception for empty values returned by ${method} handler`, async () => {
+                    const {ingress: source, egress: [fixture]} = await fixtures;
+                    const message = {
+                        schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                        Operations: [{op: "add", value: source}]
+                    };
+                    
+                    handlers[method].reset();
+                    handlers[method].returns(undefined);
+                    
+                    await assert.rejects(() => new TargetResource(fixture.id).patch(message),
+                        {name: "SCIMError", status: 500, scimType: null,
+                            message: "Unexpected empty value returned by handler"},
+                        `Instance method 'patch' did not rethrow exception for empty values returned by ${method} handler`);
+                });
+                
                 (skip ? it.skip : it)(`should call ${method} handler method with originating resource instance as an argument`, async () => {
                     const {egress: [fixture]} = await fixtures;
                     const [, target] = Object.keys(fixture);
-                    const resource = new TargetResource();
+                    const resource = new TargetResource(fixture.id);
                     
                     await resource.patch({
                         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -745,7 +783,7 @@ export default class ResourcesHooks {
                 (skip ? it.skip : it)(`should call ${method} handler method with supplied context as an argument`, async () => {
                     const {egress: [fixture]} = await fixtures;
                     const [, target] = Object.keys(fixture);
-                    const resource = new TargetResource();
+                    const resource = new TargetResource(fixture.id);
                     const context = {};
                     const message = {
                         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -768,7 +806,7 @@ export default class ResourcesHooks {
             (skip ? it.skip : it)("should call egress handler before ingress handler", async () => {
                 const {egress: [fixture]} = await fixtures;
                 const [, target] = Object.keys(fixture);
-                const resource = new TargetResource();
+                const resource = new TargetResource(fixture.id);
                 const spy = sandbox.spy(resource, "patch");
                 
                 await resource.patch({

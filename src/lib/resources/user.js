@@ -76,10 +76,10 @@ export class User extends Types.Resource {
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.User}
      * @example
      * // Retrieve user with ID "1234"
-     * await (new SCIMMY.Resources.User("1234")).read();
+     * await new SCIMMY.Resources.User("1234").read();
      * @example
      * // Retrieve users with an email ending in "@example.com"
-     * await (new SCIMMY.Resources.User({filter: 'email.value -ew "@example.com"'})).read();
+     * await new SCIMMY.Resources.User({filter: 'email.value ew "@example.com"'}).read();
      */
     async read(ctx) {
         if (!this.id) {
@@ -87,7 +87,9 @@ export class User extends Types.Resource {
                 .map(u => new Schemas.User(u, "out", User.basepath(), this.attributes)), this.constraints);
         } else {
             try {
-                return new Schemas.User([await User.#egress(this, ctx)].flat().shift(), "out", User.basepath(), this.attributes);
+                const source = [await User.#egress(this, ctx)].flat().shift();
+                if (!source) throw new Types.Error(500, null, "Unexpected empty value returned by handler");
+                else return new Schemas.User(source, "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
                 else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -101,10 +103,10 @@ export class User extends Types.Resource {
      * @returns {SCIMMY.Schemas.User}
      * @example
      * // Create a new user with userName "someGuy"
-     * await (new SCIMMY.Resources.User()).write({userName: "someGuy"});
+     * await new SCIMMY.Resources.User().write({userName: "someGuy"});
      * @example
      * // Set userName attribute to "someGuy" for user with ID "1234"
-     * await (new SCIMMY.Resources.User("1234")).write({userName: "someGuy"});
+     * await new SCIMMY.Resources.User("1234").write({userName: "someGuy"});
      */
     async write(instance, ctx) {
         if (instance === undefined)
@@ -113,11 +115,9 @@ export class User extends Types.Resource {
             throw new Types.Error(400, "invalidSyntax", `Operation ${!!this.id ? "PUT" : "POST"} expected request body payload to be single complex value`);
         
         try {
-            // TODO: handle incoming read-only and immutable attribute tests
-            return new Schemas.User(
-                await User.#ingress(this, new Schemas.User(instance, "in"), ctx),
-                "out", User.basepath(), this.attributes
-            );
+            const target = await User.#ingress(this, new Schemas.User(instance, "in"), ctx);
+            if (!target) throw new Types.Error(500, null, "Unexpected empty value returned by handler");
+            else return new Schemas.User(target, "out", User.basepath(), this.attributes);
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
             else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -131,7 +131,7 @@ export class User extends Types.Resource {
      * @returns {SCIMMY.Schemas.User}
      * @example
      * // Set userName to "someGuy" for user with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
-     * await (new SCIMMY.Resources.User("1234")).patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});
+     * await new SCIMMY.Resources.User("1234").patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});
      */
     async patch(message, ctx) {
         if (message === undefined)
@@ -139,23 +139,16 @@ export class User extends Types.Resource {
         if (Object(message) !== message || Array.isArray(message))
             throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
         
-        try {
-            return await Promise.resolve(new Messages.PatchOp(message)
-                .apply(new Schemas.User([await User.#egress(this, ctx)].flat().shift()), 
-                    async (instance) => await User.#ingress(this, instance, ctx)))
-                .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
-        } catch (ex) {
-            if (ex instanceof Types.Error) throw ex;
-            else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
-            else throw new Types.Error(404, null, `Resource ${this.id} not found`);
-        }
+        return await new Messages.PatchOp(message)
+            .apply(await this.read(ctx), async (instance) => await this.write(instance, ctx))
+            .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
     }
     
     /**
      * @implements {SCIMMY.Types.Resource#dispose}
      * @example
      * // Delete user with ID "1234"
-     * await (new SCIMMY.Resources.User("1234")).dispose();
+     * await new SCIMMY.Resources.User("1234").dispose();
      */
     async dispose(ctx) {
         if (!this.id)
