@@ -31,7 +31,10 @@ export class User extends Types.Resource {
     }
     
     /** @private */
-    static #ingress = () => {};
+    static #ingress = () => {
+        throw new Types.Error(501, null, "Method 'ingress' not implemented by resource 'User'");
+    };
+    
     /** @implements {SCIMMY.Types.Resource.ingress} */
     static ingress(handler) {
         User.#ingress = handler;
@@ -39,7 +42,10 @@ export class User extends Types.Resource {
     }
     
     /** @private */
-    static #egress = () => {};
+    static #egress = () => {
+        throw new Types.Error(501, null, "Method 'egress' not implemented by resource 'User'");
+    };
+    
     /** @implements {SCIMMY.Types.Resource.egress} */
     static egress(handler) {
         User.#egress = handler;
@@ -47,7 +53,10 @@ export class User extends Types.Resource {
     }
     
     /** @private */
-    static #degress = () => {};
+    static #degress = () => {
+        throw new Types.Error(501, null, "Method 'degress' not implemented by resource 'User'");
+    };
+    
     /** @implements {SCIMMY.Types.Resource.degress} */
     static degress(handler) {
         User.#degress = handler;

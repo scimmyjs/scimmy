@@ -246,7 +246,7 @@ describe("SCIMMY.Messages.SearchRequest", () => {
         });
         
         it("should return a ListResponse message instance", async () => {
-            assert.ok(await (new SearchRequest()).apply() instanceof ListResponse,
+            assert.ok(await (new SearchRequest()).apply([]) instanceof ListResponse,
                 "Instance method 'apply' did not return an instance of ListResponse");
         });
         

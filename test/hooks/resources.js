@@ -5,7 +5,6 @@ import {Resource} from "#@/lib/types/resource.js";
 import {SCIMError} from "#@/lib/types/error.js";
 import {ListResponse} from "#@/lib/messages/listresponse.js";
 import {createSchemaClass} from "./schemas.js";
-import exp from "node:constants";
 
 /**
  * Create a class that extends SCIMMY.Types.Resource, for use in tests
@@ -165,6 +164,14 @@ export default class ResourcesHooks {
                     "Static method 'ingress' was not a function");
             });
             
+            it("should include a fallback private ingress handler", async () => {
+                const {egress: [source]} = await fixtures;
+                
+                await assert.rejects(() => new TargetResource().write(source),
+                    {name: "SCIMError", status: 501, scimType: null, message: /not implemented by resource/},
+                    "Static method 'ingress' did not include fallback private handler");
+            });
+            
             it("should set private ingress handler", async () => {
                 const {egress: [source]} = await fixtures;
                 const spy = sandbox.spy(TargetResource, "ingress");
@@ -206,6 +213,12 @@ export default class ResourcesHooks {
                     "Static method 'egress' was not a function");
             });
             
+            it("should include a fallback private egress handler", async () => {
+                await assert.rejects(() => new TargetResource("placeholder").read(),
+                    {name: "SCIMError", status: 501, scimType: null, message: /not implemented by resource/},
+                    "Static method 'egress' did not include fallback private handler");
+            });
+            
             it("should set private egress handler", async () => {
                 const spy = sandbox.spy(TargetResource, "egress");
                 const error = new Error("Handler Stubbed");
@@ -244,6 +257,12 @@ export default class ResourcesHooks {
                     "Static method 'degress' was not implemented");
                 assert.ok(typeof TargetResource.degress === "function",
                     "Static method 'degress' was not a function");
+            });
+            
+            it("should include a fallback private degress handler", async () => {
+                await assert.rejects(() => new TargetResource("Error").dispose(),
+                    {name: "SCIMError", status: 501, scimType: null, message: /not implemented by resource/},
+                    "Static method 'degress' did not include fallback private handler");
             });
             
             it("should set private degress handler", async () => {
