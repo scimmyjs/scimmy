@@ -3,6 +3,12 @@
     <img alt="SCIMMY" src="https://scimmyjs.github.io/static/assets/logo.svg" width="512" />
   </a>
 </p>
+<p align="center">
+  <a href="https://github.com/scimmyjs/scimmy/actions/workflows/ci.yml" target="_blank"><img alt="Unit Test Status" src="https://img.shields.io/github/actions/workflow/status/scimmyjs/scimmy/ci.yml?branch=main&style=flat&logo=mocha&label=unit%20tests"></a>
+  <a href="https://coveralls.io/github/scimmyjs/scimmy?branch=main" target="_blank"><img alt="Coverage Status" src="https://img.shields.io/coverallsCoverage/github/scimmyjs/scimmy?branch=main&style=flat&logo=coveralls"></a>
+  <a href="https://github.com/sponsors/scimmyjs" target="_blank"><img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/scimmyjs?style=flat&logo=githubsponsors"></a>
+  <a href="https://github.com/scimmyjs/scimmy/blob/1e51643ba4c224b5619aaa6732de1f414b9ceaf6/LICENSE.md" target="_blank"><img alt="GitHub License" src="https://img.shields.io/github/license/scimmyjs/scimmy?style=flat"></a>
+</p>
 
 # SCIMMY - SCIM m(ade eas)y
 
