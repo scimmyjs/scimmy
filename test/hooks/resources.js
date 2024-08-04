@@ -679,6 +679,13 @@ export default class ResourcesHooks {
                     "Instance method 'patch' was not a function");
             });
             
+            it("should expect resource instances to have 'id' property", async () => {
+                await assert.rejects(() => new TargetResource().patch(),
+                    {name: "SCIMError", status: 404, scimType: null,
+                        message: "PATCH operation must target a specific resource"},
+                    "Instance method 'patch' did not expect resource instance to have 'id' property");
+            });
+            
             it("should expect 'message' argument to be an object", async () => {
                 const fixtures = [
                     ["string value 'a string'", "a string"],

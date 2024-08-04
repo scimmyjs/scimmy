@@ -134,6 +134,8 @@ export class Group extends Types.Resource {
      * await new SCIMMY.Resources.Group("1234").patch({Operations: [{op: "add", path: "members", value: {value: "5678"}}]});
      */
     async patch(message, ctx) {
+        if (!this.id)
+            throw new Types.Error(404, null, "PATCH operation must target a specific resource");
         if (message === undefined)
             throw new Types.Error(400, "invalidSyntax", "Missing message body from PatchOp request");
         if (Object(message) !== message || Array.isArray(message))
