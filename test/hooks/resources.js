@@ -422,14 +422,30 @@ export default class ResourcesHooks {
             });
             
             if (callsEgress) {
+                (skip ? it.skip : it)("should throw exception for invalid values returned by handler", async () => {
+                    handler.reset();
+                    
+                    for (let value of [true, false, "invalid", null]) {
+                        handler.returns(value);
+                        
+                        await assert.rejects(() => new TargetResource("placeholder").read(),
+                            {name: "SCIMError", status: 500, scimType: null,
+                                message: "Unexpected invalid value returned by handler"},
+                            "Instance method 'read' did not throw exception for invalid values returned by handler");
+                    }
+                });
+                
                 (skip ? it.skip : it)("should throw exception for empty values returned by handler", async () => {
                     handler.reset();
-                    handler.returns(undefined);
                     
-                    await assert.rejects(() => new TargetResource("placeholder").read(),
-                        {name: "SCIMError", status: 500, scimType: null,
-                            message: "Unexpected empty value returned by handler"},
-                        "Instance method 'read' did not throw exception for empty values returned by handler");
+                    for (let value of [undefined, []]) {
+                        handler.returns(value);
+                        
+                        await assert.rejects(() => new TargetResource("placeholder").read(),
+                            {name: "SCIMError", status: 500, scimType: null,
+                                message: "Unexpected empty value returned by handler"},
+                            "Instance method 'read' did not throw exception for empty values returned by handler");
+                    }
                 });
                 
                 (skip ? it.skip : it)("should call egress handler method with originating resource instance as an argument", async () => {
@@ -563,6 +579,18 @@ export default class ResourcesHooks {
                             `Instance method 'write' did not reject 'instance' parameter ${label} for ${name}`);
                     }
                 }
+            });
+            
+            (skip ? it.skip : it)("should throw exception for invalid values returned by handler", async () => {
+                const {ingress: source} = await fixtures;
+                
+                handler.reset();
+                handler.returns(true);
+                
+                await assert.rejects(() => new TargetResource().write(source),
+                    {name: "SCIMError", status: 500, scimType: null,
+                        message: "Unexpected invalid value returned by handler"},
+                    "Instance method 'write' did not throw exception for invalid values returned by handler");
             });
             
             (skip ? it.skip : it)("should throw exception for empty values returned by handler", async () => {

@@ -88,7 +88,7 @@ export class User extends Types.Resource {
         } else {
             try {
                 const source = [await User.#egress(this, ctx)].flat().shift();
-                if (!source) throw new Types.Error(500, null, "Unexpected empty value returned by handler");
+                if (!(source instanceof Object)) throw new Types.Error(500, null, `Unexpected ${source === undefined ? "empty" : "invalid"} value returned by handler`);
                 else return new Schemas.User(source, "out", User.basepath(), this.attributes);
             } catch (ex) {
                 if (ex instanceof Types.Error) throw ex;
@@ -116,7 +116,7 @@ export class User extends Types.Resource {
         
         try {
             const target = await User.#ingress(this, new Schemas.User(instance, "in"), ctx);
-            if (!target) throw new Types.Error(500, null, "Unexpected empty value returned by handler");
+            if (!(target instanceof Object)) throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by handler`);
             else return new Schemas.User(target, "out", User.basepath(), this.attributes);
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
