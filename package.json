@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
   "description": "SCIMMY - SCIM m(ade eas)y",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -58,14 +58,14 @@
   },
   "devDependencies": {
     "@types/node": "ts5.4",
-    "c8": "^9.1.0",
+    "c8": "^10.1.2",
     "chalk": "^5.3.0",
-    "classy-template": "^1.2.0",
+    "classy-template": "^1.4.0",
     "jsdoc": "^4.0.2",
     "minimist": "^1.2.8",
     "mocha": "^10.4.0",
     "rollup": "^4.17.2",
-    "sinon": "^17.0.1",
+    "sinon": "^18.0.0",
     "typescript": "^5.4.5"
   }
 }
