@@ -44,7 +44,7 @@ export class ListResponse {
         // Check supplied itemsPerPage and startIndex are valid integers...
         for (let [key, val, min] of Object.entries({itemsPerPage, startIndex}).map(([key, val], index) => ([key, val, index]))) {
             // ...but only expect actual number primitives when preparing an outbound list response
-            if (Number.isNaN(Number.parseInt(val)) || !`${val}`.match(/^-?\d*$/) || (outbound && (typeof val !== "number" || !Number.isInteger(val) || val < min))) {
+            if (Number.isNaN(Number.parseInt(val)) || !`${val}`.match(/^-?\d*$/) || (outbound && (typeof val !== "number" || !Number.isInteger(val)))) {
                 throw new TypeError(`Expected '${key}' parameter to be a ${min ? "positive" : "non-negative"} integer in ListResponse message constructor`);
             }
         }
