@@ -28,16 +28,16 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "ListResponse instantiated with invalid 'schemas' property");
         });
         
-        it("should expect 'startIndex' parameter to be a positive integer", () => {
-            for (let value of ["a string", -1, 1.5]) {
+        it("should expect 'startIndex' parameter to be a number", () => {
+            for (let value of ["a string", false, {}]) {
                 assert.throws(() => new ListResponse([], {startIndex: value}),
                     {name: "TypeError", message: "Expected 'startIndex' parameter to be a positive integer in ListResponse message constructor"},
                     `ListResponse instantiated with invalid 'startIndex' parameter value '${value}'`);
             }
         });
         
-        it("should expect 'itemsPerPage' parameter to be a positive integer", () => {
-            for (let value of ["a string", -1, 1.5]) {
+        it("should expect 'itemsPerPage' parameter to be a number", () => {
+            for (let value of ["a string", false, {}]) {
                 assert.throws(() => new ListResponse([], {itemsPerPage: value}),
                     {name: "TypeError", message: "Expected 'itemsPerPage' parameter to be a non-negative integer in ListResponse message constructor"},
                     `ListResponse instantiated with invalid 'itemsPerPage' parameter value '${value}'`);

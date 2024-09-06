@@ -295,8 +295,8 @@ export class Resource {
             this.constraints = {
                 ...(typeof sortBy === "string" ? {sortBy} : {}),
                 ...(["ascending", "descending"].includes(sortOrder) ? {sortOrder} : {}),
-                ...(!Number.isNaN(Number(startIndex)) && Number.isInteger(startIndex) ? {startIndex} : {}),
-                ...(!Number.isNaN(Number(count)) && Number.isInteger(count) ? {count} : {})
+                ...(!Number.isNaN(Number(startIndex)) && Number.isInteger(startIndex) ? {startIndex: Math.max(startIndex, 1)} : {}),
+                ...(!Number.isNaN(Number(count)) && Number.isInteger(count) ? {count: Math.max(count, 0)} : {})
             };
         }
     }
