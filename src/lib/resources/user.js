@@ -92,7 +92,7 @@ export class User extends Types.Resource {
             // For specific resources, make sure egress returned an object
             else if (target instanceof Object) return new Schemas.User(target, "out", User.basepath(), this.attributes);
             // Otherwise, egress has not been implemented correctly
-            else throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by handler`);
+            else throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by egress handler`);
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
             else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
@@ -118,8 +118,11 @@ export class User extends Types.Resource {
         
         try {
             const target = await User.#ingress(this, new Schemas.User(instance, "in"), ctx);
-            if (!(target instanceof Object)) throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by handler`);
-            else return new Schemas.User(target, "out", User.basepath(), this.attributes);
+            
+            // Make sure ingress returned an object
+            if (target instanceof Object) return new Schemas.User(target, "out", User.basepath(), this.attributes);
+            // Otherwise, ingress has not been implemented correctly
+            else throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by ingress handler`);
         } catch (ex) {
             if (ex instanceof Types.Error) throw ex;
             else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
