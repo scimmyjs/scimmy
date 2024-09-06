@@ -423,28 +423,32 @@ export default class ResourcesHooks {
             
             if (callsEgress) {
                 (skip ? it.skip : it)("should throw exception for invalid values returned by handler", async () => {
-                    handler.reset();
-                    
                     for (let value of [true, false, "invalid", null]) {
+                        handler.reset();
                         handler.returns(value);
                         
-                        await assert.rejects(() => new TargetResource("placeholder").read(),
+                        for (let id of [undefined, "placeholder"]) await assert.rejects(() => new TargetResource("placeholder").read(),
                             {name: "SCIMError", status: 500, scimType: null,
                                 message: "Unexpected invalid value returned by handler"},
-                            "Instance method 'read' did not throw exception for invalid values returned by handler");
+                            `Instance method 'read' (${id ? "one" : "many"}) did not throw exception for invalid value '${JSON.stringify(value)}' returned by handler`);
                     }
                 });
                 
                 (skip ? it.skip : it)("should throw exception for empty values returned by handler", async () => {
-                    handler.reset();
+                    const fixtures = [
+                        [undefined, undefined], 
+                        [undefined, "placeholder"], 
+                        [[], "placeholder"]
+                    ];
                     
-                    for (let value of [undefined, []]) {
+                    for (let [value, id] of fixtures) {
+                        handler.reset();
                         handler.returns(value);
                         
-                        await assert.rejects(() => new TargetResource("placeholder").read(),
+                        await assert.rejects(() => new TargetResource(id).read(),
                             {name: "SCIMError", status: 500, scimType: null,
                                 message: "Unexpected empty value returned by handler"},
-                            "Instance method 'read' did not throw exception for empty values returned by handler");
+                            `Instance method 'read' (${id ? "one" : "many"}) did not throw exception for empty value '${JSON.stringify(value)}' returned by handler`);
                     }
                 });
                 

@@ -82,19 +82,21 @@ export class User extends Types.Resource {
      * await new SCIMMY.Resources.User({filter: 'email.value ew "@example.com"'}).read();
      */
     async read(ctx) {
-        if (!this.id) {
-            return new Messages.ListResponse((await User.#egress(this, ctx) ?? [])
+        try {
+            const source = await User.#egress(this, ctx);
+            const target = (this.id ? [source].flat().shift() : source);
+            
+            // If not looking for a specific resource, make sure egress returned an array
+            if (!this.id && Array.isArray(target)) return new Messages.ListResponse(target
                 .map(u => new Schemas.User(u, "out", User.basepath(), this.attributes)), this.constraints);
-        } else {
-            try {
-                const source = [await User.#egress(this, ctx)].flat().shift();
-                if (!(source instanceof Object)) throw new Types.Error(500, null, `Unexpected ${source === undefined ? "empty" : "invalid"} value returned by handler`);
-                else return new Schemas.User(source, "out", User.basepath(), this.attributes);
-            } catch (ex) {
-                if (ex instanceof Types.Error) throw ex;
-                else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
-                else throw new Types.Error(404, null, `Resource ${this.id} not found`);
-            }
+            // For specific resources, make sure egress returned an object
+            else if (target instanceof Object) return new Schemas.User(target, "out", User.basepath(), this.attributes);
+            // Otherwise, egress has not been implemented correctly
+            else throw new Types.Error(500, null, `Unexpected ${target === undefined ? "empty" : "invalid"} value returned by handler`);
+        } catch (ex) {
+            if (ex instanceof Types.Error) throw ex;
+            else if (ex instanceof TypeError) throw new Types.Error(400, "invalidValue", ex.message);
+            else throw new Types.Error(404, null, `Resource ${this.id} not found`);
         }
     }
     
