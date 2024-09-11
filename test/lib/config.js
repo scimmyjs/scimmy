@@ -58,7 +58,7 @@ describe("SCIMMY.Config", () => {
                 {name: "TypeError", message: "SCIM configuration: schema does not define attribute 'test'"},
                 "Static method 'set' accepted unknown attribute object key");
             assert.throws(() => SCIMMY.Config.set("patch", {test: true}),
-                {name: "TypeError", message: "SCIM configuration: complex attribute 'patch' does not declare subAttribute 'test'"},
+                {name: "TypeError", message: "SCIM configuration: attribute 'patch' of schema 'urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig' does not declare subAttribute 'test'"},
                 "Static method 'set' accepted unknown sub-attribute object key");
         });
         

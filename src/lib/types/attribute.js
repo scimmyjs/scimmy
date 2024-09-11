@@ -573,15 +573,8 @@ export class Attribute {
                         for (let [key, value] of Object.entries(source)) try {
                             target[key.toLowerCase()] = value;
                         } catch (ex) {
-                            // Attempted to add an undeclared attribute to the value
-                            if (ex instanceof TypeError && ex.message.endsWith("not extensible")) {
-                                ex.message = `Complex attribute '${this.name}' `
-                                    + (typeof source !== "object" || Array.isArray(source)
-                                    ? `expected complex value but found type '${typeof source}'`
-                                    : `does not declare subAttribute '${key}'`);
-                            }
-                            
-                            throw ex;
+                            // Ignore attempts to add an undeclared attribute to the value, raise all other errors
+                            if (!(ex instanceof TypeError && ex.message.endsWith("not extensible"))) throw ex;
                         }
                         
                         // Reassign values to catch missing required sub-attributes

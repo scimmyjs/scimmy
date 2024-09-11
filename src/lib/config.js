@@ -193,6 +193,9 @@ export default class Config {
                     // No shorthand, make sure value is an object
                     else if (value === Object(value)) {
                         try {
+                            // Make sure all object keys correspond to valid config attributes
+                            for (let name of Object.keys(value)) Schemas.ServiceProviderConfig.definition.attribute(`${key}.${name}`);
+                            
                             // Coerce the value and assign it to the config property
                             Object.assign(target, Schemas.ServiceProviderConfig.definition.attribute(key)
                                 .coerce({...target, supported: true, ...value}));
