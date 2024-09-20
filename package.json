@@ -9,6 +9,7 @@
     "node": ">=16"
   },
   "main": "./dist/scimmy.js",
+  "types": "./dist/scimmy.d.ts",
   "exports": {
     "import": {
       "types": "./dist/scimmy.d.ts",
