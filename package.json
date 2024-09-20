@@ -9,10 +9,15 @@
     "node": ">=16"
   },
   "main": "./dist/scimmy.js",
-  "types": "./dist/scimmy.d.ts",
   "exports": {
-    "import": "./dist/scimmy.js",
-    "require": "./dist/cjs/scimmy.cjs"
+    "import": {
+      "types": "./dist/scimmy.d.ts",
+      "import": "./dist/scimmy.js"
+    },    
+    "require": {
+      "types": "./dist/scimmy.d.cts",
+      "require": "./dist/scimmy.js"
+    }
   },
   "scripts": {
     "test": "node packager.js -t test",
