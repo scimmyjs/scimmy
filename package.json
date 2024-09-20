@@ -16,7 +16,7 @@
       "import": "./dist/scimmy.js"
     },    
     "require": {
-      "types": "./dist/scimmy.d.cts",
+      "types": "./dist/scimmy.d.ts",
       "require": "./dist/scimmy.js"
     }
   },
