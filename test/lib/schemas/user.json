@@ -324,7 +324,7 @@
         "subAttributes": [
           {
             "name": "value", "type": "binary", "multiValued": false, "required": false,
-            "caseExact": false, "mutability": "readWrite", "returned": "default", "uniqueness": "none",
+            "caseExact": true, "mutability": "readWrite", "returned": "default", "uniqueness": "none",
             "description": "The value of an X.509 certificate."
           },
           {
