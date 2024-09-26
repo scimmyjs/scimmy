@@ -151,6 +151,83 @@ describe("SCIMMY.Types.Attribute", () => {
         });
     });
     
+    describe("#config", () => {
+        it("should not allow setting values for unknown properties", () => {
+            const {config} = new Attribute("string", "test");
+            
+            assert.throws(() => config.test = true,
+                {name: "TypeError", message: "Cannot add unknown property 'test' to configuration of attribute definition 'test'"},
+                "Instance member 'config' allowed unknown property addition after instantiation");
+        });
+        
+        it("should not allow definition of unknown properties", () => {
+            const {config} = new Attribute("string", "test");
+            
+            assert.throws(() => Object.defineProperty(config, "test", {value: 42, writable: false}),
+                {name: "TypeError", message: "Cannot add unknown property 'test' to configuration of attribute definition 'test'"},
+                "Instance member 'config' allowed unknown property definition after instantiation");
+        });
+        
+        it("should not allow known properties to be removed", () => {
+            const {config} = new Attribute("string", "test");
+            
+            for (let key of Object.keys(config)) {
+                assert.throws(() => delete config[key],
+                    {name: "TypeError", message: `Cannot remove known property '${key}' from configuration of attribute definition 'test'`},
+                    `Instance member 'config' allowed removal of known property '${key}' after instantiation`);
+            }
+        });
+        
+        it("should ignore removal of unknown properties", () => {
+            const {config} = new Attribute("string", "test");
+            
+            try {
+                delete config.test;
+            } catch (ex) {
+                assert.fail(`Instance member 'config' did not ignore removal of unknown property 'test'\r\n${ex.stack}`);
+            }
+        });
+        
+        it("should expect 'caseExact' value to be 'true' when attribute type is 'binary'", () => {
+            const {config} = new Attribute("binary", "test");
+            
+            assert.throws(() => config.caseExact = false,
+                {name: "TypeError", message: "Attribute type 'binary' must specify 'caseExact' value as 'true' in attribute definition 'test'"},
+                "Instance member 'config' did not expect 'caseExact' value to be 'true' when attribute type was 'binary'");
+        });
+        
+        for (let attrib of ["canonicalValues", "referenceTypes"]) {
+            it(`should not accept invalid '${attrib}' values`, () => {
+                const {config} = new Attribute("string", "test");
+                
+                for (let value of ["a string", true]) {
+                    assert.throws(() => config[attrib] = value,
+                        {name: "TypeError", message: `Attribute '${attrib}' value must be either a collection or 'false' in attribute definition 'test'`},
+                        `Instance member 'config' accepted invalid '${attrib}' value '${value}'`);
+                }
+            });
+        }
+        
+        for (let [attrib, name = attrib] of [["mutable", "mutability"], ["returned"], ["uniqueness"]]) {
+            it(`should not accept invalid '${attrib}' values`, () => {
+                const {config} = new Attribute("string", "test");
+                
+                assert.throws(() => config[attrib] = "a string",
+                    {name: "TypeError", message: `Attribute '${name}' value 'a string' not recognised in attribute definition 'test'`},
+                    `Instance member 'config' accepted invalid '${attrib}' value 'a string'`);
+                assert.throws(() => config[attrib] = 1,
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Instance member 'config' accepted invalid '${attrib}' number value '1'`);
+                assert.throws(() => config[attrib] = {},
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Instance member 'config' accepted invalid '${attrib}' complex value`);
+                assert.throws(() => config[attrib] = new Date(),
+                    {name: "TypeError", message: `Attribute '${name}' value must be either string or boolean in attribute definition 'test'`},
+                    `Instance member 'config' accepted invalid '${attrib}' date value`);
+            });
+        }
+    });
+    
     describe("#subAttributes", () => {
         it("should not be defined when type is not 'complex'", () => {
             assert.ok(!("subAttributes" in new Attribute("string", "test")),

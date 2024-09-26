@@ -27,11 +27,36 @@ const BaseConfiguration = {
      * Proxied configuration validation trap handler
      * @alias ProxiedConfigHandler
      * @param {String} errorSuffix - the suffix to use in thrown type errors
-     * @returns {{set: (function(Object, String, *): boolean)}} the handler trap definition to use in the config proxy
+     * @param {String} type - the attribute type for which configuration is being proxied
+     * @returns {ProxyHandler<Object>} the handler trap definition to use in the config proxy
      * @private
      */
-    handler: (errorSuffix) => ({
+    handler: (errorSuffix, type) => ({
+        deleteProperty: (target, key) => {
+            // Prevent removal of known properties from attribute config
+            if (key in BaseConfiguration.target) throw new TypeError(`Cannot remove known property '${key}' from configuration of ${errorSuffix}`);
+            // Otherwise, delete the property from the target
+            else return Reflect.deleteProperty(target, key);
+        },
+        defineProperty: (target, key, descriptor) => {
+            // Only allow known properties to be defined on attribute config
+            if (key in BaseConfiguration.target) return Reflect.defineProperty(target, key, descriptor);
+            // Otherwise, throw an exception explaining the above
+            else throw new TypeError(`Cannot add unknown property '${key}' to configuration of ${errorSuffix}`);
+        },
+        get: (target, key) => {
+            // Always return true for 'caseExact' config value of binary attributes
+            if (type === "binary" && key === "caseExact") return true;
+            // Otherwise, return actual value
+            else return Reflect.get(target, key);
+        },
         set: (target, key, value) => {
+            // Make sure the property is known before setting any value
+            if (!(key in BaseConfiguration.target))
+                throw new TypeError(`Cannot add unknown property '${key}' to configuration of ${errorSuffix}`);
+            // Make sure binary attributes only accept 'caseExact' values of 'true'
+            if (type === "binary" && key === "caseExact" && value !== true)
+                throw new TypeError(`Attribute type 'binary' must specify 'caseExact' value as 'true' in ${errorSuffix}`);
             // Make sure required, multiValued, and caseExact are booleans
             if (["required", "multiValued", "caseExact", "shadow"].includes(key) && (value !== undefined && typeof value !== "boolean"))
                 throw new TypeError(`Attribute '${key}' value must be either 'true' or 'false' in ${errorSuffix}`);
@@ -49,7 +74,7 @@ const BaseConfiguration = {
             }
             
             // Set the value!
-            return (target[key] = value) || true;
+            return Reflect.set(target, key, value);
         }
     })
 };
@@ -334,8 +359,7 @@ export class Attribute {
         this.name = name;
         
         // Prevent addition and removal of properties from config
-        this.config = Object.seal(Object
-            .assign(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix)), config));
+        this.config = Object.assign(Object.seal(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix, type))), config);
         
         // Store subAttributes, and make sure any additions are also attribute instances
         if (type === "complex") this.subAttributes = new Proxy([...subAttributes], {
