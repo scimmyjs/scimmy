@@ -86,7 +86,7 @@ export class User extends Types.Schema {
             new Types.Attribute("boolean", "primary", {description: "A Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once."})
         ]),
         new Types.Attribute("complex", "x509Certificates", {multiValued: true, uniqueness: false, description: "A list of certificates issued to the User."}, [
-            new Types.Attribute("binary", "value", {description: "The value of an X.509 certificate."}),
+            new Types.Attribute("binary", "value", {description: "The value of an X.509 certificate.", caseExact: true}),
             new Types.Attribute("string", "display", {description: "A human-readable name, primarily used for display purposes. READ-ONLY."}),
             new Types.Attribute("string", "type", {canonicalValues: [], description: "A label indicating the attribute's function."}),
             new Types.Attribute("boolean", "primary", {description: "A Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once."})
