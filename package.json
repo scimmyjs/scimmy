@@ -1,7 +1,7 @@
 {
   "name": "scimmy",
   "description": "SCIMMY - SCIM m(ade eas)y",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "author": "sleelin",
   "license": "MIT",
   "type": "module",
@@ -65,7 +65,7 @@
     "minimist": "^1.2.8",
     "mocha": "^10.4.0",
     "rollup": "^4.17.2",
-    "sinon": "^18.0.0",
+    "sinon": "^19.0.2",
     "typescript": "^5.4.5"
   }
 }
