@@ -45,18 +45,27 @@ const BaseConfiguration = {
             else throw new TypeError(`Cannot add unknown property '${key}' to configuration of ${errorSuffix}`);
         },
         get: (target, key) => {
-            // Always return true for 'caseExact' config value of binary attributes
-            if (type === "binary" && key === "caseExact") return true;
+            // For binary attribute configuration...
+            if (type === "binary") {
+                // ...always return true for 'caseExact', and
+                if (key === "caseExact") return true;
+                // ...always return 'none' for 'uniqueness'
+                if (key === "uniqueness") return "none";
+            }
+            
             // Otherwise, return actual value
-            else return Reflect.get(target, key);
+            return Reflect.get(target, key);
         },
         set: (target, key, value) => {
             // Make sure the property is known before setting any value
             if (!(key in BaseConfiguration.target))
                 throw new TypeError(`Cannot add unknown property '${key}' to configuration of ${errorSuffix}`);
-            // Make sure binary attributes only accept 'caseExact' values of 'true'
+            // Make sure binary attributes only accept 'caseExact' values of true
             if (type === "binary" && key === "caseExact" && value !== true)
                 throw new TypeError(`Attribute type 'binary' must specify 'caseExact' value as 'true' in ${errorSuffix}`);
+            // Make sure binary attributes only accept 'uniqueness' values of 'none'
+            if (type === "binary" && key === "uniqueness" && value !== "none")
+                throw new TypeError(`Attribute type 'binary' must specify 'uniqueness' value as 'none' in ${errorSuffix}`);
             // Make sure required, multiValued, and caseExact are booleans
             if (["required", "multiValued", "caseExact", "shadow"].includes(key) && (value !== undefined && typeof value !== "boolean"))
                 throw new TypeError(`Attribute '${key}' value must be either 'true' or 'false' in ${errorSuffix}`);

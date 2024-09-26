@@ -136,6 +136,28 @@ describe("SCIMMY.Types.Attribute", () => {
             });
         }
         
+        for (let attrib of ["required", "multiValued", "caseExact", "shadow"]) {
+            it(`should only accept boolean '${attrib}' configuration values`, () => {
+                for (let [type, value] of [["string", "a string"], ["number", 1], ["complex", {}], ["date", new Date()]]) {
+                    assert.throws(() => new Attribute("string", "test", {[attrib]: value}),
+                        {name: "TypeError", message: `Attribute '${attrib}' value must be either 'true' or 'false' in attribute definition 'test'`},
+                        `Attribute instantiated with invalid '${attrib}' configuration ${type} value${typeof value === "object" ? "" : ` '${value}'`}`);
+                }
+            });
+        }
+        
+        it("should expect 'caseExact' value to be 'true' when attribute type is 'binary'", () => {
+            assert.throws(() => new Attribute("binary", "test", {caseExact: false}),
+                {name: "TypeError", message: "Attribute type 'binary' must specify 'caseExact' value as 'true' in attribute definition 'test'"},
+                "Attribute instance did not expect 'caseExact' configuration value to be 'true' when attribute type was 'binary'");
+        });
+        
+        it("should expect 'uniqueness' value to be 'none' when attribute type is 'binary'", () => {
+            assert.throws(() => new Attribute("binary", "test", {uniqueness: false}),
+                {name: "TypeError", message: "Attribute type 'binary' must specify 'uniqueness' value as 'none' in attribute definition 'test'"},
+                "Attribute instance did not expect 'uniqueness' configuration value to be 'none' when attribute type was 'binary'");
+        });
+        
         it("should be frozen after instantiation", () => {
             const attribute = new Attribute("string", "test");
             
@@ -188,14 +210,6 @@ describe("SCIMMY.Types.Attribute", () => {
             }
         });
         
-        it("should expect 'caseExact' value to be 'true' when attribute type is 'binary'", () => {
-            const {config} = new Attribute("binary", "test");
-            
-            assert.throws(() => config.caseExact = false,
-                {name: "TypeError", message: "Attribute type 'binary' must specify 'caseExact' value as 'true' in attribute definition 'test'"},
-                "Instance member 'config' did not expect 'caseExact' value to be 'true' when attribute type was 'binary'");
-        });
-        
         for (let attrib of ["canonicalValues", "referenceTypes"]) {
             it(`should not accept invalid '${attrib}' values`, () => {
                 const {config} = new Attribute("string", "test");
@@ -226,6 +240,34 @@ describe("SCIMMY.Types.Attribute", () => {
                     `Instance member 'config' accepted invalid '${attrib}' date value`);
             });
         }
+        
+        for (let attrib of ["required", "multiValued", "caseExact", "shadow"]) {
+            it(`should only accept boolean '${attrib}' values`, () => {
+                const {config} = new Attribute("string", "test");
+                
+                for (let [type, value] of [["string", "a string"], ["number", 1], ["complex", {}], ["date", new Date()]]) {
+                    assert.throws(() => config[attrib] = value,
+                        {name: "TypeError", message: `Attribute '${attrib}' value must be either 'true' or 'false' in attribute definition 'test'`},
+                        `Instance member 'config' accepted invalid '${attrib}' configuration ${type} value${typeof value === "object" ? "" : ` '${value}'`}`);
+                }
+            });
+        }
+        
+        it("should expect 'caseExact' value to be 'true' when attribute type is 'binary'", () => {
+            const {config} = new Attribute("binary", "test");
+            
+            assert.throws(() => config.caseExact = false,
+                {name: "TypeError", message: "Attribute type 'binary' must specify 'caseExact' value as 'true' in attribute definition 'test'"},
+                "Instance member 'config' did not expect 'caseExact' value to be 'true' when attribute type was 'binary'");
+        });
+        
+        it("should expect 'uniqueness' value to be 'none' when attribute type is 'binary'", () => {
+            const {config} = new Attribute("binary", "test");
+            
+            assert.throws(() => config.uniqueness = true,
+                {name: "TypeError", message: "Attribute type 'binary' must specify 'uniqueness' value as 'none' in attribute definition 'test'"},
+                "Instance member 'config' did not expect 'uniqueness' value to be 'none' when attribute type was 'binary'");
+        });
     });
     
     describe("#subAttributes", () => {
