@@ -113,6 +113,32 @@
     ],
     "complex": [
       {
+        "source": "emails[type eq \"work\"] pr",
+        "target": [
+          {"emails": [{"type": ["eq", "work"]}, ["pr"]]}
+        ]
+      },
+      {
+        "source": "emails[not type eq \"work\"] pr",
+        "target": [
+          {"emails": [{"type": ["not", "eq", "work"]}, ["pr"]]}
+        ]
+      },
+      {
+        "source": "userType eq \"Employee\" and emails[type eq \"work\" or primary eq true]",
+        "target": [
+          {"userType": ["eq", "Employee"], "emails": {"type": ["eq", "work"]}},
+          {"userType": ["eq", "Employee"], "emails": {"primary": ["eq", true]}}
+        ]
+      },
+      {
+        "source": "userType eq \"Employee\" and emails[type eq \"work\" or primary eq true] pr",
+        "target": [
+          {"userType": ["eq", "Employee"], "emails": [{"type": ["eq", "work"]}, ["pr"]]},
+          {"userType": ["eq", "Employee"], "emails": [{"primary": ["eq", true]}, ["pr"]]}
+        ]
+      },
+      {
         "source": "(name.FamilyName eq \"Employee\" or name.FamilyName eq \"Manager\") and (emails.Value co \"example.com\" or emails.Value co \"example.org\")",
         "target": [
           {"name": {"familyName": ["eq", "Employee"]}, "emails": {"value": ["co", "example.com"]}},
@@ -178,7 +204,8 @@
       {"source": [{"quota": ["gt", 1.5]}], "target": "quota gt 1.5"},
       {"source": [{"userType": ["eq", null]}], "target": "userType eq null"},
       {"source": [{"active": ["eq", false]}], "target": "active eq false"},
-      {"source": [{"emails": {"primary": ["eq", true]}}], "target": "emails.primary eq true"}
+      {"source": [{"emails": {"primary": ["eq", true]}}], "target": "emails.primary eq true"},
+      {"source": [{"date": ["ge", "2021-09-08T23:02:28.986Z"]}], "target": "date ge \"2021-09-08T23:02:28.986Z\""}
     ],
     "logical": [
       {"source": [{"eq": ["not", "pr"]}], "target": "not eq pr"},
@@ -196,6 +223,19 @@
       {"source": [{"not": ["not", "sw", "A"], "userName": [["ew", "Z"], ["co", "m"]]}], "target": "not not sw \"A\" and userName ew \"Z\" and userName co \"m\""}
     ],
     "complex": [
+      {
+        "target": "emails[type eq \"work\"] pr",
+        "source": [
+          {"emails": [{"type": ["eq", "work"]}, ["pr"]]}
+        ]
+      },
+      {
+        "target": "userType eq \"Employee\" and emails[type eq \"work\"] pr or userType eq \"Employee\" and emails[primary eq true] pr",
+        "source": [
+          {"userType": ["eq", "Employee"], "emails": [{"type": ["eq", "work"]}, ["pr"]]},
+          {"userType": ["eq", "Employee"], "emails": [{"primary": ["eq", true]}, ["pr"]]}
+        ]
+      },
       {
         "target": "name.familyName eq \"Employee\" and emails.value co \"example.com\" or name.familyName eq \"Employee\" and emails.value co \"example.org\" or name.familyName eq \"Manager\" and emails.value co \"example.com\" or name.familyName eq \"Manager\" and emails.value co \"example.org\"",
         "source": [
@@ -296,13 +336,15 @@
         {"expression": {"exists": ["ne", null]}, "expected": [1, 3]},
         {"expression": {"exists": ["eq", true]}, "expected": [1]},
         {"expression": {"exists": ["eq", "True"]}, "expected": [1]},
-        {"expression": {"exists": ["eq", "False"]}, "expected": [3]}
+        {"expression": {"exists": ["eq", "False"]}, "expected": [3]},
+        {"expression": {"exists": ["eq", "falsey"]}, "expected": []}
       ],
       "nesting": [
         {"expression": {"name": {"formatted": ["co", "a"]}}, "expected": [1, 2, 4]},
         {"expression": {"name": {"formatted": ["ew", "e"]}}, "expected": [1, 2]},
         {"expression": {"userName": ["co", "A"], "name": {"formatted": ["co", "a"]}}, "expected": [1, 2]},
         {"expression": {"emails": {"type": ["eq", "work"]}}, "expected": [1, 3, 4]},
+        {"expression": {"emails": [{"type": ["eq", "work"]}, ["pr"]]}, "expected": [1, 3, 4]},
         {"expression": {"emails": {"value": ["ew", "example.net"]}}, "expected": [1, 4]},
         {"expression": {"emails": {"type": ["eq", "work"], "value": ["ew", "example.net"]}}, "expected": [1]}
       ],
