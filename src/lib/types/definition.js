@@ -217,24 +217,26 @@ export class SchemaDefinition {
      * @param {Object} data - value to coerce and confirm conformity of properties to schema attributes' characteristics
      * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {String} [basepath] - the URI representing the resource type's location
-     * @param {SCIMMY.Types.Filter} [filters] - the attribute filters to apply to the coerced value
+     * @param {SCIMMY.Types.Filter} [filter] - the attribute filters to apply to the coerced value
      * @returns {Object} the coerced value, conforming to all schema attributes' characteristics
      */
-    coerce(data, direction = "both", basepath, filters) {
+    coerce(data, direction = "both", basepath, filter) {
         // Make sure there is data to coerce...
         if (data === undefined || Array.isArray(data) || Object(data) !== data)
             throw new TypeError("Expected 'data' parameter to be an object in SchemaDefinition instance");
+        // If specified, make sure filter is an instance of Filter class
+        if (filter !== undefined && !(filter instanceof Filter))
+            throw new TypeError("Expected 'filter' parameter to be a Filter instance in SchemaDefinition instance");
         
-        // Get the filter and coercion target ready
-        const filter = (filters ?? []).slice(0).shift();
+        // Get the coercion target ready, compile a list of schema IDs to include in the resource
         const target = {};
-        // Compile a list of schema IDs to include in the resource
         const schemas = [...new Set([
             this.id,
             ...(this.attributes.filter(a => a instanceof SchemaDefinition).map(s => s.id)
                 .filter(id => !!data[id] || Object.keys(data).some(d => d.startsWith(`${id}:`)))),
             ...(Array.isArray(data.schemas) ? data.schemas : [])
         ])];
+        
         // Add schema IDs, and schema's name as resource type to meta attribute
         const source = {
             // Cast all key names to lower case to eliminate case sensitivity....
@@ -277,7 +279,7 @@ export class SchemaDefinition {
                         return res;
                     }, {});
                 // Mix the namespaced attribute values in with the extension value
-                const mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues ?? {}].reduce(function merge(t, s) {
+                const mixedSource = [source[name.toLowerCase()] ?? {}, namespacedValues].reduce(function merge(t, s) {
                     // Cast all key names to lower case to eliminate case sensitivity....
                     t = (Object.keys(t).reduce((res, key) => Object.assign(res, {[key.toLowerCase()]: t[key]}), {}));
                     
@@ -305,12 +307,16 @@ export class SchemaDefinition {
                 if (!!required && !Object.keys(mixedSource).length) {
                     throw new TypeError(`Missing values for required schema extension '${name}'`);
                 } else if (required || Object.keys(mixedSource).length) {
+                    // See if there are any namespaced attribute filters for this extension
+                    const namespacedFilters = (filter ?? [])
+                        // Start by only dealing with expressions that contain this extension...
+                        .map((filter) => Object.entries(filter).filter(([k]) => k.startsWith(`${name}:`))).filter((filter) => filter.length)
+                        // ...then remove the extension prefix
+                        .map((filter) => filter.reduce((res, [key, val]) => Object.assign(res, {[key.replace(`${name}:`, "")]: val}), {}))
+                    
                     try {
                         // Coerce the mixed value, using only namespaced attributes for this extension
-                        target[name] = attribute.coerce(mixedSource, direction, basepath, [Object.keys(filter ?? {})
-                            .filter(k => k.startsWith(`${name}:`))
-                            .reduce((res, key) => Object.assign(res, {[key.replace(`${name}:`, "")]: filter[key]}), {})
-                        ]);
+                        target[name] = attribute.coerce(mixedSource, direction, basepath, namespacedFilters.length ? new Filter(namespacedFilters) : undefined);
                     } catch (ex) {
                         // Rethrow exception with added context
                         ex.message += ` in schema extension '${name}'`;
@@ -320,7 +326,8 @@ export class SchemaDefinition {
             }
         }
         
-        return SchemaDefinition.#filter(this, filter && {...filter}, target);
+        // Go through and apply each filter expression individually to get coerced value
+        return (filter ?? []).reduce((target, filter) => SchemaDefinition.#filter(this, filter, target), target);
     }
     
     /**
@@ -338,7 +345,7 @@ export class SchemaDefinition {
             return data;
         // If the data is a set, only get values that match the filter
         else if (Array.isArray(data))
-            return data.map(data => SchemaDefinition.#filter(definition, {...filter}, data, prefix)).filter(v => Object.keys(v).length);
+            return data.map(data => SchemaDefinition.#filter(definition, filter, data, prefix)).filter(v => Object.keys(v).length);
         // Otherwise, filter the data!
         else {
             // Prepare resultant value storage
@@ -372,8 +379,14 @@ export class SchemaDefinition {
                 // ...go through all subAttributes, or extension attributes...
                 for (let attribute of (prefix ? definition.attribute(prefix).subAttributes : definition.attributes)) {
                     // ...and assume they should be included, if they weren't explicitly excluded
-                    if (attribute instanceof Attribute && !exclusions.includes(attribute.name)) inclusions.push(attribute.name);
+                    const name = (attribute instanceof SchemaDefinition ? attribute.id : attribute.name);
+                    if (!exclusions.includes(name)) inclusions.push(name);
                 }
+            }
+            // If there were explicit inclusions, go through all attributes...
+            else if (inclusions.length) for (let attribute of definition.attributes) {
+                // ...and exclude any extension schemas for which no filter is defined
+                if (attribute instanceof SchemaDefinition && !Object.keys(filter).some(key => key.startsWith(attribute.id))) exclusions.push(attribute.id);
             }
             
             // Go through every value in the data and filter it
@@ -383,7 +396,7 @@ export class SchemaDefinition {
                 
                 if (attribute instanceof SchemaDefinition) {
                     // If there is data in a namespaced key and no namespace filter, or there's an explicit inclusion filter...
-                    if ((Object.keys(data[key]).length && !Array.isArray(filter[key])) || (key in filter && inclusions.includes(key)))
+                    if ((!exclusions.includes(key) && Object.keys(data[key]).length && !Array.isArray(filter[key])) || (key in filter && inclusions.includes(key)))
                         // ...include the extension data
                         target[key] = data[key];
                 } else {
@@ -394,9 +407,10 @@ export class SchemaDefinition {
                     if (returned === "always") target[key] = data[key];
                     // Otherwise, if the attribute was requested and ~can~ be returned, process it
                     else if (![false, "never"].includes(returned)) {
-                        // If there's a filter for a complex attribute, evaluate it
-                        if (key in filter && !Array.isArray(filter[key]) && type === "complex") {
-                            const value = SchemaDefinition.#filter(definition, filter[key], data[key], key);
+                        // If there's a filter for a complex attribute, evaluate it...
+                        if (key in filter && type === "complex") {
+                            // ...either using Filter instance match method, or by recursing into this filter method to get specified attributes
+                            const value = Array.isArray(filter[key]) ? new Filter(filter[key].filter((expr) => Object.getPrototypeOf(expr).constructor === Object)).match(data[key]) : SchemaDefinition.#filter(definition, filter[key], data[key], key);
                             
                             // Only set the value if it isn't empty
                             if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
