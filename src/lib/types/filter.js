@@ -261,7 +261,7 @@ export class Filter extends Array {
         const isString = typeof expression === "string";
         
         // Make sure expression is a string, an object, or an array of objects
-        if (!isString && !(Array.isArray(expression) ? expression : [expression]).every(e => Object.getPrototypeOf(e).constructor === Object))
+        if (!isString && !(Array.isArray(expression) ? expression : [expression]).every(e => !!e && Object.getPrototypeOf(e).constructor === Object))
             throw new TypeError("Expected 'expression' parameter to be a string, object, or array of objects in Filter constructor");
         // Make sure the expression string isn't empty
         if (isString && !expression.trim().length)
@@ -289,13 +289,15 @@ export class Filter extends Array {
     match(values) {
         // Match against any of the filters in the set
         return values.filter(value => 
-            this.some(f => (f !== Object(f) ? false : Object.entries(f).every(([attr, expressions]) => {
-                let [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
+            this.some(f => Object.entries(f).every(([attr, expressions]) => {
+                const [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
                 const isActualDate = (actual instanceof Date || (new Date(actual).toString() !== "Invalid Date" && String(actual).match(isoDate)));
                 
                 if (Array.isArray(actual)) {
-                    // Handle multivalued attributes by diving into them
-                    return !!(new Filter(expressions).match(actual).length);
+                    // Handle multivalued attributes by diving into them...
+                    return !!(Array.isArray(expressions) ? expressions : [expressions])
+                        // ...dealing with nested joins involving complex filter expressions
+                        .some(e => new Filter(Array.isArray(e) ? {[attr]: e} : e).match(actual).length);
                 } else if (!Array.isArray(expressions)) {
                     // Handle complex attributes by diving into them
                     return !!(new Filter([expressions]).match([actual]).length);
@@ -370,7 +372,7 @@ export class Filter extends Array {
                     
                     return result;
                 }
-            })))
+            }))
         );
     }
     
@@ -392,7 +394,7 @@ export class Filter extends Array {
             const index = originIndex ?? expressions.indexOf(e)+1;
             const props = Object.entries(e);
             
-            // Make sure the expression isn't empty... 
+            // Make sure the expression isn't empty...
             if (!props.length) {
                 if (!prefix) throw new TypeError(`Missing expression properties for Filter expression object #${index}`);
                 else throw new TypeError(`Missing expressions for property '${prefix.slice(0, -1)}' of Filter expression object #${index}`);
@@ -409,30 +411,34 @@ export class Filter extends Array {
                     const nested = expr.some(e => Array.isArray(e));
                     
                     // Make sure expression is either singular or nested, not both
-                    if (nested && expr.length && !expr.every(e => Array.isArray(e)))
+                    if (nested && expr.length && !expr.every(e => Array.isArray(e) || Object.getPrototypeOf(e).constructor === Object))
                         throw new TypeError(`Unexpected nested array in property '${name}' of Filter expression object #${index}`);
                     
                     // Go through and make sure each expression is valid
                     for (let e of (nested ? expr : [expr])) {
-                        // Extract comparator and expected value
-                        const [comparator, expected] = e.slice(e[0]?.toLowerCase?.() === "not" ? 1 : 0);
-                        
-                        // Make sure there was a comparator
-                        if (!comparator)
-                            throw new TypeError(`Missing comparator in property '${name}' of Filter expression object #${index}`);
-                        // Make sure presence comparators don't include expected values
-                        if (["pr", "np"].includes(comparator.toLowerCase()) && expected !== undefined)
-                            throw new TypeError(`Unexpected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
-                        // Make sure expected value was defined for any other comparator
-                        if (expected === undefined && !["pr", "np"].includes(comparator.toLowerCase()))
-                            throw new TypeError(`Missing expected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
+                        // If the expression is a nested object, make sure it's also valid
+                        if (!Array.isArray(e)) Filter.#validate(e, index, name);
+                        else {
+                            // Extract comparator and expected value
+                            const [comparator, expected] = e.slice(e[0]?.toLowerCase?.() === "not" ? 1 : 0);
+                            
+                            // Make sure there was a comparator
+                            if (!comparator || typeof comparator !== "string")
+                                throw new TypeError(`Missing comparator in property '${name}' of Filter expression object #${index}`);
+                            // Make sure presence comparators don't include expected values
+                            if (["pr", "np"].includes(comparator.toLowerCase()) && expected !== undefined)
+                                throw new TypeError(`Unexpected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
+                            // Make sure expected value was defined for any other comparator
+                            if (expected === undefined && !["pr", "np"].includes(comparator.toLowerCase()))
+                                throw new TypeError(`Missing expected comparison value for '${comparator}' comparator in property '${name}' of Filter expression object #${index}`);
+                        }
                     }
                 }
                 // If expression is an object, traverse it
                 else if (Object.getPrototypeOf(expr).constructor === Object)
                     Filter.#validate(expr, index, `${name}.`);
                 // Otherwise, the expression is not valid
-                else throw new TypeError(`Expected plain object ${name ? `or expression array in property '${name}' of` : "for"} Filter expression object #${index}`)
+                else throw new TypeError(`Expected plain object or expression array in property '${name}' of Filter expression object #${index}`);
             }
         }
         
@@ -456,17 +462,21 @@ export class Filter extends Array {
                         const expressions = [];
                         
                         // Handle logical "and" operations applied to a single attribute
-                        for (let e of expr.every(e => Array.isArray(e)) ? expr : [expr]) {
-                            // Copy expression so original isn't modified
-                            const parts = [...e];
-                            // Then check for negations and extract the actual values
-                            const negate = (parts[0].toLowerCase() === "not" ? parts.shift() : undefined);
-                            const [comparator, expected] = parts;
-                            const maybeValue = expected instanceof Date ? expected.toISOString() : expected;
-                            const value = (typeof maybeValue === "string" ? `"${maybeValue}"` : (maybeValue !== undefined ? `${maybeValue}` : maybeValue))
-                            
-                            // Add the stringified expression to the results
-                            expressions.push([negate, `${prefix}${attr}`, comparator, value].filter(v => !!v).join(" "));
+                        for (let e of expr.every(e => Array.isArray(e) || Object.getPrototypeOf(e).constructor === Object) ? expr : [expr]) {
+                            // If expression isn't simple, update attribute name with complex filters
+                            if (!Array.isArray(e)) attr = `${attr}[${Object.entries(e).map(getMapper())}]`;
+                            else {
+                                // Copy expression so original isn't modified
+                                const parts = [...e];
+                                // Then check for negations and extract the actual values
+                                const negate = (parts[0].toLowerCase() === "not" ? parts.shift() : undefined);
+                                const [comparator, expected] = parts;
+                                const maybeValue = expected instanceof Date ? expected.toISOString() : expected;
+                                const value = (typeof maybeValue === "string" ? `"${maybeValue}"` : (maybeValue !== undefined ? `${maybeValue}` : maybeValue))
+                                
+                                // Add the stringified expression to the results
+                                expressions.push([negate, `${prefix}${attr}`, comparator, value].filter(v => !!v).join(" "));
+                            }
                         }
                         
                         return expressions;
@@ -513,7 +523,7 @@ export class Filter extends Array {
                 if (grouping !== undefined) tokens.push({type: "Group", value: grouping.substring(1, grouping.length - 1)});
                 
                 // Treat complex attribute filters as words
-                if (complex !== undefined) word = tokens.pop().value + complex;
+                if (complex !== undefined) word = tokens.pop()?.value + complex;
                 
                 // Handle attribute names (words), and unescaped string values
                 if (word !== undefined) {
@@ -605,7 +615,7 @@ export class Filter extends Array {
         else if (expressions.every(e => Object.getPrototypeOf(e).constructor === Object)) {
             return expressions.map(Filter.#objectify);
         }
-        // Go through every expression in the list, or handle a singular expression if that's what was given  
+        // Go through every expression in the list, or handle a singular expression if that's what was given
         else {
             const result = {};
             
@@ -631,7 +641,7 @@ export class Filter extends Array {
                         const expression = [negative, comparator.toLowerCase(), value].filter(v => v !== undefined);
                         
                         // Either store the single expression, or convert to array if attribute already has an expression defined
-                        target[name] = (!Array.isArray(target[name]) ? expression : [...(target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
+                        target[name] = (target[name] === undefined ? expression : [...(Array.isArray(target[name]) && target[name].every(Array.isArray) ? target[name] : [target[name]]), expression]);
                     }
                 }
             }
@@ -652,12 +662,12 @@ export class Filter extends Array {
         // Initial pass to check for complexities
         const simple = !tokens.some(t => ["Operator", "Group"].includes(t.type));
         // Closer inspection in case word tokens contain nested attribute filters
-        const reallySimple = simple && (tokens[0]?.value ?? tokens[0] ?? "").split(pathSeparator)
+        const reallySimple = simple && tokens[0]?.value.split(pathSeparator)
             .every(t => t === multiValuedFilter.exec(t).slice(1).shift());
         
         // If there's no operators or groups, and no nested attribute filters, assume the expression is complete
         if (reallySimple) {
-            results.push(Array.isArray(query) ? tokens.map(t => t.value ?? t) : Filter.#objectify(tokens.splice(0).map(t => t?.value ?? t)));
+            results.push(Array.isArray(query) ? tokens.map(t => t.value) : Filter.#objectify(tokens.splice(0).map(t => t.value)));
         }
         // Otherwise, logic and groups need to be evaluated
         else {
@@ -691,7 +701,7 @@ export class Filter extends Array {
                         
                         for (let part of parts) {
                             // Check for filters in the path part
-                            const [, key = part, filter] = multiValuedFilter.exec(part) ?? [];
+                            const [, key = part, filter] = multiValuedFilter.exec(part);
                             
                             // Store the spent path part
                             spent.push(key);
@@ -702,14 +712,19 @@ export class Filter extends Array {
                                     // Get any branches in the nested filter, parse them for joins, and properly wrap them
                                     .#operations(Filter.#tokenise(filter.substring(1, filter.length - 1)), "or")
                                     .map(b => Filter.#parse(b))
-                                    .map(b => b.every(b => b.every(b => Array.isArray(b))) ? b.flat(1) : b)
                                     // Prefix any attribute paths with spent parts
                                     .map((branch) => branch.map(join => {
-                                        const negative = (join.length === 4 || (join.length === 3 && comparators.includes(join[join.length-1].toLowerCase())) ? join.shift() : undefined);
+                                        const negative = (join.length === 4 || (join.length === 3 && comparators.includes(join[join.length-1]?.toLowerCase?.())) ? join.shift() : undefined);
                                         const [path, comparator, value] = join;
                                         
-                                        return [negative?.toLowerCase?.(), `${spent.join(".")}.${path}`, comparator, value];
+                                        return [negative?.toLowerCase(), `${spent.join(".")}.${path}`, comparator, value];
                                     }));
+                                
+                                // If there was a filter, some comparator, and no chained attribute name...
+                                if (parts.indexOf(part) === parts.length - 1 && comparator !== undefined) {
+                                    // ...add the expression as a branch I guess?
+                                    for (let branch of branches) branch.push([negative?.value, spent.join("."), comparator.value, value?.value]);
+                                }
                                 
                                 if (!results.length) {
                                     // Extract results from the filter
@@ -727,7 +742,7 @@ export class Filter extends Array {
                             }
                             // No filter, but if we're at the end of the chain, join the last expression with the results
                             else if (parts.indexOf(part) === parts.length - 1) {
-                                for (let result of results) result.push([negative?.value, spent.join("."), comparator?.value, value?.value]);
+                                for (let result of results) result.push([negative?.value, spent.join("."), comparator.value, value?.value]);
                             }
                         }
                         
@@ -777,7 +792,7 @@ export class Filter extends Array {
             
             // Push all expressions to results, objectifying if necessary
             for (let expression of expressions) {
-                results.push(...(Array.isArray(query) ? (expression.every(t => Array.isArray(t)) ? expression : [expression]) : [Filter.#objectify(expression)]));
+                results.push(...(Array.isArray(query) && expression.every(Array.isArray) ? expression : [Filter.#objectify(expression)]));
             }
         }
         

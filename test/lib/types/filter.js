@@ -15,9 +15,10 @@ describe("SCIMMY.Types.Filter", () => {
     });
     
     describe("@constructor", () => {
-        it("should not require arguments", () => {
-            assert.doesNotThrow(() => new Filter("id pr"),
-                "Filter type class did not instantiate without arguments");
+        it("should require 'expression' argument to be defined", () => {
+            assert.throws(() => new Filter(),
+                {name: "TypeError", message: "Expected 'expression' parameter to be a string, object, or array of objects in Filter constructor"},
+                "Filter type class instantiated without arguments");
         });
         
         context("when 'expression' argument is defined", () => {
@@ -143,7 +144,28 @@ describe("SCIMMY.Types.Filter", () => {
                     "Filter type class did not expect expression comparators to be defined");
             });
             
-            it("should throw when nested arrays are mixed with singular expressions", () => {
+            it("should expect expression comparators to be valid", () => {
+                assert.throws(() => new Filter({id: ["pr", "test"]}),
+                    {name: "TypeError", message: "Unexpected comparison value for 'pr' comparator in property 'id' of Filter expression object #1"},
+                    "Filter type class did not expect expression comparators to be valid");
+                assert.throws(() => new Filter({id: ["eq"]}),
+                    {name: "TypeError", message: "Missing expected comparison value for 'eq' comparator in property 'id' of Filter expression object #1"},
+                    "Filter type class did not expect expression comparators to be valid");
+            });
+            
+            it("should only accept Date instances as comparison values", () => {
+                try {
+                    new Filter({date: ["eq", new Date()]});
+                } catch (ex) {
+                    assert.fail(`Filter type class did not accept Date instances as comparison values\r\n[cause]: ${ex}`);
+                } finally {
+                    assert.throws(() => new Filter({date: [new Date()]}),
+                        {name: "TypeError", message: "Missing comparator in property 'date' of Filter expression object #1"},
+                        "Filter type class did not reject Date instance in place of comparator");
+                }
+            });
+            
+            it("should expect nested arrays to not be mixed with singular expressions", () => {
                 assert.throws(() => new Filter({id: ["pr", ["sw", "A"]]}),
                     {name: "TypeError", message: "Unexpected nested array in property 'id' of Filter expression object #1"},
                     "Filter type class did not throw when nested arrays were mixed with singular expressions");
@@ -245,13 +267,20 @@ describe("SCIMMY.Types.Filter", () => {
                     "Instance member 'expression' was not a string");
             });
             
+            it("should stringify Date instances", () => {
+                const date = new Date();
+                
+                assert.strictEqual(new Filter({date: ["eq", date]}).expression, `date eq "${date.toISOString()}"`,
+                    "Instance member 'expression' did not equal supplied date");
+            });
+            
             it("should stringify simple expression objects without logical or grouping operators", async function () {
                 const {expression: {simple: suite}} = await fixtures;
                 
                 if (!suite.length) this.skip();
                 else for (let fixture of suite) {
                     assert.deepStrictEqual((new Filter(fixture.source)).expression, fixture.target,
-                        `Filter type class failed to stringify simple expression object '${JSON.stringify(fixture.source)}'`);
+                        `Filter type class failed to stringify simple expression object\r\n[expression]: ${JSON.stringify(fixture.source)}`);
                 }
             });
             
@@ -261,7 +290,7 @@ describe("SCIMMY.Types.Filter", () => {
                 if (!suite.length) this.skip();
                 else for (let fixture of suite) {
                     assert.deepStrictEqual((new Filter(fixture.source)).expression, fixture.target,
-                        `Filter type class failed to stringify expression object '${JSON.stringify(fixture.source)}' with logical operators`);
+                        `Filter type class failed to stringify expression object with logical operators\r\n[expression]: ${JSON.stringify(fixture.source)}`);
                 }
             });
             
@@ -271,7 +300,7 @@ describe("SCIMMY.Types.Filter", () => {
                 if (!suite.length) this.skip();
                 else for (let fixture of suite) {
                     assert.deepStrictEqual((new Filter(fixture.source)).expression, fixture.target,
-                        `Filter type class failed to stringify complex expression object '${JSON.stringify(fixture.source)}'`);
+                        `Filter type class failed to stringify complex expression object\r\n[expression]: ${JSON.stringify(fixture.source)}`);
                 }
             });
         });
@@ -301,8 +330,14 @@ describe("SCIMMY.Types.Filter", () => {
                 
                 if (!suite.length) this.skip();
                 else for (let fixture of suite) {
-                    assert.deepStrictEqual(new Filter(fixture.expression).match(source).map((v) => v.id), fixture.expected,
-                        `Unexpected matches in '${key}' fixture #${suite.indexOf(fixture) + 1} with expression '${JSON.stringify(fixture.expression)}'`);
+                    const result = await Promise.resolve()
+                        .then(() => new Filter(fixture.expression))
+                        .catch((ex) => assert.fail(`Failed to instantiate Filter type class\r\n[expression]: ${JSON.stringify(fixture.expression)}\r\n[cause]: ${ex}`))
+                        .then((filter) => filter.match(source).map((v) => v.id))
+                        .catch((ex) => assert.fail(`Instance method 'match' failed unexpectedly\r\n[expression]: ${JSON.stringify(fixture.expression)}\r\n[cause]: ${ex.stack}`));
+                    
+                    assert.deepStrictEqual(result, fixture.expected,
+                        `Unexpected matches in '${key}' fixture #${suite.indexOf(fixture) + 1}\r\n[expression]: ${JSON.stringify(fixture.source)}`);
                 }
             });
         }

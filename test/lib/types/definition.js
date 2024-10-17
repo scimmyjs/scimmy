@@ -304,6 +304,15 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
             assert.strictEqual(Object.getPrototypeOf(definition.extend(extension).attribute(extension.id)), extension,
                 "Instance method 'extend' did not ignore already declared SchemaDefinition extension");
         });
+        
+        it("should expect nested schema definition extensions to be declared as extensions themselves", () => {
+            const nested = new SchemaDefinition("NestedDefinition", extensionId);
+            const extension = new SchemaDefinition(`${params.name}Extension`, `${params.id}Extension`).extend(nested);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(extension);
+            
+            assert.strictEqual(Object.getPrototypeOf(definition.attribute(nested.id)), nested,
+                "Instance method 'extend' did not expect nested schema definition extensions to be declared as extensions themselves");
+        });
     });
     
     describe("#truncate()", () => {
@@ -441,6 +450,14 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "Instance method 'coerce' did not fail with 'data' argument array value");
         });
         
+        it("should expect 'filter' argument to be a Filter instance, if specified", () => {
+            const definition = new SchemaDefinition(...Object.values(params));
+            
+            assert.throws(() => definition.coerce({}, undefined, undefined, "test"),
+                {name: "TypeError", message: "Expected 'filter' parameter to be a Filter instance in SchemaDefinition instance"},
+                "Instance method 'coerce' did not expect 'filter' argument to be a Filter instance");
+        });
+        
         it("should expect common attributes to be defined on coerced result", () => {
             const definition = new SchemaDefinition(...Object.values(params));
             const result = definition.coerce({});
@@ -449,6 +466,15 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "Instance method 'coerce' did not set common attribute 'schemas' on coerced result");
             assert.strictEqual(result?.meta?.resourceType, params.name,
                 "Instance method 'coerce' did not set common attribute 'meta.resourceType' on coerced result");
+        });
+        
+        it("should always include always returned attributes", () => {
+            const source = {name: "Test", value: "False"};
+            const attributes = [new Attribute("string", "name", {returned: "always"}), new Attribute("string", "value")];
+            const definition = new SchemaDefinition(...Object.values(params), "Test Schema", attributes).truncate(["schemas", "meta"]);
+            
+            assert.deepStrictEqual({...definition.coerce(source, undefined, undefined, new Filter("name np"))}, source,
+                `Instance method 'coerce' did not always include always returned attributes`);
         });
         
         it("should expect coerce to be called on directly included attributes", () => {
@@ -516,11 +542,18 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
         });
         
         it("should expect deeply nested namespaced and extension attributes to be merged and coerced", () => {
-            const attributes = [new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])]
+            const attributes = [new Attribute("string", "words", {multiValued: true}), new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])];
             const extension = new SchemaDefinition("Extension", extensionId, "An Extension", attributes);
             const definition = new SchemaDefinition(...Object.values(params)).extend(extension, true);
-            const {[extension.id]: actual} = definition.coerce({[`${extension.id}:test.value`]: "Test", [extension.id]: {test: {name: "Test"}}});
-            const expected = {test: {name: "Test", value: "Test"}};
+            const expected = {words: ["first", "second"], test: {name: "Test", value: "Test"}};
+            const {[extension.id]: actual} = definition.coerce({
+                [`${extension.id}:words`]: ["second"],
+                [`${extension.id}:test.value`]: "Test",
+                [extension.id]: {
+                    words: ["first"],
+                    test: {name: "Test", value: "Wrong"}
+                }
+            });
             
             assert.deepStrictEqual({...actual}, expected,
                 "Instance method 'coerce' did not expect deeply nested namespaced and extension attributes to be merged and coerced");
@@ -562,7 +595,8 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
             ["complex attributes", "filtered positively", "unexpectedly included", {test: {value: "False"}}, "test.value pr"],
             ["complex attributes", "filtered negatively", "unexpectedly excluded", {test: {name: "Test"}}, "test.value np"],
             ["complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test"}]}, "test.name pr", true],
-            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true]
+            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true],
+            ["complex multi-value attributes", "matched against filter expressions", "unexpectedly excluded", {test: [{name: "Test", value: "Test"}]}, "test[name eq \"Test\"] pr", true]
         ]) it(`should expect ${target} to be ${outcome}`, () => {
             const source = {test: multiValued ? [{name: "Test", value: "Test"}, {value: "False"}] : {name: "Test", value: "False"}};
             const attributes = [new Attribute("complex", "test", {multiValued}, [new Attribute("string", "name"), new Attribute("string", "value")])];
@@ -573,9 +607,10 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
         });
         
         for (let [target, outcome, unexpected, expected, filter] of [
-            ["namespaced attributes", "present in coerced result", "unexpectedly excluded", {costCenter: "Test", [extensionId]: {employeeNumber: "1234", costCenter: "Test"}}, "employeeNumber np"],
-            ["namespaced attributes", "filtered positively", "unexpectedly included", {[extensionId]: {employeeNumber: "1234"}}, `${extensionId}:employeeNumber pr`],
-            ["namespaced attributes", "filtered negatively", "unexpectedly excluded", {employeeNumber: "Test", costCenter: "Test", [extensionId]: {costCenter: "Test"}}, `${extensionId}:employeeNumber np`],
+            ["namespaced attributes", "included when not specified in negative filter", "unexpectedly excluded", {costCenter: "Test", [extensionId]: {employeeNumber: "1234", costCenter: "Test"}}, "employeeNumber np"],
+            ["namespaced attributes", "excluded when not specified in positive filter", "unexpectedly included", {costCenter: "Test"}, "costCenter pr"],
+            ["namespaced attributes", "filtered positively", "unexpectedly excluded", {[extensionId]: {employeeNumber: "1234"}}, `${extensionId}:employeeNumber pr`],
+            ["namespaced attributes", "filtered negatively", "unexpectedly included", {employeeNumber: "Test", costCenter: "Test", [extensionId]: {costCenter: "Test"}}, `${extensionId}:employeeNumber np`],
             ["extension namespaces", "filtered positively", "unexpectedly included", {[extensionId]: {employeeNumber: "1234", costCenter: "Test"}}, `${extensionId} pr`],
             ["extension namespaces", "filtered negatively", "unexpectedly excluded", {employeeNumber: "Test", costCenter: "Test"}, `${extensionId} np`],
             ["direct and namespaced attributes", "filtered positively", "unexpectedly included", {costCenter: "Test", [extensionId]: {employeeNumber: "1234"}}, `costCenter pr and ${extensionId}:employeeNumber pr`],
