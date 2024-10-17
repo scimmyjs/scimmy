@@ -155,7 +155,7 @@ export class SchemaDefinition {
             
             // Go through the schema extension definition and directly register any nested schema definitions
             const surplusSchemas = extension.attributes.filter(e => e instanceof SchemaDefinition);
-            for (let definition of surplusSchemas) this.extend(definition);
+            for (let definition of surplusSchemas) this.extend(Object.getPrototypeOf(definition));
         }
         // If every extension is an attribute instance, add them to the schema definition
         else if (extensions.every(e => e instanceof Attribute)) {
@@ -316,7 +316,7 @@ export class SchemaDefinition {
                     
                     try {
                         // Coerce the mixed value, using only namespaced attributes for this extension
-                        target[name] = attribute.coerce(mixedSource, direction, basepath, namespacedFilters.length ? new Filter(namespacedFilters) : undefined);
+                        target[name] = attribute.coerce(mixedSource, direction, basepath, ...(namespacedFilters.length ? [new Filter(namespacedFilters)] : []));
                     } catch (ex) {
                         // Rethrow exception with added context
                         ex.message += ` in schema extension '${name}'`;
@@ -327,7 +327,7 @@ export class SchemaDefinition {
         }
         
         // Go through and apply each filter expression individually to get coerced value
-        return (filter ?? []).reduce((target, filter) => SchemaDefinition.#filter(this, filter, target), target);
+        return (filter ?? [filter]).reduce((target, filter) => SchemaDefinition.#filter(this, filter, target), target);
     }
     
     /**
@@ -392,7 +392,7 @@ export class SchemaDefinition {
             // Go through every value in the data and filter it
             for (let key in data) {
                 // Get the matching attribute or extension definition for the key
-                const attribute = definition.attribute(prefix ? `${prefix}.${key}` : key) ?? {};
+                const attribute = definition.attribute(prefix ? `${prefix}.${key}` : key);
                 
                 if (attribute instanceof SchemaDefinition) {
                     // If there is data in a namespaced key and no namespace filter, or there's an explicit inclusion filter...

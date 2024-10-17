@@ -304,6 +304,15 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
             assert.strictEqual(Object.getPrototypeOf(definition.extend(extension).attribute(extension.id)), extension,
                 "Instance method 'extend' did not ignore already declared SchemaDefinition extension");
         });
+        
+        it("should expect nested schema definition extensions to be declared as extensions themselves", () => {
+            const nested = new SchemaDefinition("NestedDefinition", extensionId);
+            const extension = new SchemaDefinition(`${params.name}Extension`, `${params.id}Extension`).extend(nested);
+            const definition = new SchemaDefinition(...Object.values(params)).extend(extension);
+            
+            assert.strictEqual(Object.getPrototypeOf(definition.attribute(nested.id)), nested,
+                "Instance method 'extend' did not expect nested schema definition extensions to be declared as extensions themselves");
+        });
     });
     
     describe("#truncate()", () => {
@@ -533,11 +542,18 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
         });
         
         it("should expect deeply nested namespaced and extension attributes to be merged and coerced", () => {
-            const attributes = [new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])]
+            const attributes = [new Attribute("string", "words", {multiValued: true}), new Attribute("complex", "test", {}, [new Attribute("string", "name"), new Attribute("string", "value")])];
             const extension = new SchemaDefinition("Extension", extensionId, "An Extension", attributes);
             const definition = new SchemaDefinition(...Object.values(params)).extend(extension, true);
-            const {[extension.id]: actual} = definition.coerce({[`${extension.id}:test.value`]: "Test", [extension.id]: {test: {name: "Test"}}});
-            const expected = {test: {name: "Test", value: "Test"}};
+            const expected = {words: ["first", "second"], test: {name: "Test", value: "Test"}};
+            const {[extension.id]: actual} = definition.coerce({
+                [`${extension.id}:words`]: ["second"],
+                [`${extension.id}:test.value`]: "Test",
+                [extension.id]: {
+                    words: ["first"],
+                    test: {name: "Test", value: "Wrong"}
+                }
+            });
             
             assert.deepStrictEqual({...actual}, expected,
                 "Instance method 'coerce' did not expect deeply nested namespaced and extension attributes to be merged and coerced");
@@ -579,7 +595,8 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
             ["complex attributes", "filtered positively", "unexpectedly included", {test: {value: "False"}}, "test.value pr"],
             ["complex attributes", "filtered negatively", "unexpectedly excluded", {test: {name: "Test"}}, "test.value np"],
             ["complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test"}]}, "test.name pr", true],
-            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true]
+            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true],
+            ["complex multi-value attributes", "matched against filter expressions", "unexpectedly excluded", {test: [{name: "Test", value: "Test"}]}, "test[name eq \"Test\"] pr", true]
         ]) it(`should expect ${target} to be ${outcome}`, () => {
             const source = {test: multiValued ? [{name: "Test", value: "Test"}, {value: "False"}] : {name: "Test", value: "False"}};
             const attributes = [new Attribute("complex", "test", {multiValued}, [new Attribute("string", "name"), new Attribute("string", "value")])];
