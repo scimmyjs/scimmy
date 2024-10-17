@@ -119,9 +119,33 @@
         ]
       },
       {
+        "source": "not emails[type eq \"work\"].value pr",
+        "target": [
+          {"emails": {"type": ["eq", "work"], "value": ["not", "pr"]}}
+        ]
+      },
+      {
         "source": "emails[not type eq \"work\"] pr",
         "target": [
           {"emails": [{"type": ["not", "eq", "work"]}, ["pr"]]}
+        ]
+      },
+      {
+        "source": "emails[type eq \"work\"] co \"A\"",
+        "target": [
+          {"emails": [{"type": ["eq", "work"]}, ["co", "A"]]}
+        ]
+      },
+      {
+        "source": "emails[not type eq \"work\"] co \"A\"",
+        "target": [
+          {"emails": [{"type": ["not", "eq", "work"]}, ["co", "A"]]}
+        ]
+      },
+      {
+        "source": "not emails[not type eq \"work\"] co \"A\"",
+        "target": [
+          {"emails": [{"type": ["not", "eq", "work"]}, ["not", "co", "A"]]}
         ]
       },
       {

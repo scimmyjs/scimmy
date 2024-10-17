@@ -721,9 +721,10 @@ export class Filter extends Array {
                                     }));
                                 
                                 // If there was a filter, some comparator, and no chained attribute name...
-                                if (parts.indexOf(part) === parts.length - 1 && comparator !== undefined)
+                                if (parts.indexOf(part) === parts.length - 1 && comparator !== undefined) {
                                     // ...add the expression as a branch I guess?
-                                    for (let branch of branches) branch.push([negative?.value, spent.join("."), comparator?.value, value?.value]);
+                                    for (let branch of branches) branch.push([negative?.value, spent.join("."), comparator.value, value?.value]);
+                                }
                                 
                                 if (!results.length) {
                                     // Extract results from the filter
@@ -741,7 +742,7 @@ export class Filter extends Array {
                             }
                             // No filter, but if we're at the end of the chain, join the last expression with the results
                             else if (parts.indexOf(part) === parts.length - 1) {
-                                for (let result of results) result.push([negative?.value, spent.join("."), comparator?.value, value?.value]);
+                                for (let result of results) result.push([negative?.value, spent.join("."), comparator.value, value?.value]);
                             }
                         }
                         
@@ -791,7 +792,7 @@ export class Filter extends Array {
             
             // Push all expressions to results, objectifying if necessary
             for (let expression of expressions) {
-                results.push(...(Array.isArray(query) ? (expression.every(t => Array.isArray(t)) ? expression : [expression]) : [Filter.#objectify(expression)]));
+                results.push(...(Array.isArray(query) && expression.every(Array.isArray) ? expression : [Filter.#objectify(expression)]));
             }
         }
         
