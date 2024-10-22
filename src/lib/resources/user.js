@@ -45,7 +45,7 @@ export class User extends Types.Resource {
     /**
      * Sets the method to be called to consume a resource on create
      * @param {IngressHandler} handler - function to invoke to consume a resource on create
-     * @returns {typeof SCIMMY.Resources.User} this resource type class for chaining
+     * @returns {SCIMMY.Resources.User} this resource type class for chaining
      * @override
      */
     static ingress(handler) {
