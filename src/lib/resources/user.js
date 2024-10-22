@@ -14,55 +14,67 @@ export class User extends Types.Resource {
     static get endpoint() {
         return "/Users";
     }
-    
+
     /** @private */
     static #basepath;
     /** @implements {SCIMMY.Types.Resource.basepath} */
     static basepath(path) {
         if (path === undefined) return User.#basepath;
         else User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
-        
+
         return User;
     }
-    
-    /** @implements {SCIMMY.Types.Resource.schema} */
+
     static get schema() {
         return Schemas.User;
     }
-    
-    /** @private */
-    static #ingress = () => {
+
+    /**
+     * Handler for ingress of a resource
+     * @callback IngressHandler
+     * @param {SCIMMY.Resources.User} resource - the resource performing the ingress
+     * @param {SCIMMY.Schemas.User} instance - an instance of the resource type that conforms to the resource's schema
+     * @param {*} [ctx] - external context in which the handler has been called
+     * @returns {Object} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
+    */
+
+    static #ingress = (() => {
         throw new Types.Error(501, null, "Method 'ingress' not implemented by resource 'User'");
-    };
-    
-    /** @implements {SCIMMY.Types.Resource.ingress} */
+    });
+
+    /**
+     * Sets the method to be called to consume a resource on create
+     * @param {IngressHandler} handler - function to invoke to consume a resource on create
+     * @returns {typeof SCIMMY.Resources.User} this resource type class for chaining
+     * @override
+     */
     static ingress(handler) {
         User.#ingress = handler;
         return User;
     }
-    
+
     /** @private */
     static #egress = () => {
         throw new Types.Error(501, null, "Method 'egress' not implemented by resource 'User'");
     };
-    
+
     /** @implements {SCIMMY.Types.Resource.egress} */
     static egress(handler) {
         User.#egress = handler;
         return User;
     }
-    
+
     /** @private */
     static #degress = () => {
         throw new Types.Error(501, null, "Method 'degress' not implemented by resource 'User'");
     };
-    
+
     /** @implements {SCIMMY.Types.Resource.degress} */
     static degress(handler) {
         User.#degress = handler;
         return User;
     }
-    
+
     /**
      * Instantiate a new SCIM User resource and parse any supplied parameters
      * @extends SCIMMY.Types.Resource
@@ -70,7 +82,7 @@ export class User extends Types.Resource {
     constructor(...params) {
         super(...params);
     }
-    
+
     /**
      * @implements {SCIMMY.Types.Resource#read}
      * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.User}
@@ -85,7 +97,7 @@ export class User extends Types.Resource {
         try {
             const source = await User.#egress(this, ctx);
             const target = (this.id ? [source].flat().shift() : source);
-            
+
             // If not looking for a specific resource, make sure egress returned an array
             if (!this.id && Array.isArray(target)) return new Messages.ListResponse(target
                 .map(u => new Schemas.User(u, "out", User.basepath(), this.attributes)), this.constraints);
@@ -99,7 +111,7 @@ export class User extends Types.Resource {
             else throw new Types.Error(404, null, `Resource ${this.id} not found`);
         }
     }
-    
+
     /**
      * @implements {SCIMMY.Types.Resource#write}
      * @returns {SCIMMY.Schemas.User}
@@ -115,10 +127,10 @@ export class User extends Types.Resource {
             throw new Types.Error(400, "invalidSyntax", `Missing request body payload for ${!!this.id ? "PUT" : "POST"} operation`);
         if (Object(instance) !== instance || Array.isArray(instance))
             throw new Types.Error(400, "invalidSyntax", `Operation ${!!this.id ? "PUT" : "POST"} expected request body payload to be single complex value`);
-        
+
         try {
             const target = await User.#ingress(this, new Schemas.User(instance, "in"), ctx);
-            
+
             // Make sure ingress returned an object
             if (target instanceof Object) return new Schemas.User(target, "out", User.basepath(), this.attributes);
             // Otherwise, ingress has not been implemented correctly
@@ -129,7 +141,7 @@ export class User extends Types.Resource {
             else throw new Types.Error(404, null, `Resource ${this.id} not found`);
         }
     }
-    
+
     /**
      * @implements {SCIMMY.Types.Resource#patch}
      * @see SCIMMY.Messages.PatchOp
@@ -145,12 +157,12 @@ export class User extends Types.Resource {
             throw new Types.Error(400, "invalidSyntax", "Missing message body from PatchOp request");
         if (Object(message) !== message || Array.isArray(message))
             throw new Types.Error(400, "invalidSyntax", "PatchOp request expected message body to be single complex value");
-        
+
         return await new Messages.PatchOp(message)
             .apply(await this.read(ctx), async (instance) => await this.write(instance, ctx))
             .then(instance => !instance ? undefined : new Schemas.User(instance, "out", User.basepath(), this.attributes));
     }
-    
+
     /**
      * @implements {SCIMMY.Types.Resource#dispose}
      * @example
@@ -160,7 +172,7 @@ export class User extends Types.Resource {
     async dispose(ctx) {
         if (!this.id)
             throw new Types.Error(404, null, "DELETE operation must target a specific resource");
-        
+
         try {
             await User.#degress(this, ctx);
         } catch (ex) {
