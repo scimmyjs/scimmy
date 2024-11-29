@@ -60,11 +60,12 @@
     "@types/node": "ts5.4",
     "c8": "^10.1.2",
     "chalk": "^5.3.0",
-    "classy-template": "^1.4.0",
+    "classy-template": "^1.5.1",
     "jsdoc": "^4.0.2",
     "minimist": "^1.2.8",
     "mocha": "^10.4.0",
-    "rollup": "^4.17.2",
+    "ostensibly-typed": "^1.0.1",
+    "rollup": "^4.25.0",
     "sinon": "^19.0.2",
     "typescript": "^5.4.5"
   }
