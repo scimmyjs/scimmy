@@ -1,4 +1,4 @@
-import {ErrorMessage} from "./error.js";
+import {ErrorResponse} from "./error.js";
 import {BulkResponse} from "./bulkresponse.js";
 import Types from "../types.js";
 import Resources from "../resources.js";
@@ -142,46 +142,46 @@ export class BulkRequest {
                 const lastOp = (await Promise.all(precedingOps)).pop();
                 
                 // If there was last operation, and it failed, and error limit reached, bail out here
-                if (precedingOps.length && (!lastOp || (lastOp.response instanceof ErrorMessage && !(!errorLimit || (errorCount < errorLimit)))))
+                if (precedingOps.length && (!lastOp || (lastOp.response instanceof ErrorResponse && !(!errorLimit || (errorCount < errorLimit)))))
                     return;
             }
             
             // Make sure method has a value
             if (!method && method !== false)
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Missing or empty 'method' string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `Missing or empty 'method' string ${errorSuffix}`));
             // Make sure that value is a string
             else if (typeof method !== "string")
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Expected 'method' to be a string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `Expected 'method' to be a string ${errorSuffix}`));
             // Make sure that string is a valid method
             else if (!validMethods.includes(String(method).toUpperCase()))
-                error = new ErrorMessage(new Types.Error(400, "invalidValue", `Invalid 'method' value '${method}' ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidValue", `Invalid 'method' value '${method}' ${errorSuffix}`));
             // Make sure path has a value
             else if (!path && path !== false)
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Missing or empty 'path' string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `Missing or empty 'path' string ${errorSuffix}`));
             // Make sure that path is a string
             else if (typeof path !== "string")
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Expected 'path' to be a string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `Expected 'path' to be a string ${errorSuffix}`));
             // Make sure that string points to a valid resource type
             else if (![...typeMap.keys()].includes(`/${endpoint}`))
-                error = new ErrorMessage(new Types.Error(400, "invalidValue", `Invalid 'path' value '${path}' ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidValue", `Invalid 'path' value '${path}' ${errorSuffix}`));
             // Make sure there IS a bulkId if the method is POST
             else if (method.toUpperCase() === "POST" && !bulkId && bulkId !== false)
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `POST operation missing required 'bulkId' string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `POST operation missing required 'bulkId' string ${errorSuffix}`));
             // Make sure there IS a bulkId if the method is POST
             else if (method.toUpperCase() === "POST" && typeof bulkId !== "string")
-                error = new ErrorMessage(new Types.Error(400, "invalidValue", `POST operation expected 'bulkId' to be a string ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(400, "invalidValue", `POST operation expected 'bulkId' to be a string ${errorSuffix}`));
             // Make sure there ISN'T a resource targeted if the method is POST
             else if (method.toUpperCase() === "POST" && !!id)
-                error = new ErrorMessage(new Types.Error(404, null, `POST operation must not target a specific resource ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(404, null, `POST operation must not target a specific resource ${errorSuffix}`));
             // Make sure there IS a resource targeted if the method isn't POST
             else if (method.toUpperCase() !== "POST" && !id)
-                error = new ErrorMessage(new Types.Error(404, null, `${method.toUpperCase()} operation must target a specific resource ${errorSuffix}`));
+                error = new ErrorResponse(new Types.Error(404, null, `${method.toUpperCase()} operation must target a specific resource ${errorSuffix}`));
             // Make sure data is an object, if method isn't DELETE
             else if (method.toUpperCase() !== "DELETE" && (Object(data) !== data || Array.isArray(data)))
-                error = new ErrorMessage(new Types.Error(400, "invalidSyntax", `Expected 'data' to be a single complex value ${errorSuffix}`))
+                error = new ErrorResponse(new Types.Error(400, "invalidSyntax", `Expected 'data' to be a single complex value ${errorSuffix}`))
             // Make sure any bulkIds referenced in data can eventually be resolved
             else if (!waitingOn.every((id) => bulkIds.has(id)))
-                error = new ErrorMessage(new Types.Error(400, "invalidValue", `No POST operation found matching bulkId '${waitingOn.find((id) => !bulkIds.has(id))}'`));
+                error = new ErrorResponse(new Types.Error(400, "invalidValue", `No POST operation found matching bulkId '${waitingOn.find((id) => !bulkIds.has(id))}'`));
             // If things look OK, attempt to apply the operation
             else try {
                 // Get replaceable data for reference resolution
@@ -214,7 +214,7 @@ export class BulkRequest {
                         if (bulkId && data.id) await new TargetResource(data.id).dispose(ctx);
                         
                         // If we're following on from a prior failure, no need to explain why, otherwise, explain the failure
-                        if (ex instanceof ErrorMessage && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
+                        if (ex instanceof ErrorResponse && (!!errorLimit && errorCount >= errorLimit && index > lastErrorIndex)) return;
                         else throw new Types.Error(412, null, `Referenced POST operation with bulkId '${referenceId}' was not successful`);
                     }
                 }
@@ -247,11 +247,11 @@ export class BulkRequest {
                     ex = new Types.Error(...(ex instanceof TypeError ? [400, "invalidValue"] : [500, null]), ex.message);
                 
                 // Set the error variable for final handling, and reject any pending operations
-                error = new ErrorMessage(ex);
+                error = new ErrorResponse(ex);
             }
             
             // If there was an error, store result and increment error count
-            if (error instanceof ErrorMessage) {
+            if (error instanceof ErrorResponse) {
                 Object.assign(result, {status: error.status, response: error, location: (String(method).toUpperCase() !== "POST" ? result.location : undefined)});
                 lastErrorIndex = (index < lastErrorIndex ? index : lastErrorIndex);
                 errorCount++;

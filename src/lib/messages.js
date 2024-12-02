@@ -1,4 +1,4 @@
-import {ErrorMessage as ErrorResponse} from "./messages/error.js";
+import {ErrorResponse} from "./messages/error.js";
 import {ListResponse} from "./messages/listresponse.js";
 import {PatchOp} from "./messages/patchop.js";
 import {BulkRequest} from "./messages/bulkrequest.js";
@@ -18,10 +18,11 @@ export {ErrorResponse, ListResponse, PatchOp, BulkRequest, BulkResponse, SearchR
  */
 export default class Messages {
     /**
-     * @type {typeof SCIMMY.Messages.ErrorMessage}
+     * @type {typeof SCIMMY.Messages.ErrorResponse}
      * @ignore
      */
     static Error = ErrorResponse;
+    static ErrorResponse = ErrorResponse;
     static ListResponse = ListResponse;
     static PatchOp = PatchOp;
     static BulkRequest = BulkRequest;
