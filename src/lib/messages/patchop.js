@@ -66,9 +66,18 @@ export class PatchOp {
     #dispatched = false;
     
     /**
+     * SCIM PatchOp Operation definition
+     * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpOperation
+     * @prop {SCIMMY.Messages.PatchOp~ValidPatchOperations} op - the operation to perform
+     * @prop {String} [path] - an attribute path describing the target of the operation
+     * @prop {*} [value] - value to add or update
+     */
+    
+    /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} request - contents of the patch operation request being performed
-     * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
+     * @param {SCIMMY.Messages.PatchOp~PatchOpOperation[]} request.Operations - list of SCIM-compliant patch operations to apply to the given resource
+     * @property {SCIMMY.Messages.PatchOp~PatchOpOperation[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {
         const {schemas = [], Operations: operations = []} = request ?? {};
@@ -138,10 +147,20 @@ export class PatchOp {
     #target;
     
     /**
+     * Apply final transformations or database operations before determining whether a PatchOp resulted in any actual changes
+     * @async
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that was patched
+     * @callback SCIMMY.Messages.PatchOp~PatchOpFinaliser
+     * @param {S} instance - a patched version of the originally supplied resource schema instance
+     * @returns {Record<String, any>} the resource instance after final transformations have been applied
+     */
+    
+    /**
      * Apply patch operations to a resource as defined by the PatchOp instance
-     * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
-     * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
-     * @returns {SCIMMY.Types.Schema} an instance of the resource modified as per the included patch operations
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance being patched
+     * @param {S} resource - the schema instance the patch operation will be performed on
+     * @param {SCIMMY.Messages.PatchOp~PatchOpFinaliser<S>} [finalise] - method to call when all operations are complete, to feed target back through model
+     * @returns {S} an instance of the resource modified as per the included patch operations
      */
     async apply(resource, finalise) {
         // Bail out if message has not been dispatched (i.e. it's not ready yet)
@@ -256,7 +275,7 @@ export class PatchOp {
          * @private
          */
         return {
-            complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
+            complex: (attribute instanceof Types.SchemaDefinition ? true : String(attribute.type) === "complex"),
             multiValued, property, targets
         };
     }
