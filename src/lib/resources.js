@@ -132,6 +132,22 @@ export default class Resources {
     static Group = Group;
     
     /**
+     * Register a resource implementation and return it for chained configuration
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @overload
+     * @param {R} resource - the resource type implementation to register
+     * @param {String} [config] - the explicit name to register the resource implementation with
+     * @returns {R} the registered resource type class for chaining
+     */
+    /**
+     * Register a resource implementation with specific config, returning Resources class for chained registrations
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @overload
+     * @param {R} resource - the resource type implementation to register
+     * @param {Object} config - the configuration to feed to the resource being registered
+     * @returns {typeof SCIMMY.Resources} the Resources class for chaining
+     */
+    /**
      * Register a resource implementation for exposure as a ResourceType
      * @param {typeof SCIMMY.Types.Resource} resource - the resource type implementation to register
      * @param {Object|String} [config] - the configuration to feed to the resource being registered, or the name of the resource type implementation if different to the class name
@@ -192,9 +208,27 @@ export default class Resources {
     }
     
     /**
+     * Get all registered resource implementations
+     * @overload
+     * @returns {Record<String, typeof SCIMMY.Types.Resource>} a containing object with all registered resource implementations
+     */
+    /**
+     * Get the registered resource type implementation for the given name
+     * @overload
+     * @param {String} resource - registered name of resource to retrieve
+     * @returns {typeof SCIMMY.Types.Resource} the registered resource type implementation with matching name
+     */
+    /**
+     * Query the registration status of a given resource type implementation
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @overload
+     * @param {R} resource - the resource type implementation to query registration status for
+     * @returns {Boolean} the registration status of the specified resource type implementation class
+     */
+    /**
      * Get registration status of specific resource implementation, or get all registered resource implementations
      * @param {typeof SCIMMY.Types.Resource|String} [resource] - the resource implementation or name to query registration status for
-     * @returns {Object|typeof SCIMMY.Types.Resource|Boolean}
+     * @returns {Record<String, typeof SCIMMY.Types.Resource>|typeof SCIMMY.Types.Resource|Boolean}
      * *   A containing object with registered resource implementations for exposure as ResourceTypes, if no arguments are supplied.
      * *   The registered resource type implementation with matching name, or undefined, if a string argument is supplied.
      * *   The registration status of the specified resource implementation, if a class extending `SCIMMY.Types.Resource` is supplied.

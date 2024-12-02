@@ -129,20 +129,28 @@ export default class Config {
     }
     
     /**
+     * Set multiple SCIM service provider configuration property values
+     * @overload
+     * @param {Object} config - the new configuration to apply to the service provider config instance
+     * @returns {Object} the updated configuration instance
+     */
+    /**
+     * Set specific SCIM service provider configuration property by name
+     * @overload
+     * @param {String} name - the name of the configuration property to set
+     * @param {Object|Boolean} value - the new value of the configuration property to set
+     * @returns {typeof SCIMMY.Config} the config container class for chaining
+     */
+    /**
      * Set SCIM service provider configuration
-     * @param {Array<Object|String>} args - the configuration key name or value to apply
-     * @param {Object} args - the new configuration to apply to the service provider config instance
-     * @param {String} args - the name of the configuration property to set
-     * @param {Object|Boolean} args - the new value of the configuration property to set
+     * @param {Object|String} name - the configuration key name or value to apply
+     * @param {Object|String|Boolean} [config=name] - the new configuration to apply to the service provider config instance
      * @returns {Object|typeof SCIMMY.Config} the updated configuration instance, or the config container class for chaining
      */
-    static set(...args) {
-        // Dereference name and config from supplied parameters
-        let [name, config = args[0]] = args;
-        
+    static set(name, config = name) {
         // If property name supplied, call again with object
         if (typeof name === "string") {
-            Config.set({[name]: args[1]});
+            Config.set({[name]: config});
             
             return Config;
         }

@@ -127,12 +127,29 @@ export default class Schemas {
     }
     
     /**
-     * Get registration status of specific schema definition, or get all registered schema definitions
-     * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema definition or name to query registration status for
+     * Get all declared schema definitions
+     * @overload
+     * @returns {SCIMMY.Types.SchemaDefinition[]} array containing all declared schema definitions
+     */
+    /**
+     * Get the declared schema definition for the given name or ID
+     * @overload
+     * @param {String} definition - declared name or ID of schema definition to retrieve
+     * @returns {SCIMMY.Types.SchemaDefinition} the declared schema definition with matching name or ID
+     */
+    /**
+     * Query the declaration status of a given schema definition instance
+     * @overload
+     * @param {SCIMMY.Types.SchemaDefinition} definition - the schema definition instance to query declaration status for
+     * @returns {Boolean} the declaration status of the specified schema definition
+     */
+    /**
+     * Get declaration status of specific schema definition, or get all declared schema definitions
+     * @param {SCIMMY.Types.SchemaDefinition|String} [definition] - the schema definition or name to query declaration status for
      * @returns {SCIMMY.Types.SchemaDefinition[]|SCIMMY.Types.SchemaDefinition|Boolean}
      * *   Array containing declared schema definitions for exposure via Schemas HTTP endpoint, if no arguments are supplied.
-     * *   The registered schema definition with matching name or ID, or undefined, if a string argument is supplied.
-     * *   The registration status of the specified schema definition, if a class extending `SCIMMY.Types.SchemaDefinition` was supplied.
+     * *   The declared schema definition with matching name or ID, or undefined, if a string argument is supplied.
+     * *   The declaration status of the specified schema definition, if a class extending `SCIMMY.Types.SchemaDefinition` was supplied.
      */
     static declared(definition) {
         // If no definition specified, return declared schema definitions
