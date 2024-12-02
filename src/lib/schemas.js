@@ -5,8 +5,12 @@ import {EnterpriseUser} from "./schemas/enterpriseuser.js";
 import {ResourceType} from "./schemas/resourcetype.js";
 import {ServiceProviderConfig} from "./schemas/spconfig.js";
 
+// Export classes for direct consumption
+export {User, Group, EnterpriseUser, ResourceType, ServiceProviderConfig};
+
 /**
  * SCIMMY Schemas Container Class
+ * @module scimmy/schemas
  * @namespace SCIMMY.Schemas
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Schemas`, that is used to declare schema definitions implemented by a SCIM Service Provider.
@@ -74,8 +78,15 @@ import {ServiceProviderConfig} from "./schemas/spconfig.js";
  * ```
  */
 export default class Schemas {
-    // Store declared schema definitions for later retrieval
+    /**
+     * Store declared schema definitions for later retrieval
+     * @private
+     */
     static #definitions = new Map();
+    /**
+     * Map declared schema IDs to declared schema names
+     * @private
+     */
     static #idsToNames = new Map();
     
     // Expose built-in schemas without "declaring" them

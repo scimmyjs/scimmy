@@ -1,13 +1,17 @@
+import Types from "./types.js";
+import Schemas from "./schemas.js";
 import {User} from "./resources/user.js";
 import {Group} from "./resources/group.js";
 import {Schema} from "./resources/schema.js";
 import {ResourceType} from "./resources/resourcetype.js";
 import {ServiceProviderConfig} from "./resources/spconfig.js";
-import Types from "./types.js";
-import Schemas from "./schemas.js";
+
+// Export classes for direct consumption
+export {User, Group, Schema, ResourceType, ServiceProviderConfig};
 
 /**
  * SCIMMY Resources Container Class
+ * @module scimmy/resources
  * @namespace SCIMMY.Resources
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Resources`, that is used to declare resource types implemented by a SCIM Service Provider.

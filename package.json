@@ -11,8 +11,14 @@
   "main": "./dist/scimmy.js",
   "types": "./dist/scimmy.d.ts",
   "exports": {
-    "import": "./dist/scimmy.js",
-    "require": "./dist/cjs/scimmy.cjs"
+    ".": {
+      "import": "./dist/scimmy.js",
+      "require": "./dist/cjs/scimmy.cjs"
+    },
+    "./*": {
+      "import": "./dist/lib/*.js",
+      "require": "./dist/cjs/lib/*.js"
+    }
   },
   "scripts": {
     "test": "node packager.js -t test",
