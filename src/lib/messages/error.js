@@ -38,11 +38,11 @@ export class ErrorResponse extends Error {
     /**
      * Instantiate a new SCIM Error Message with relevant details
      * @param {Object} [ex={}] - the initiating exception to parse into a SCIM error message
-     * @param {SCIMMY.Messages.Error~ValidStatusTypes} ex.status=500 - HTTP status code to be sent with the error
-     * @param {SCIMMY.Messages.Error~ValidScimTypes} [ex.scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
+     * @param {SCIMMY.Messages.ErrorResponse~ValidStatusCodes} [ex.status=500] - HTTP status code to be sent with the error
+     * @param {SCIMMY.Messages.ErrorResponse~ValidScimTypes} [ex.scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
      * @param {String} [ex.detail] - a human-readable description of what caused the error to occur
-     * @property {String} status - stringified HTTP status code to be sent with the error
-     * @property {String} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
+     * @property {SCIMMY.Messages.ErrorResponse~ValidStatusCodes} status - stringified HTTP status code to be sent with the error
+     * @property {SCIMMY.Messages.ErrorResponse~ValidScimTypes} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
      * @property {String} [detail] - a human-readable description of what caused the error to occur
      */
     constructor(ex = {}) {

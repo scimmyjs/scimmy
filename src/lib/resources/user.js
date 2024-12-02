@@ -5,6 +5,7 @@ import Schemas from "../schemas.js";
 /**
  * SCIM User Resource
  * @alias SCIMMY.Resources.User
+ * @extends {SCIMMY.Types.Resource<SCIMMY.Schemas.User>}
  * @summary
  * *   Handles read/write/patch/dispose operations for SCIM User resources with specified ingress/egress/degress methods.
  * *   Formats SCIM User resources for transmission/consumption using the `{@link SCIMMY.Schemas.User}` schema class.
@@ -17,7 +18,7 @@ export class User extends Types.Resource {
     
     /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /** @implements {SCIMMY.Types.Resource.basepath<typeof SCIMMY.Resources.User>} */
     static basepath(path) {
         if (path === undefined) return User.#basepath;
         else User.#basepath = (path.endsWith(User.endpoint) ? path : `${path}${User.endpoint}`);
@@ -25,7 +26,10 @@ export class User extends Types.Resource {
         return User;
     }
     
-    /** @implements {SCIMMY.Types.Resource.schema} */
+    /**
+     * @implements {SCIMMY.Types.Resource.schema}
+     * @type {typeof SCIMMY.Schemas.User}
+     */
     static get schema() {
         return Schemas.User;
     }
@@ -35,7 +39,7 @@ export class User extends Types.Resource {
         throw new Types.Error(501, null, "Method 'ingress' not implemented by resource 'User'");
     };
     
-    /** @implements {SCIMMY.Types.Resource.ingress} */
+    /** @implements {SCIMMY.Types.Resource.ingress<typeof SCIMMY.Resources.User, SCIMMY.Schemas.User>} */
     static ingress(handler) {
         User.#ingress = handler;
         return User;
@@ -46,7 +50,7 @@ export class User extends Types.Resource {
         throw new Types.Error(501, null, "Method 'egress' not implemented by resource 'User'");
     };
     
-    /** @implements {SCIMMY.Types.Resource.egress} */
+    /** @implements {SCIMMY.Types.Resource.egress<typeof SCIMMY.Resources.User>} */
     static egress(handler) {
         User.#egress = handler;
         return User;
@@ -57,7 +61,7 @@ export class User extends Types.Resource {
         throw new Types.Error(501, null, "Method 'degress' not implemented by resource 'User'");
     };
     
-    /** @implements {SCIMMY.Types.Resource.degress} */
+    /** @implements {SCIMMY.Types.Resource.degress<typeof SCIMMY.Resources.User>} */
     static degress(handler) {
         User.#degress = handler;
         return User;
@@ -65,7 +69,7 @@ export class User extends Types.Resource {
     
     /**
      * Instantiate a new SCIM User resource and parse any supplied parameters
-     * @extends SCIMMY.Types.Resource
+     * @internal
      */
     constructor(...params) {
         super(...params);
@@ -73,7 +77,6 @@ export class User extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource#read}
-     * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.User}
      * @example
      * // Retrieve user with ID "1234"
      * await new SCIMMY.Resources.User("1234").read();
@@ -102,7 +105,6 @@ export class User extends Types.Resource {
     
     /**
      * @implements {SCIMMY.Types.Resource#write}
-     * @returns {SCIMMY.Schemas.User}
      * @example
      * // Create a new user with userName "someGuy"
      * await new SCIMMY.Resources.User().write({userName: "someGuy"});
@@ -133,7 +135,6 @@ export class User extends Types.Resource {
     /**
      * @implements {SCIMMY.Types.Resource#patch}
      * @see SCIMMY.Messages.PatchOp
-     * @returns {SCIMMY.Schemas.User}
      * @example
      * // Set userName to "someGuy" for user with ID "1234" with a patch operation (see SCIMMY.Messages.PatchOp)
      * await new SCIMMY.Resources.User("1234").patch({Operations: [{op: "add", value: {userName: "someGuy"}}]});

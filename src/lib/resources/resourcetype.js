@@ -6,6 +6,7 @@ import Resources from "../resources.js";
 /**
  * SCIM ResourceType Resource
  * @alias SCIMMY.Resources.ResourceType
+ * @extends {SCIMMY.Types.Resource<SCIMMY.Schemas.ResourceType>}
  * @summary
  * *   Formats SCIM Resource Type implementations declared in `{@link SCIMMY.Resources}` for transmission/consumption according to the ResourceType schema set out in [RFC7643§6](https://datatracker.ietf.org/doc/html/rfc7643#section-6).
  */
@@ -17,7 +18,7 @@ export class ResourceType extends Types.Resource {
     
     /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /** @implements {SCIMMY.Types.Resource.basepath<typeof SCIMMY.Resources.ResourceType>} */
     static basepath(path) {
         if (path === undefined) return ResourceType.#basepath;
         else ResourceType.#basepath = (path.endsWith(ResourceType.endpoint) ? path : `${path}${ResourceType.endpoint}`);
@@ -26,7 +27,7 @@ export class ResourceType extends Types.Resource {
     }
     
     /**
-     * @implements {SCIMMY.Types.Resource.extend}
+     * @overrides {SCIMMY.Types.Resource.extend}
      * @throws {TypeError} SCIM 'ResourceType' resource does not support extension
      */
     static extend() {
@@ -35,7 +36,7 @@ export class ResourceType extends Types.Resource {
     
     /**
      * Instantiate a new SCIM ResourceType resource and parse any supplied parameters
-     * @extends SCIMMY.Types.Resource
+     * @internal
      */
     constructor(id, config) {
         // Bail out if a resource is requested by filter
@@ -45,10 +46,7 @@ export class ResourceType extends Types.Resource {
         super(id, config);
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource#read}
-     * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Schemas.ResourceType}
-     */
+    /** @implements {SCIMMY.Types.Resource#read} */
     async read() {
         if (!this.id) {
             return new Messages.ListResponse(Object.entries(Resources.declared())

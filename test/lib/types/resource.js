@@ -197,8 +197,8 @@ describe("SCIMMY.Types.Resource", () => {
                     `Instance method '${method}' was not defined`);
             });
             
-            it("should be abstract", () => {
-                assert.throws(() => new Resource()[method](),
+            it("should be abstract", async () => {
+                await assert.rejects(async () => new Resource()[method](),
                     {name: "TypeError", message: `Method '${method}' not implemented by resource 'Resource'`},
                     `Instance method '${method}' was not abstract`);
             });

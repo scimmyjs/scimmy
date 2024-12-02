@@ -6,6 +6,7 @@ import {Filter} from "./filter.js";
 /**
  * SCIM Resource Type
  * @alias SCIMMY.Types.Resource
+ * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that will be passed to handlers
  * @summary
  * *   Extendable class representing a SCIM Resource Type, which acts as an interface between a SCIM resource type schema, and an app's internal data model.
  * *   Handles incoming requests to read/write/delete a resource, parses any attribute, filter, and sort parameters of a request, and formats responses for consumption by other SCIM clients and service providers.
@@ -25,12 +26,14 @@ export class Resource {
      * @type {String}
      * @private
      * @abstract
+     * @internal
      */
     static #basepath;
     /**
      * Sets or retrieves the base path for resolution of a resource's location
+     * @template {typeof SCIMMY.Types.Resource<any>} R
      * @param {String} [path] - the path to use as the base of a resource's location
-     * @returns {SCIMMY.Types.Resource|String} this resource type class for chaining if path is a string, or the resource's basepath
+     * @returns {R|String} this resource type class for chaining if path is a string, or the resource's basepath
      * @abstract
      */
     static basepath(path) {
@@ -50,7 +53,7 @@ export class Resource {
      * Register an extension to the resource's core schema
      * @param {typeof SCIMMY.Types.Schema} extension - the schema extension to register
      * @param {Boolean} [required] - whether the extension is required
-     * @returns {SCIMMY.Types.Resource|void} this resource type implementation for chaining
+     * @returns {typeof SCIMMY.Types.Resource} this resource type implementation for chaining
      */
     static extend(extension, required) {
         this.schema.extend(extension, required);
@@ -60,11 +63,13 @@ export class Resource {
     
     /**
      * Handler for ingress of a resource
+     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing ingress
+     * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
      * @callback SCIMMY.Types.Resource~IngressHandler
-     * @param {SCIMMY.Types.Resource} resource - the resource performing the ingress
-     * @param {SCIMMY.Types.Schema} instance - an instance of the resource type that conforms to the resource's schema
+     * @param {R} resource - the resource performing the ingress
+     * @param {S} instance - an instance of the resource type that conforms to the resource's schema
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {Object} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @returns {Record<String, *>} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
      * @example
      * // Handle a request to create a new resource, or update an existing resource
      * async function ingress(resource, instance, ctx) {
@@ -98,8 +103,10 @@ export class Resource {
     static #ingress;
     /**
      * Sets the method to be called to consume a resource on create
-     * @param {SCIMMY.Types.Resource~IngressHandler} handler - function to invoke to consume a resource on create
-     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @template {SCIMMY.Types.Schema} S
+     * @param {SCIMMY.Types.Resource~IngressHandler<InstanceType<R>, S>} handler - function to invoke to consume a resource on create
+     * @returns {R} this resource type class for chaining
      * @abstract
      */
     static ingress(handler) {
@@ -108,11 +115,11 @@ export class Resource {
     
     /**
      * Handler for egress of a resource
+     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing egress
      * @callback SCIMMY.Types.Resource~EgressHandler
-     * @param {SCIMMY.Types.Resource} resource - the resource performing the egress
+     * @param {R} resource - the resource performing the egress
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {Object} an object, to be used to create a new schema instance, whose properties conform to the resource type's schema
-     * @returns {Object[]} an array of objects, to be used to create new schema instances, whose properties conform to the resource type's schema
+     * @returns {Record<String, *>|Array<Record<String, *>>} an object, or array of objects, to be used to create a new schema instances, whose properties conform to the resource type's schema
      * @example
      * // Handle a request to retrieve a specific resource, or a list of resources
      * async function egress(resource, ctx) {
@@ -143,8 +150,9 @@ export class Resource {
     static #egress;
     /**
      * Sets the method to be called to retrieve a resource on read
-     * @param {SCIMMY.Types.Resource~EgressHandler} handler - function to invoke to retrieve a resource on read
-     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>>} handler - function to invoke to retrieve a resource on read
+     * @returns {R} this resource type class for chaining
      * @abstract
      */
     static egress(handler) {
@@ -153,8 +161,9 @@ export class Resource {
     
     /**
      * Handler for degress of a resource
+     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing degress
      * @callback SCIMMY.Types.Resource~DegressHandler
-     * @param {SCIMMY.Types.Resource} resource - the resource performing the degress
+     * @param {R} resource - the resource performing the degress
      * @param {*} [ctx] - external context in which the handler has been called
      * @example
      * // Handle a request to delete a specific resource
@@ -184,8 +193,9 @@ export class Resource {
     static #degress;
     /**
      * Sets the method to be called to dispose of a resource on delete
-     * @param {SCIMMY.Types.Resource~DegressHandler} handler - function to invoke to dispose of a resource on delete
-     * @returns {SCIMMY.Types.Resource} this resource type class for chaining
+     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @param {SCIMMY.Types.Resource~DegressHandler<InstanceType<R>>} handler - function to invoke to dispose of a resource on delete
+     * @returns {R} this resource type class for chaining
      * @abstract
      */
     static degress(handler) {
@@ -194,7 +204,7 @@ export class Resource {
     
     /**
      * Describe this resource type implementation
-     * @returns {SCIMMY.Types.Resource~ResourceType} object describing the resource type implementation 
+     * @returns {SCIMMY.Types.Resource~ResourceDescription} object describing the resource type implementation 
      */
     static describe() {
         // Find all schema definitions that extend this resource's definition...
@@ -205,13 +215,13 @@ export class Resource {
             .map(({id: schema, required}) => ({schema, required}));
         
         /**
-         * @typedef {Object} SCIMMY.Types.Resource~ResourceType
-         * @description An object describing a resource type's implementation
+         * An object describing a resource type's implementation
+         * @typedef {Object} SCIMMY.Types.Resource~ResourceDescription
          * @property {String} id - URN namespace of the resource's SCIM schema definition
          * @property {String} name - friendly name of the resource's SCIM schema definition
          * @property {String} endpoint - resource type's endpoint, relative to a service provider's base URL
          * @property {String} description - human-readable description of the resource
-         * @property {Object} [schemaExtensions] - schema extensions that augment the resource
+         * @property {Object[]} [schemaExtensions] - schema extensions that augment the resource
          * @property {String} schemaExtensions[].schema - URN namespace of the schema extension that augments the resource
          * @property {Boolean} schemaExtensions[].required - whether resource instances must include the schema extension
          */
@@ -304,45 +314,47 @@ export class Resource {
     /**
      * Calls resource's egress method for data retrieval.
      * Wraps the results in valid SCIM list response or single resource syntax.
-     * @param {*} [ctx] - any additional context information to pass to the egress handler
-     * @returns {SCIMMY.Messages.ListResponse|SCIMMY.Types.Schema}
-     * *   A collection of resources matching instance's configured filter, if no ID was supplied to resource constructor.
-     * *   The specifically requested resource instance, if an ID was supplied to resource constructor.
+     * @template [T=*] - external context object passed to ingress handler
+     * @param {T} [ctx] - any additional context information to pass to the egress handler
+     * @returns {SCIMMY.Messages.ListResponse|S} the specifically requested resource instance, if an ID was supplied to resource constructor, or collection of resources matching instance's configured filter.
      * @abstract
      */
-    read(ctx) {
+    async read(ctx) {
         throw new TypeError(`Method 'read' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
      * Calls resource's ingress method for consumption after unwrapping the SCIM resource
+     * @template [T=*] - external context object passed to ingress handler
      * @param {Object} instance - the raw resource type instance for consumption by ingress method
-     * @param {*} [ctx] - any additional context information to pass to the ingress handler
-     * @returns {SCIMMY.Types.Schema} the consumed resource type instance
+     * @param {T} [ctx] - any additional context information to pass to the ingress handler
+     * @returns {S} the consumed resource type instance
      * @abstract
      */
-    write(instance, ctx) {
+    async write(instance, ctx) {
         throw new TypeError(`Method 'write' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
      * Retrieves resources via egress method, and applies specified patch operations.
      * Emits patched resources for consumption with resource's ingress method.
+     * @template [T=*] - external context object passed to ingress handler
      * @param {Object} message - the PatchOp message to apply to the received resource
-     * @param {*} [ctx] - any additional context information to pass to the ingress/egress handlers
-     * @returns {SCIMMY.Types.Schema} the resource type instance after patching and consumption by ingress method
+     * @param {T} [ctx] - any additional context information to pass to the ingress/egress handlers
+     * @returns {S} the resource type instance after patching and consumption by ingress method
      * @abstract
      */
-    patch(message, ctx) {
+    async patch(message, ctx) {
         throw new TypeError(`Method 'patch' not implemented by resource '${this.constructor.name}'`);
     }
     
     /**
      * Calls resource's degress method for disposal of the SCIM resource
-     * @param {*} [ctx] - any additional context information to pass to the degress handler
+     * @template [T=*] - external context object passed to ingress handler
+     * @param {T} [ctx] - any additional context information to pass to the degress handler
      * @abstract
      */
-    dispose(ctx) {
+    async dispose(ctx) {
         throw new TypeError(`Method 'dispose' not implemented by resource '${this.constructor.name}'`);
     }
 }
