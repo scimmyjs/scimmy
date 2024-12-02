@@ -5,13 +5,8 @@ import Resources from "../resources.js";
 
 /**
  * List of valid HTTP methods in a SCIM bulk request operation
- * @enum
+ * @enum SCIMMY.Messages.BulkRequest~ValidBulkMethods
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidBulkMethods
- * @memberOf SCIMMY.Messages.BulkRequest
- * @default
  */
 const validMethods = ["POST", "PUT", "PATCH", "DELETE"];
 

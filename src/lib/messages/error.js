@@ -2,25 +2,15 @@ import Types from "../types.js";
 
 /**
  * HTTP response status codes specified by RFC7644§3.12
- * @enum
+ * @enum SCIMMY.Messages.ErrorResponse~ValidStatusCodes
  * @inner
- * @constant
- * @type {Number[]}
- * @alias ValidStatusTypes
- * @memberOf SCIMMY.Messages.ErrorResponse
- * @default
  */
 const validStatusCodes = [307, 308, 400, 401, 403, 404, 409, 412, 413, 500, 501];
 
 /**
  * SCIM detail error keywords specified by RFC7644§3.12
- * @enum
+ * @enum SCIMMY.Messages.ErrorResponse~ValidScimTypes
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidScimTypes
- * @memberOf SCIMMY.Messages.ErrorResponse
- * @default
  */
 const validScimTypes = [
     "uniqueness", "tooMany", "invalidFilter", "mutability", "invalidSyntax",

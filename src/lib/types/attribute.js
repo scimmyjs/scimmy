@@ -5,6 +5,7 @@
  */
 const BaseConfiguration = {
     /**
+     * SCIMMY Attribute Instance Configuration properties
      * @typedef {Object} SCIMMY.Types.Attribute~AttributeConfig
      * @property {Boolean} [multiValued=false] - does the attribute expect a collection of values
      * @property {String} [description=""] - a human-readable description of the attribute
@@ -96,49 +97,29 @@ const BaseConfiguration = {
 const CharacteristicValidity = {
     /**
      * Collection of valid attribute type characteristic's values
-     * @enum
+     * @enum SCIMMY.Types.Attribute~ValidAttributeTypes
      * @inner
-     * @constant
-     * @type {String[]}
-     * @alias ValidAttributeTypes
-     * @memberOf SCIMMY.Types.Attribute
-     * @default
      */
     types: ["string", "complex", "boolean", "binary", "decimal", "integer", "dateTime", "reference"],
     
     /**
      * Collection of valid attribute mutability characteristic's values
-     * @enum
+     * @enum SCIMMY.Types.Attribute~ValidMutabilityValues
      * @inner
-     * @constant
-     * @type {String[]}
-     * @alias ValidMutabilityValues
-     * @memberOf SCIMMY.Types.Attribute
-     * @default
      */
     mutability: ["readOnly", "readWrite", "immutable", "writeOnly"],
     
     /**
      * Collection of valid attribute returned characteristic's values
-     * @enum
+     * @enum SCIMMY.Types.Attribute~ValidReturnedValues
      * @inner
-     * @constant
-     * @type {String[]}
-     * @alias ValidReturnedValues
-     * @memberOf SCIMMY.Types.Attribute
-     * @default
      */
     returned: ["always", "never", "default", "request"],
     
     /**
      * Collection of valid attribute uniqueness characteristic's values
-     * @enum
+     * @enum SCIMMY.Types.Attribute~ValidUniquenessValues
      * @inner
-     * @constant
-     * @type {String[]}
-     * @alias ValidUniquenessValues
-     * @memberOf SCIMMY.Types.Attribute
-     * @default
      */
     uniqueness: ["none", "server", "global"]
 };
@@ -330,11 +311,11 @@ const validate = {
 export class Attribute {
     /**
      * Constructs an instance of a full SCIM attribute definition
-     * @param {String} type - the data type of the attribute
+     * @param {SCIMMY.Types.Attribute~ValidAttributeTypes} type - the data type of the attribute
      * @param {String} name - the actual name of the attribute
-     * @param {SCIMMY.Types.Attribute~AttributeConfig|Object} [config] - additional config defining the attribute's characteristics
+     * @param {SCIMMY.Types.Attribute~AttributeConfig} [config] - additional config defining the attribute's characteristics
      * @param {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
-     * @property {String} type - the data type of the attribute
+     * @property {SCIMMY.Types.Attribute~ValidAttributeTypes} type - the data type of the attribute
      * @property {String} name - the actual name of the attribute
      * @property {SCIMMY.Types.Attribute~AttributeConfig} config - additional config defining the attribute's characteristics
      * @property {SCIMMY.Types.Attribute[]} [subAttributes] - if the attribute is complex, the sub-attributes of the attribute
@@ -357,10 +338,10 @@ export class Attribute {
         if (!!invalidNameChar)
             throw new TypeError(`Invalid character '${invalidNameChar}' in name of ${errorSuffix}`);
         // Make sure attribute type is 'complex' if subAttributes are defined
-        if (subAttributes.length && type !== "complex")
+        if (subAttributes.length && String(type) !== "complex")
             throw new TypeError(`Attribute type must be 'complex' when subAttributes are specified in ${errorSuffix}`);
         // Make sure subAttributes are all instances of Attribute
-        if (type === "complex" && !subAttributes.every(a => a instanceof Attribute))
+        if (String(type) === "complex" && !subAttributes.every(a => a instanceof Attribute))
             throw new TypeError(`Expected 'subAttributes' to be an array of Attribute instances in ${errorSuffix}`);
         
         // Attribute config is valid, proceed
@@ -371,7 +352,7 @@ export class Attribute {
         this.config = Object.assign(Object.seal(new Proxy({...BaseConfiguration.target}, BaseConfiguration.handler(errorSuffix, type))), config);
         
         // Store subAttributes, and make sure any additions are also attribute instances
-        if (type === "complex") this.subAttributes = new Proxy([...subAttributes], {
+        if (String(type) === "complex") this.subAttributes = new Proxy([...subAttributes], {
             set: (target, key, value) => {
                 if (key === "length" || value instanceof Attribute) target[key] = value;
                 else throw new TypeError(`Complex attribute '${this.name}' expected new subAttributes to be Attribute instances`);
@@ -391,7 +372,7 @@ export class Attribute {
      * @returns {SCIMMY.Types.Attribute} this attribute instance for chaining
      */
     truncate(subAttributes) {
-        if (this.type === "complex") {
+        if (String(this.type) === "complex") {
             for (let subAttrib of (Array.isArray(subAttributes) ? subAttributes : [subAttributes])) {
                 if (this.subAttributes.includes(subAttrib)) {
                     // Remove found subAttribute from definition
@@ -413,11 +394,10 @@ export class Attribute {
      */
     toJSON() {
         /**
+         * SCIM Attribute Definition properties
          * @typedef {Object} SCIMMY.Types.Attribute~AttributeDefinition
-         * @alias AttributeDefinition
-         * @memberOf SCIMMY.Types.Attribute
          * @property {String} name - the attribute's name
-         * @property {String} type - the attribute's data type
+         * @property {SCIMMY.Types.Attribute~ValidAttributeTypes} type - the attribute's data type
          * @property {String[]} [referenceTypes] - specifies a SCIM resourceType that a reference attribute may refer to
          * @property {Boolean} multiValued - boolean value indicating an attribute's plurality
          * @property {String} description - a human-readable description of the attribute
@@ -432,18 +412,18 @@ export class Attribute {
         return {
             name: this.name,
             type: this.type,
-            ...(this.type === "reference" ? {referenceTypes: this.config.referenceTypes} : {}),
+            ...(String(this.type) === "reference" ? {referenceTypes: this.config.referenceTypes} : {}),
             multiValued: this.config.multiValued,
             description: this.config.description,
             required: this.config.required,
-            ...(this.type === "complex" ? {subAttributes: this.subAttributes.filter(a => (!a.config.shadow))} : {}),
+            ...(String(this.type) === "complex" ? {subAttributes: this.subAttributes.filter(a => (!a.config.shadow))} : {}),
             ...(this.config.caseExact === true || ["string", "reference", "binary"].includes(this.type) ? {caseExact: this.config.caseExact} : {}),
             ...(Array.isArray(this.config.canonicalValues) ? {canonicalValues: this.config.canonicalValues} : {}),
             mutability: (typeof this.config.mutable === "string" ? this.config.mutable
                 : (this.config.mutable ? (this.config.direction === "in" ? "writeOnly" : "readWrite") : "readOnly")),
             returned: (typeof this.config.returned === "string" ? this.config.returned
                 : (this.config.returned ? "default" : "never")),
-            ...(this.type !== "boolean" && this.config.uniqueness !== false ? {uniqueness: this.config.uniqueness} : {})
+            ...(String(this.type) !== "boolean" && this.config.uniqueness !== false ? {uniqueness: this.config.uniqueness} : {})
         }
     }
     

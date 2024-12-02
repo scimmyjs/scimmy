@@ -2,13 +2,8 @@ import Types from "../types.js";
 
 /**
  * List of valid SCIM patch operations
- * @enum
+ * @enum SCIMMY.Messages.PatchOp~ValidPatchOperations
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidPatchOperations
- * @memberOf SCIMMY.Messages.PatchOp
- * @default
  */
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
@@ -146,7 +141,7 @@ export class PatchOp {
      * Apply patch operations to a resource as defined by the PatchOp instance
      * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
      * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
-     * @returns {Promise<SCIMMY.Types.Schema>} an instance of the resource modified as per the included patch operations
+     * @returns {SCIMMY.Types.Schema} an instance of the resource modified as per the included patch operations
      */
     async apply(resource, finalise) {
         // Bail out if message has not been dispatched (i.e. it's not ready yet)
@@ -201,7 +196,7 @@ export class PatchOp {
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute or value being patched
      * @param {String} op - the operation being performed, for use in error messages
-     * @returns {SCIMMY.Messages.PatchOp~PatchOpDetails}
+     * @returns {PatchOpDetails}
      * @private
      */
     #resolve(index, path, op) {
@@ -252,11 +247,12 @@ export class PatchOp {
             throw new Types.Error(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
         
         /**
-         * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpDetails
+         * @typedef {Object} PatchOpDetails
          * @property {Boolean} complex - whether the target attribute value should be complex
          * @property {Boolean} multiValued - whether the target attribute expects a collection of values
          * @property {String} property - name of the targeted attribute to apply values to
          * @property {Object[]} targets - the resources containing the attributes to apply values to
+         * @internal
          * @private
          */
         return {
