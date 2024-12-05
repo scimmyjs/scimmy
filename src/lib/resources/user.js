@@ -50,7 +50,7 @@ export class User extends Types.Resource {
         throw new Types.Error(501, null, "Method 'egress' not implemented by resource 'User'");
     };
     
-    /** @implements {SCIMMY.Types.Resource.egress<typeof SCIMMY.Resources.User>} */
+    /** @implements {SCIMMY.Types.Resource.egress<typeof SCIMMY.Resources.User, SCIMMY.Schemas.User>} */
     static egress(handler) {
         User.#egress = handler;
         return User;

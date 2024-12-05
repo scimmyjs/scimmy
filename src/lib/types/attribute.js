@@ -430,7 +430,7 @@ export class Attribute {
     /**
      * Coerce a given value by making sure it conforms to attribute's characteristics
      * @param {any|any[]} source - value to coerce and confirm conformity with attribute's characteristics
-     * @param {String} [direction] - whether to check for inbound, outbound, or bidirectional attributes
+     * @param {String} [direction="both"] - whether to check for inbound, outbound, or bidirectional attributes
      * @param {Boolean} [isComplexMultiValue=false] - indicates whether a coercion is for a single complex value in a collection of complex values
      * @returns {String|String[]|Number|Boolean|Object|Object[]} the coerced value, conforming to attribute's characteristics
      */

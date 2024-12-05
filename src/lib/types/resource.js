@@ -4,6 +4,12 @@ import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
+ * Automatically assigned attributes not required in handler return values
+ * @enum {"schemas"|"meta"} SCIMMY.Types.Resource~ShadowAttributes
+ * @private
+ */
+
+/**
  * SCIM Resource Type
  * @alias SCIMMY.Types.Resource
  * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that will be passed to handlers
@@ -65,11 +71,12 @@ export class Resource {
      * Handler for ingress of a resource
      * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing ingress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
+     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes] - shape of return value
      * @callback SCIMMY.Types.Resource~IngressHandler
      * @param {R} resource - the resource performing the ingress
      * @param {S} instance - an instance of the resource type that conforms to the resource's schema
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {Record<String, *>} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
+     * @returns {V|Promise<V>} an object to be used to create a new schema instance, whose properties conform to the resource type's schema
      * @example
      * // Handle a request to create a new resource, or update an existing resource
      * async function ingress(resource, instance, ctx) {
@@ -116,10 +123,12 @@ export class Resource {
     /**
      * Handler for egress of a resource
      * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing egress
+     * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
+     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes] - shape of return value
      * @callback SCIMMY.Types.Resource~EgressHandler
      * @param {R} resource - the resource performing the egress
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {Record<String, *>|Array<Record<String, *>>} an object, or array of objects, to be used to create a new schema instances, whose properties conform to the resource type's schema
+     * @returns {V|Array<V>|Promise<V>|Promise<Array<V>>} an object, or array of objects, to be used to create a new schema instances, whose properties conform to the resource type's schema
      * @example
      * // Handle a request to retrieve a specific resource, or a list of resources
      * async function egress(resource, ctx) {
@@ -151,7 +160,8 @@ export class Resource {
     /**
      * Sets the method to be called to retrieve a resource on read
      * @template {typeof SCIMMY.Types.Resource<any>} R
-     * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>>} handler - function to invoke to retrieve a resource on read
+     * @template {SCIMMY.Types.Schema} S
+     * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>, S>} handler - function to invoke to retrieve a resource on read
      * @returns {R} this resource type class for chaining
      * @abstract
      */

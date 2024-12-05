@@ -50,7 +50,7 @@ export class Group extends Types.Resource {
         throw new Types.Error(501, null, "Method 'egress' not implemented by resource 'Group'");
     };
     
-    /** @implements {SCIMMY.Types.Resource.egress<typeof SCIMMY.Resources.Group>} */
+    /** @implements {SCIMMY.Types.Resource.egress<typeof SCIMMY.Resources.Group, SCIMMY.Schemas.Group>} */
     static egress(handler) {
         Group.#egress = handler;
         return Group;
