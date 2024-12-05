@@ -39,6 +39,13 @@ export class ResourceType extends Types.Schema {
      * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [basepath] - the base path for resolution of a resource's location
+     * @property {String} name - the resource type name. When applicable, service providers MUST specify the name, e.g., 'User'
+     * @property {String} [description] - the resource type's human-readable description. When applicable, service providers MUST specify the description
+     * @property {String} endpoint - the resource type's HTTP-addressable endpoint relative to the Base URL, e.g., '/Users'
+     * @property {String} schema - the resource type's primary/base schema URI
+     * @property {Object[]} [schemaExtensions] - a list of URIs of the resource type's schema extensions
+     * @property {String} schemaExtensions[].schema - the URI of a schema extension
+     * @property {Boolean} schemaExtensions[].required - a Boolean value that specifies whether the schema extension is required for the resource type
      */
     constructor(resource, basepath) {
         super(resource, "out");

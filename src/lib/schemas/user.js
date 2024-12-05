@@ -100,6 +100,73 @@ export class User extends Types.Schema {
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location
      * @param {SCIMMY.Types.Filter} [filters] - attribute filters to apply to the coerced value
+     * @property {String} userName - unique identifier for the User, typically used by the user to directly authenticate to the service provider. Each User MUST include a non-empty userName value. This identifier MUST be unique across the service provider's entire set of Users. REQUIRED
+     * @property {Object} [name] - the components of the user's real name. Providers MAY return just the full name as a single string in the formatted sub-attribute, or they MAY return just the individual component attributes using the other sub-attributes, or they MAY return both. If both variants are returned, they SHOULD be describing the same name, with the formatted name indicating how the component attributes should be combined
+     * @property {String} [name.formatted] - the full name, including all middle names, titles, and suffixes as appropriate, formatted for display (e.g. 'Ms. Barbara J Jensen, III')
+     * @property {String} [name.familyName] - the family name of the User, or last name in most Western languages (e.g. 'Jensen' given the full name 'Ms. Barbara J Jensen, III')
+     * @property {String} [name.givenName] - the given name of the User, or first name in most Western languages (e.g. 'Barbara' given the full name 'Ms. Barbara J Jensen, III')
+     * @property {String} [name.middleName] - the middle name(s) of the User (e.g. 'Jane' given the full name 'Ms. Barbara J Jensen, III')
+     * @property {String} [name.honorificPrefix] - the honorific prefix(es) of the User, or title in most Western languages (e.g. 'Ms.' given the full name 'Ms. Barbara J Jensen, III')
+     * @property {String} [name.honorificSuffix] - the honorific suffix(es) of the User, or suffix in most Western languages (e.g. 'III' given the full name 'Ms. Barbara J Jensen, III')
+     * @property {String} [displayName] - the name of the User, suitable for display to end-users. The name SHOULD be the full name of the User being described, if known
+     * @property {String} [nickName] - the casual way to address the user in real life, e.g. 'Bob' or 'Bobby' instead of 'Robert'. This attribute SHOULD NOT be used to represent a User's username (e.g. 'bjensen' or 'mpepperidge')
+     * @property {String} [profileUrl] - a fully qualified URL pointing to a page representing the User's online profile
+     * @property {String} [title] - the user's title, such as 'Vice President'
+     * @property {String} [userType] - used to identify the relationship between the organization and the user. Typical values used might be 'Contractor', 'Employee', 'Intern', 'Temp', 'External', and 'Unknown', but any value may be used
+     * @property {String} [preferredLanguage] - indicates the User's preferred written or spoken language. Generally used for selecting a localized user interface; e.g. 'en_US' specifies the language English and country US
+     * @property {String} [locale] - used to indicate the User's default location for purposes of localizing items such as currency, date time format, or numerical representations
+     * @property {String} [timezone] - the User's time zone in the 'Olson' time zone database format, e.g. 'America/Los_Angeles'
+     * @property {Boolean} [active] - a Boolean value indicating the User's administrative status
+     * @property {String} [password] - the User's cleartext password. This attribute is intended to be used as a means to specify an initial password when creating a new User or to reset an existing User's password
+     * @property {Object[]} [emails] - email addresses for the user. The value SHOULD be canonicalized by the service provider, e.g. 'bjensen@example.com' instead of 'bjensen@EXAMPLE.COM'. Canonical type values of 'work', 'home', and 'other'
+     * @property {String} emails[].value - email addresses for the user. The value SHOULD be canonicalized by the service provider, e.g. 'bjensen@example.com' instead of 'bjensen@EXAMPLE.COM'. Canonical type values of 'work', 'home', and 'other'
+     * @property {String} [emails[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [emails[].type] - a label indicating the attribute's function, e.g. 'work' or 'home'
+     * @property {Boolean} [emails[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred mailing address or primary email address. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [phoneNumbers] - phone numbers for the User. The value SHOULD be canonicalized by the service provider according to the format specified in RFC 3966, e.g. 'tel:+1-201-555-0123'. Canonical type values of 'work', 'home', 'mobile', 'fax', 'pager', and 'other'
+     * @property {String} phoneNumbers[].value - phone number of the User
+     * @property {String} [phoneNumbers[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [phoneNumbers[].type] - a label indicating the attribute's function, e.g. 'work', 'home', 'mobile'
+     * @property {Boolean} [phoneNumbers[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred phone number or primary phone number. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [ims] - instant messaging addresses for the User
+     * @property {String} ims[].value - instant messaging address for the User
+     * @property {String} [ims[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [ims[].type] - a label indicating the attribute's function, e.g. 'aim', 'gtalk', 'xmpp'
+     * @property {Boolean} [ims[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred messenger or primary messenger. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [photos] - uRLs of photos of the User
+     * @property {String} photos[].value - uRL of a photo of the User
+     * @property {String} [photos[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [photos[].type] - a label indicating the attribute's function, i.e., 'photo' or 'thumbnail'
+     * @property {Boolean} [photos[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred photo or thumbnail. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [addresses] - a physical mailing address for this User. Canonical type values of 'work', 'home', and 'other'
+     * @property {String} [addresses[].formatted] - the full mailing address, formatted for display or use with a mailing label. This attribute MAY contain newlines
+     * @property {String} [addresses[].streetAddress] - the full street address component, which may include house number, street name, P.O. box, and multi-line extended street address information
+     * @property {String} [addresses[].locality] - the city or locality component
+     * @property {String} [addresses[].region] - the state or region component
+     * @property {String} [addresses[].postalCode] - the zip code or postal code component
+     * @property {String} [addresses[].country] - the country name component
+     * @property {String} [addresses[].type] - a label indicating the attribute's function, e.g. 'work' or 'home'
+     * @property {Boolean} [addresses[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute, e.g. the preferred mailing address or primary email address
+     * @property {Object[]} [groups] - a list of groups to which the user belongs, either through direct membership, through nested groups, or dynamically calculated
+     * @property {String} groups[].value - the identifier of the User's group
+     * @property {String} [groups[].$ref] - the URI of the corresponding 'Group' resource to which the user belongs
+     * @property {String} [groups[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [groups[].type] - a label indicating the attribute's function, e.g. 'direct' or 'indirect'
+     * @property {Object[]} [entitlements] - a list of entitlements for the User that represent a thing the User has
+     * @property {String} entitlements[].value - the value of an entitlement
+     * @property {String} [entitlements[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [entitlements[].type] - a label indicating the attribute's function
+     * @property {Boolean} [entitlements[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [roles] - a list of roles for the User that collectively represent who the User is, e.g. 'Student', 'Faculty'
+     * @property {String} roles[].value - the value of a role
+     * @property {String} [roles[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [roles[].type] - a label indicating the attribute's function
+     * @property {Boolean} [roles[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once
+     * @property {Object[]} [x509Certificates] - a list of certificates issued to the User
+     * @property {String} x509Certificates[].value - the value of an X.509 certificate
+     * @property {String} [x509Certificates[].display] - a human-readable name, primarily used for display purposes
+     * @property {String} [x509Certificates[].type] - a label indicating the attribute's function
+     * @property {Boolean} [x509Certificates[].primary] - a Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once
      */
     constructor(resource, direction = "both", basepath, filters) {
         super(resource, direction);

@@ -34,6 +34,15 @@ export class EnterpriseUser extends Types.Schema {
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location
      * @param {SCIMMY.Types.Filter} [filters] - attribute filters to apply to the coerced value
+     * @property {String} [employeeNumber] - numeric or alphanumeric identifier assigned to a person, typically based on order of hire or association with an organization
+     * @property {String} [costCenter] - identifies the name of a cost center
+     * @property {String} [organization] - identifies the name of an organization
+     * @property {String} [division] - identifies the name of a division
+     * @property {String} [department] - identifies the name of a department
+     * @property {Object} [manager] - the User's manager
+     * @property {String} manager.value - the id of the SCIM resource representing the User's manager
+     * @property {String} [manager.$ref] - the URI of the SCIM resource representing the User's manager
+     * @property {String} [manager.displayName] - the displayName of the User's manager
      */
     constructor(resource, direction = "both", basepath, filters) {
         super(resource, direction);

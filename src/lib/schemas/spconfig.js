@@ -54,6 +54,29 @@ export class ServiceProviderConfig extends Types.Schema {
      * @extends SCIMMY.Types.Schema
      * @param {Object} resource - the source data to feed through the schema definition
      * @param {String} [basepath] - the base path for resolution of a resource's location
+     * @property {never} id
+     * @property {String} documentationUri - an HTTP-addressable URL pointing to the service provider's human-consumable help documentation
+     * @property {Object} patch - a complex type that specifies PATCH configuration options
+     * @property {Boolean} patch.supported - a Boolean value specifying whether the operation is supported
+     * @property {Object} bulk - a complex type that specifies bulk configuration options
+     * @property {Boolean} bulk.supported - a Boolean value specifying whether the operation is supported
+     * @property {Number} bulk.maxOperations - an integer value specifying the maximum number of operations
+     * @property {Number} bulk.maxPayloadSize - an integer value specifying the maximum payload size in bytes
+     * @property {Object} filter - a complex type that specifies FILTER options
+     * @property {Boolean} filter.supported - a Boolean value specifying whether the operation is supported
+     * @property {Number} filter.maxResults - an integer value specifying the maximum number of resources returned in a response
+     * @property {Object} changePassword - a complex type that specifies configuration options related to changing a password
+     * @property {Boolean} changePassword.supported - a Boolean value specifying whether the operation is supported
+     * @property {Object} sort - a complex type that specifies sort result options
+     * @property {Boolean} sort.supported - a Boolean value specifying whether the operation is supported
+     * @property {Object} etag - a complex type that specifies ETag configuration options
+     * @property {Boolean} etag.supported - a Boolean value specifying whether the operation is supported
+     * @property {Object[]} authenticationSchemes - a complex type that specifies supported authentication scheme properties
+     * @property {String} authenticationSchemes[].type - the authentication scheme
+     * @property {String} authenticationSchemes[].name - the common authentication scheme name, e.g., HTTP Basic
+     * @property {String} authenticationSchemes[].description - a description of the authentication scheme
+     * @property {String} [authenticationSchemes[].specUri] - an HTTP-addressable URL pointing to the authentication scheme's specification
+     * @property {String} [authenticationSchemes[].documentationUri] - an HTTP-addressable URL pointing to the authentication scheme's usage documentation
      */
     constructor(resource, basepath) {
         super(resource, "out");
