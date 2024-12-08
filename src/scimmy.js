@@ -9,6 +9,7 @@ export {Config, Types, Messages, Schemas, Resources};
 
 /**
  * SCIMMY Container Class
+ * @module scimmy
  * @namespace SCIMMY
  * @description
  * SCIMMY exports a singleton class which provides the following interfaces:
