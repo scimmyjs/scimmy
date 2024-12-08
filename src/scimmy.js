@@ -1,11 +1,15 @@
 import Types from "./lib/types.js";
 import Messages from "./lib/messages.js";
-import Resources from "./lib/resources.js";
 import Schemas from "./lib/schemas.js";
+import Resources from "./lib/resources.js";
 import Config from "./lib/config.js";
+
+// Export classes for direct consumption
+export {Config, Types, Messages, Schemas, Resources};
 
 /**
  * SCIMMY Container Class
+ * @module scimmy
  * @namespace SCIMMY
  * @description
  * SCIMMY exports a singleton class which provides the following interfaces:

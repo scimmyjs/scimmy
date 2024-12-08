@@ -2,24 +2,14 @@ import {SCIMError} from "./error.js";
 
 /**
  * Collection of valid logical operator strings in a filter expression
- * @enum
+ * @enum SCIMMY.Types.Filter~ValidLogicStrings
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidLogicStrings
- * @memberOf SCIMMY.Types.Filter
- * @default
  */
 const operators = ["and", "or", "not"];
 /**
  * Collection of valid comparison operator strings in a filter expression
- * @enum
+ * @enum SCIMMY.Types.Filter~ValidComparisonStrings
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidComparisonStrings
- * @memberOf SCIMMY.Types.Filter
- * @default
  */
 const comparators = ["eq", "ne", "co", "sw", "ew", "gt", "lt", "ge", "le", "pr", "np"];
 
@@ -241,14 +231,19 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
  * ```
  */
 export class Filter extends Array {
-    // Make sure derivatives return native arrays
+    /**
+     * Make sure derivatives return native arrays 
+     * @internal
+     * @ignore
+     */
     static get [Symbol.species]() {
         return Array;
     }
     
     /**
      * The original string that was parsed by the filter, or the stringified representation of filter expression objects
-     * @member {String}
+     * @type {String}
+     * @member
      */
     expression;
     

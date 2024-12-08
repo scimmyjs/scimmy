@@ -74,7 +74,16 @@ export class Schema {
      * Construct a resource instance after verifying schema compatibility
      * @param {Object} data - the source data to feed through the schema definition
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
-     */
+     * @property {String} id - unique identifier for a SCIM resource as defined by the service provider
+     * @property {String[]} schemas - namespace URIs of the SCIM schemas that define the attributes present in the current data structure
+     * @property {String} [externalId] - identifier for the resource as defined by the provisioning client
+     * @property {Object} meta - a complex attribute containing resource metadata
+     * @property {String} meta.resourceType - name of the resource type of the resource
+     * @property {Date} [meta.created] - when the resource was added to the service provider
+     * @property {Date} [meta.lastModified] - when this resource was last updated at the service provider
+     * @property {String} meta.location - full, canonical URI of the resource being returned
+     * @property {String} [meta.version] - version of the resource being returned, if any
+    */
     constructor(data = {}, direction) {
         const {schemas = []} = data;
         // Create internally scoped storage object

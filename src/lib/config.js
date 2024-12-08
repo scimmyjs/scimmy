@@ -1,4 +1,4 @@
-import Schemas from "./schemas.js";
+import {ServiceProviderConfig} from "./schemas.js";
 
 // Define handler traps for returned proxied configuration object
 const catchAll = () => {throw new TypeError("SCIM Configuration can only be changed via the 'set' method")};
@@ -6,6 +6,7 @@ const handleTraps = {set: catchAll, deleteProperty: catchAll, defineProperty: ca
 
 /**
  * SCIMMY Service Provider Configuration Class
+ * @module scimmy/config
  * @namespace SCIMMY.Config
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Config`, that acts as a central store for a SCIM Service Provider's configuration.  
@@ -128,20 +129,28 @@ export default class Config {
     }
     
     /**
+     * Set multiple SCIM service provider configuration property values
+     * @overload
+     * @param {Object} config - the new configuration to apply to the service provider config instance
+     * @returns {Object} the updated configuration instance
+     */
+    /**
+     * Set specific SCIM service provider configuration property by name
+     * @overload
+     * @param {String} name - the name of the configuration property to set
+     * @param {Object|Boolean} value - the new value of the configuration property to set
+     * @returns {typeof SCIMMY.Config} the config container class for chaining
+     */
+    /**
      * Set SCIM service provider configuration
-     * @param {Array<Object|String>} args - the configuration key name or value to apply
-     * @param {Object} args - the new configuration to apply to the service provider config instance
-     * @param {String} args - the name of the configuration property to set
-     * @param {Object|Boolean} args - the new value of the configuration property to set
+     * @param {Object|String} name - the configuration key name or value to apply
+     * @param {Object|String|Boolean} [config=name] - the new configuration to apply to the service provider config instance
      * @returns {Object|typeof SCIMMY.Config} the updated configuration instance, or the config container class for chaining
      */
-    static set(...args) {
-        // Dereference name and config from supplied parameters
-        let [name, config = args[0]] = args;
-        
+    static set(name, config = name) {
         // If property name supplied, call again with object
         if (typeof name === "string") {
-            Config.set({[name]: args[1]});
+            Config.set({[name]: config});
             
             return Config;
         }
@@ -163,12 +172,12 @@ export default class Config {
                         throw new TypeError("SCIM configuration: attribute 'documentationUri' expected value type 'string'");
                     
                     // Assign documentationUri string
-                    if (!!value) Config.#config.documentationUri = Schemas.ServiceProviderConfig.definition.attribute(key).coerce(value);
+                    if (!!value) Config.#config.documentationUri = ServiceProviderConfig.definition.attribute(key).coerce(value);
                     else Config.#config.documentationUri = undefined;
                 } else if (Array.isArray(target)) {
                     // Target is multi-valued (authenticationSchemes), add coerced values to config, or reset if empty
                     if (!value || (Array.isArray(value) && value.length === 0)) target.splice(0);
-                    else target.push(...Schemas.ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
+                    else target.push(...ServiceProviderConfig.definition.attribute(key).coerce(Array.isArray(value) ? value : [value]));
                 } else {
                     // Strings are not valid shorthand config values
                     if (typeof value === "string")
@@ -194,10 +203,10 @@ export default class Config {
                     else if (value === Object(value)) {
                         try {
                             // Make sure all object keys correspond to valid config attributes
-                            for (let name of Object.keys(value)) Schemas.ServiceProviderConfig.definition.attribute(`${key}.${name}`);
+                            for (let name of Object.keys(value)) ServiceProviderConfig.definition.attribute(`${key}.${name}`);
                             
                             // Coerce the value and assign it to the config property
-                            Object.assign(target, Schemas.ServiceProviderConfig.definition.attribute(key)
+                            Object.assign(target, ServiceProviderConfig.definition.attribute(key)
                                 .coerce({...target, supported: true, ...value}));
                         } catch (ex) {
                             // Rethrow exceptions after giving them better context

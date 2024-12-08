@@ -5,6 +5,7 @@ import Schemas from "../schemas.js";
 /**
  * SCIM Schema Resource
  * @alias SCIMMY.Resources.Schema
+ * @extends {SCIMMY.Types.Resource<SCIMMY.Types.SchemaDefinition~SchemaDescription>}
  * @summary
  * *   Formats SCIM schema definition implementations declared in `{@link SCIMMY.Schemas}` for transmission/consumption according to the Schema Definition schema set out in [RFC7643§7](https://datatracker.ietf.org/doc/html/rfc7643#section-7).
  */
@@ -16,7 +17,7 @@ export class Schema extends Types.Resource {
     
     /** @private */
     static #basepath;
-    /** @implements {SCIMMY.Types.Resource.basepath} */
+    /** @implements {SCIMMY.Types.Resource.basepath<typeof SCIMMY.Resources.Schema>} */
     static basepath(path) {
         if (path === undefined) return Schema.#basepath;
         else Schema.#basepath = (path.endsWith(Schema.endpoint) ? path : `${path}${Schema.endpoint}`);
@@ -25,7 +26,7 @@ export class Schema extends Types.Resource {
     }
     
     /**
-     * @implements {SCIMMY.Types.Resource.extend}
+     * @overrides {SCIMMY.Types.Resource.extend}
      * @throws {TypeError} SCIM 'Schema' resource does not support extension
      */
     static extend() {
@@ -34,7 +35,7 @@ export class Schema extends Types.Resource {
     
     /**
      * Instantiate a new SCIM Schema resource and parse any supplied parameters
-     * @extends SCIMMY.Types.Resource
+     * @internal
      */
     constructor(id, config) {
         // Bail out if a resource is requested by filter
@@ -44,10 +45,7 @@ export class Schema extends Types.Resource {
         super(id, config);
     }
     
-    /**
-     * @implements {SCIMMY.Types.Resource#read}
-     * @returns {SCIMMY.Messages.ListResponse|Object}
-     */
+    /** @implements {SCIMMY.Types.Resource#read} */
     async read() {
         if (!this.id) {
             return new Messages.ListResponse(Schemas.declared().map((S) => S.describe(Schema.basepath())));

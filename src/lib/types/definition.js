@@ -62,9 +62,20 @@ export class SchemaDefinition {
     /**
      * Get the SCIM schema definition for consumption by clients
      * @param {String} [basepath=""] - the base path for the schema's meta.location property
-     * @returns {Object} the schema definition for consumption by clients
+     * @returns {SCIMMY.Types.SchemaDefinition~SchemaDescription} the schema definition for consumption by clients
      */
     describe(basepath = "") {
+        /**
+         * @typedef {Object} SCIMMY.Types.SchemaDefinition~SchemaDescription
+         * @property {String[]} schemas - URN namespaces that identify the type of resource being described
+         * @property {String} id - URN namespace of the SCIM schema definition
+         * @property {String} name - friendly name of the SCIM schema definition
+         * @property {String} description - human-readable description of the SCIM schema definition
+         * @property {SCIMMY.Types.Attribute~AttributeDefinition[]} attributes - attributes that make up this schema
+         * @property {Object} meta - metadata details of this schema
+         * @property {String} meta.resourceType - identifies the type of resource being described
+         * @property {String} meta.location - canonical location of this resource
+         */
         return {
             schemas: ["urn:ietf:params:scim:schemas:core:2.0:Schema"],
             id: this.id, name: this.name, description: this.description,

@@ -2,13 +2,8 @@ import Types from "../types.js";
 
 /**
  * List of valid SCIM patch operations
- * @enum
+ * @enum SCIMMY.Messages.PatchOp~ValidPatchOperations
  * @inner
- * @constant
- * @type {String[]}
- * @alias ValidPatchOperations
- * @memberOf SCIMMY.Messages.PatchOp
- * @default
  */
 const validOps = ["add", "remove", "replace"];
 // Split a path by fullstops when they aren't in a filter group or decimal
@@ -71,9 +66,18 @@ export class PatchOp {
     #dispatched = false;
     
     /**
+     * SCIM PatchOp Operation definition
+     * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpOperation
+     * @prop {SCIMMY.Messages.PatchOp~ValidPatchOperations} op - the operation to perform
+     * @prop {String} [path] - an attribute path describing the target of the operation
+     * @prop {*} [value] - value to add or update
+     */
+    
+    /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} request - contents of the patch operation request being performed
-     * @property {Object[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
+     * @param {SCIMMY.Messages.PatchOp~PatchOpOperation[]} request.Operations - list of SCIM-compliant patch operations to apply to the given resource
+     * @property {SCIMMY.Messages.PatchOp~PatchOpOperation[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {
         const {schemas = [], Operations: operations = []} = request ?? {};
@@ -143,10 +147,20 @@ export class PatchOp {
     #target;
     
     /**
+     * Apply final transformations or database operations before determining whether a PatchOp resulted in any actual changes
+     * @async
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that was patched
+     * @callback SCIMMY.Messages.PatchOp~PatchOpFinaliser
+     * @param {S} instance - a patched version of the originally supplied resource schema instance
+     * @returns {Record<String, any>} the resource instance after final transformations have been applied
+     */
+    
+    /**
      * Apply patch operations to a resource as defined by the PatchOp instance
-     * @param {SCIMMY.Types.Schema} resource - the schema instance the patch operation will be performed on
-     * @param {Function} [finalise] - method to call when all operations are complete, to feed target back through model
-     * @returns {Promise<SCIMMY.Types.Schema>} an instance of the resource modified as per the included patch operations
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance being patched
+     * @param {S} resource - the schema instance the patch operation will be performed on
+     * @param {SCIMMY.Messages.PatchOp~PatchOpFinaliser<S>} [finalise] - method to call when all operations are complete, to feed target back through model
+     * @returns {S} an instance of the resource modified as per the included patch operations
      */
     async apply(resource, finalise) {
         // Bail out if message has not been dispatched (i.e. it's not ready yet)
@@ -201,7 +215,7 @@ export class PatchOp {
      * @param {Number} index - the operation's location in the list of operations, for use in error messages
      * @param {String} path - specifies path to the attribute or value being patched
      * @param {String} op - the operation being performed, for use in error messages
-     * @returns {SCIMMY.Messages.PatchOp~PatchOpDetails}
+     * @returns {PatchOpDetails}
      * @private
      */
     #resolve(index, path, op) {
@@ -252,15 +266,16 @@ export class PatchOp {
             throw new Types.Error(400, "noTarget", `Filter '${path}' does not match any values for '${op}' op of operation ${index} in PatchOp request body`);
         
         /**
-         * @typedef {Object} SCIMMY.Messages.PatchOp~PatchOpDetails
+         * @typedef {Object} PatchOpDetails
          * @property {Boolean} complex - whether the target attribute value should be complex
          * @property {Boolean} multiValued - whether the target attribute expects a collection of values
          * @property {String} property - name of the targeted attribute to apply values to
          * @property {Object[]} targets - the resources containing the attributes to apply values to
+         * @internal
          * @private
          */
         return {
-            complex: (attribute instanceof Types.SchemaDefinition ? true : attribute.type === "complex"),
+            complex: (attribute instanceof Types.SchemaDefinition ? true : String(attribute.type) === "complex"),
             multiValued, property, targets
         };
     }

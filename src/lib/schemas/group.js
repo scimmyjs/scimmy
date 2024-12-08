@@ -30,6 +30,12 @@ export class Group extends Types.Schema {
      * @param {String} [direction="both"] - whether the resource is inbound from a request or outbound for a response
      * @param {String} [basepath] - the base path for resolution of a resource's location
      * @param {SCIMMY.Types.Filter} [filters] - attribute filters to apply to the coerced value
+     * @property {String} displayName - a human-readable name for the Group
+     * @property {Object[]} [members] - a list of members of the Group
+     * @property {String} members[].value - identifier of the member of this Group
+     * @property {String} [members[].display] - human-readable name of the member of this Group
+     * @property {String} [members[].$ref] - the URI corresponding to a SCIM resource that is a member of this Group
+     * @property {String} [members[].type] - a label indicating the type of resource, e.g., 'User' or 'Group'
      */
     constructor(resource, direction = "both", basepath, filters) {
         super(resource, direction);

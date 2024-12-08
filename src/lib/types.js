@@ -3,10 +3,14 @@ import {SchemaDefinition} from "./types/definition.js";
 import {Schema} from "./types/schema.js";
 import {Resource} from "./types/resource.js";
 import {Filter} from "./types/filter.js";
-import {SCIMError as Error} from "./types/error.js";
+import {SCIMError} from "./types/error.js";
+
+// Export classes for direct consumption
+export {Attribute, SchemaDefinition, Schema, Resource, Filter, SCIMError};
 
 /**
  * SCIMMY Types Container Class
+ * @module scimmy/types
  * @namespace SCIMMY.Types
  * @description
  * SCIMMY provides a singleton class, `SCIMMY.Types`, that exposes the building blocks used to create SCIM schemas and resource types, and handle SCIM schema and protocol errors.
@@ -18,5 +22,9 @@ export default class Types {
     static Schema = Schema;
     static Resource = Resource;
     static Filter = Filter;
-    static Error = Error;
+    /**
+     * @type {typeof SCIMMY.Types.SCIMError}
+     * @ignore
+     */
+    static Error = SCIMError;
 };

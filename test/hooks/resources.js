@@ -528,8 +528,8 @@ export default class ResourcesHooks {
         const TargetResource = this.#target;
         
         if (!supported) {
-            it("should not be implemented", () => {
-                assert.throws(() => new TargetResource().write(),
+            it("should not be implemented", async () => {
+                await assert.rejects(async () => new TargetResource().write(),
                     {name: "TypeError", message: `Method 'write' not implemented by resource '${TargetResource.name}'`},
                     "Instance method 'write' unexpectedly implemented by resource");
             });
@@ -682,8 +682,8 @@ export default class ResourcesHooks {
         const TargetResource = this.#target;
         
         if (!supported) {
-            it("should not be implemented", () => {
-                assert.throws(() => new TargetResource().patch(),
+            it("should not be implemented", async () => {
+                await assert.rejects(async () => new TargetResource().patch(),
                     {name: "TypeError", message: `Method 'patch' not implemented by resource '${TargetResource.name}'`},
                     "Instance method 'patch' unexpectedly implemented by resource");
             });
@@ -903,8 +903,8 @@ export default class ResourcesHooks {
         const TargetResource = this.#target;
         
         if (!supported) {
-            it("should not be implemented", () => {
-                assert.throws(() => new TargetResource().dispose(),
+            it("should not be implemented", async () => {
+                await assert.rejects(async () => new TargetResource().dispose(),
                     {name: "TypeError", message: `Method 'dispose' not implemented by resource '${TargetResource.name}'`},
                     "Instance method 'dispose' unexpectedly implemented by resource");
             });
