@@ -594,8 +594,10 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
         for (let [target, outcome, unexpected, expected, filter, multiValued] of [
             ["complex attributes", "filtered positively", "unexpectedly included", {test: {value: "False"}}, "test.value pr"],
             ["complex attributes", "filtered negatively", "unexpectedly excluded", {test: {name: "Test"}}, "test.value np"],
-            ["complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test"}]}, "test.name pr", true],
-            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true],
+            ["complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test", value: "Test"}, {name: undefined, value: "False"}]}, "test pr", true],
+            ["complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {}, "test np", true],
+            ["nested complex multi-value attributes", "filtered positively", "unexpectedly included", {test: [{name: "Test"}]}, "test.name pr", true],
+            ["nested complex multi-value attributes", "filtered negatively", "unexpectedly excluded", {test: [{value: "Test"}, {value: "False"}]}, "test.name np", true],
             ["complex multi-value attributes", "matched against filter expressions", "unexpectedly excluded", {test: [{name: "Test", value: "Test"}]}, "test[name eq \"Test\"] pr", true]
         ]) it(`should expect ${target} to be ${outcome}`, () => {
             const source = {test: multiValued ? [{name: "Test", value: "Test"}, {value: "False"}] : {name: "Test", value: "False"}};

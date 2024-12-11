@@ -417,11 +417,14 @@ export class SchemaDefinition {
                     // If the attribute is always returned, add it to the result
                     if (returned === "always") target[key] = data[key];
                     // Otherwise, if the attribute was requested and ~can~ be returned, process it
-                    else if (![false, "never"].includes(returned)) {
+                    else if (![false, "never"].includes(returned) && !exclusions.includes(key)) {
                         // If there's a filter for a complex attribute, evaluate it...
                         if (key in filter && type === "complex") {
-                            // ...either using Filter instance match method, or by recursing into this filter method to get specified attributes
-                            const value = Array.isArray(filter[key]) ? new Filter(filter[key].filter((expr) => Object.getPrototypeOf(expr).constructor === Object)).match(data[key]) : SchemaDefinition.#filter(definition, filter[key], data[key], key);
+                            const value = Array.isArray(filter[key]) ? !filter[key].some((expr) => typeof expr === "object") ? data[key] :
+                                // ...either using Filter instance match method for complex expressions...
+                                new Filter(filter[key].filter((expr) => Object.getPrototypeOf(expr).constructor === Object)).match(data[key]) :
+                                // ...or by recursing into this filter method to get specified attributes
+                                SchemaDefinition.#filter(definition, filter[key], data[key], key);
                             
                             // Only set the value if it isn't empty
                             if ((!multiValued && value !== undefined) || (Array.isArray(value) && value.length))
