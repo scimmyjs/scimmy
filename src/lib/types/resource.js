@@ -71,7 +71,7 @@ export class Resource {
      * Handler for ingress of a resource
      * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing ingress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
-     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes] - shape of return value
+     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~IngressHandler
      * @param {R} resource - the resource performing the ingress
      * @param {S} instance - an instance of the resource type that conforms to the resource's schema
@@ -124,11 +124,11 @@ export class Resource {
      * Handler for egress of a resource
      * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing egress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
-     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes] - shape of return value
+     * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~EgressHandler
      * @param {R} resource - the resource performing the egress
      * @param {*} [ctx] - external context in which the handler has been called
-     * @returns {V|Array<V>|Promise<V>|Promise<Array<V>>} an object, or array of objects, to be used to create a new schema instances, whose properties conform to the resource type's schema
+     * @returns {V|Array<V>|Promise<V|Array<V>>} an object, or array of objects, to be used to create a new schema instances, whose properties conform to the resource type's schema
      * @example
      * // Handle a request to retrieve a specific resource, or a list of resources
      * async function egress(resource, ctx) {
