@@ -34,6 +34,11 @@ export class Group extends Types.Resource {
         return Schemas.Group;
     }
     
+    /** @implements {SCIMMY.Types.Resource.extend<typeof SCIMMY.Resources.Group>} */
+    static extend(...args) {
+        return super.extend(...args);
+    }
+    
     /** @private */
     static #ingress = () => {
         throw new Types.Error(501, null, "Method 'ingress' not implemented by resource 'Group'");

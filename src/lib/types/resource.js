@@ -57,9 +57,12 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
+     * @template {typeof SCIMMY.Types.Resource<S>} R
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that will be passed to handlers
      * @param {typeof SCIMMY.Types.Schema} extension - the schema extension to register
      * @param {Boolean} [required] - whether the extension is required
-     * @returns {typeof SCIMMY.Types.Resource} this resource type implementation for chaining
+     * @returns {R} this resource type implementation for chaining
+     * @abstract
      */
     static extend(extension, required) {
         this.schema.extend(extension, required);
@@ -69,7 +72,7 @@ export class Resource {
     
     /**
      * Handler for ingress of a resource
-     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing ingress
+     * @template {SCIMMY.Types.Resource<S>} R - type of resource instance performing ingress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
      * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~IngressHandler
@@ -110,7 +113,7 @@ export class Resource {
     static #ingress;
     /**
      * Sets the method to be called to consume a resource on create
-     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @template {typeof SCIMMY.Types.Resource<S>} R
      * @template {SCIMMY.Types.Schema} S
      * @param {SCIMMY.Types.Resource~IngressHandler<InstanceType<R>, S>} handler - function to invoke to consume a resource on create
      * @returns {R} this resource type class for chaining
@@ -122,7 +125,7 @@ export class Resource {
     
     /**
      * Handler for egress of a resource
-     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing egress
+     * @template {SCIMMY.Types.Resource<S>} R - type of resource instance performing egress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
      * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~EgressHandler
@@ -159,7 +162,7 @@ export class Resource {
     static #egress;
     /**
      * Sets the method to be called to retrieve a resource on read
-     * @template {typeof SCIMMY.Types.Resource<any>} R
+     * @template {typeof SCIMMY.Types.Resource<S>} R
      * @template {SCIMMY.Types.Schema} S
      * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>, S>} handler - function to invoke to retrieve a resource on read
      * @returns {R} this resource type class for chaining
@@ -175,6 +178,7 @@ export class Resource {
      * @callback SCIMMY.Types.Resource~DegressHandler
      * @param {R} resource - the resource performing the degress
      * @param {*} [ctx] - external context in which the handler has been called
+     * @returns {void|Promise<void>}
      * @example
      * // Handle a request to delete a specific resource
      * async function degress(resource, ctx) {
