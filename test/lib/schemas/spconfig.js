@@ -11,6 +11,7 @@ const fixtures = fs.readFile(path.join(basepath, "./spconfig.json"), "utf8").the
 describe("SCIMMY.Schemas.ServiceProviderConfig", () => {
     const hooks = new SchemasHooks(ServiceProviderConfig, fixtures);
     
+    describe(".id", hooks.id());
     describe(".definition", hooks.definition());
     describe("@constructor", hooks.construct());
 });

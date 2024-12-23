@@ -7,6 +7,11 @@ import Types from "../types.js";
  * *   Ensures a ResourceType instance conforms to the ResourceType schema set out in [RFC7643§6](https://datatracker.ietf.org/doc/html/rfc7643#section-6).
  */
 export class ResourceType extends Types.Schema {
+    /** @type {"urn:ietf:params:scim:schemas:core:2.0:ResourceType"} */
+    static get id() {
+        return ResourceType.#definition.id;
+    }
+    
     /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return ResourceType.#definition;

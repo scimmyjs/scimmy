@@ -7,6 +7,11 @@ import Types from "../types.js";
  * *   Ensures a ServiceProviderConfig instance conforms to the Service Provider Configuration schema set out in [RFC7643§5](https://datatracker.ietf.org/doc/html/rfc7643#section-5).
  */
 export class ServiceProviderConfig extends Types.Schema {
+    /** @type {"urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"} */
+    static get id() {
+        return ServiceProviderConfig.#definition.id;
+    }
+    
     /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return ServiceProviderConfig.#definition;
@@ -14,8 +19,7 @@ export class ServiceProviderConfig extends Types.Schema {
     
     /** @private */
     static #definition = new Types.SchemaDefinition(
-        "ServiceProviderConfig", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
-        "Schema for representing the service provider's configuration", [
+        "ServiceProviderConfig", "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig", "Schema for representing the service provider's configuration", [
             new Types.Attribute("reference", "documentationUri", {mutable: false, referenceTypes: ["external"], description: "An HTTP-addressable URL pointing to the service provider's human-consumable help documentation."}),
             new Types.Attribute("complex", "patch", {required: true, mutable: false, uniqueness: false, description: "A complex type that specifies PATCH configuration options."}, [
                 new Types.Attribute("boolean", "supported", {required: true, mutable: false, description: "A Boolean value specifying whether or not the operation is supported."})

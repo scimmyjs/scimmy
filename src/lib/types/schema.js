@@ -25,6 +25,21 @@ const defineToJSONProperty = (target, definition, resource) => Object.defineProp
 const hasActualValues = (target) => (Object.values(target).some((v) => typeof v === "object" ? hasActualValues(v) : v !== undefined));
 
 /**
+ * Automatically assigned attributes not required in schema extension values
+ * @enum {"id"|"schemas"|"meta"} SCIMMY.Types.Schema~ShadowAttributes
+ * @private
+ */
+
+/**
+ * A schema instance type with an added schema extension
+ * @typedef {V} SCIMMY.Types.Schema~Extended
+ * @template {SCIMMY.Types.Schema} S
+ * @template {typeof SCIMMY.Types.Schema} E
+ * @template {S} [V=(S & {[K in keyof Pick<E, "id"> as `${E[K]}`]?: Omit<InstanceType<E>, Schema.ShadowAttributes>})]
+ * @ignore
+ */
+
+/**
  * SCIM Schema Type
  * @alias SCIMMY.Types.Schema
  * @summary
@@ -33,12 +48,21 @@ const hasActualValues = (target) => (Object.values(target).some((v) => typeof v 
  */
 export class Schema {
     /**
+     * SCIM schema URN namespace
+     * @type {String}
+     * @abstract
+     */
+    static get id() {
+        throw new TypeError("Method 'get' for static property 'id' must be implemented by subclass");
+    }
+    
+    /**
      * Retrieves a schema's definition instance
      * @type {SCIMMY.Types.SchemaDefinition}
      * @abstract
      */
     static get definition() {
-        throw new TypeError("Method 'get' for property 'definition' must be implemented by subclass");
+        throw new TypeError("Method 'get' for static property 'definition' must be implemented by subclass");
     }
     
     /**

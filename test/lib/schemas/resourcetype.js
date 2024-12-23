@@ -11,6 +11,7 @@ const fixtures = fs.readFile(path.join(basepath, "./resourcetype.json"), "utf8")
 describe("SCIMMY.Schemas.ResourceType", () => {
     const hooks = new SchemasHooks(ResourceType, fixtures);
     
+    describe(".id", hooks.id());
     describe(".definition", hooks.definition());
     describe("@constructor", hooks.construct());
 });

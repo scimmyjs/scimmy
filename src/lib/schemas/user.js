@@ -7,6 +7,11 @@ import Types from "../types.js";
  * *   Ensures a User instance conforms to the User schema set out in [RFC7643§4.1](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1).
  */
 export class User extends Types.Schema {
+    /** @type {"urn:ietf:params:scim:schemas:core:2.0:User"} */
+    static get id() {
+        return User.#definition.id;
+    }
+    
     /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return User.#definition;

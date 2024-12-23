@@ -11,6 +11,7 @@ const fixtures = fs.readFile(path.join(basepath, "./user.json"), "utf8").then((f
 describe("SCIMMY.Schemas.User", () => {
     const hooks = new SchemasHooks(User, fixtures);
     
+    describe(".id", hooks.id());
     describe(".definition", hooks.definition());
     describe("@constructor", hooks.construct());
 });
