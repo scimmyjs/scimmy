@@ -34,16 +34,27 @@ export class BulkRequest {
     #dispatched = false;
     
     /**
-     * Instantiate a new SCIM BulkResponse message from the supplied BulkRequest
+     * BulkRequest operation details
+     * @typedef {Object} SCIMMY.Messages.BulkRequest~BulkOpOperation
+     * @property {SCIMMY.Messages.BulkRequest~ValidBulkMethods} method - the HTTP method used for the requested operation
+     * @property {String} [bulkId] - the transient identifier of a newly created resource, unique within a bulk request and created by the client
+     * @property {String} [version] - resource version after operation has been applied
+     * @property {String} [path] - the resource's relative path to the SCIM service provider's root
+     * @property {Object} [data] - the resource data as it would appear for the corresponding single SCIM HTTP request
+     * @inner
+     */
+    
+    /**
+     * Instantiate a new SCIM BulkRequest message from the supplied operations
      * @param {Object} request - contents of the BulkRequest operation being performed
-     * @param {Object[]} request.Operations - list of SCIM-compliant bulk operations to apply
+     * @param {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} request.Operations - list of SCIM-compliant bulk operations to apply
      * @param {Number} [request.failOnErrors] - number of error results to encounter before aborting any following operations
      * @param {Number} [maxOperations] - maximum number of operations supported in the request, as specified by the service provider
-     * @property {Object[]} Operations - list of operations in this BulkRequest instance
+     * @property {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} Operations - list of operations in this BulkRequest instance
      * @property {Number} [failOnErrors] - number of error results a service provider should tolerate before aborting any following operations
      */
     constructor(request, maxOperations = 0) {
-        let {schemas = [], Operations: operations = [], failOnErrors = 0} = request ?? {};
+        const {schemas = [], Operations: operations = [], failOnErrors = 0} = request ?? {};
         
         // Make sure specified schema is valid
         if (schemas.length !== 1 || !schemas.includes(BulkRequest.#id))
@@ -69,7 +80,7 @@ export class BulkRequest {
     }
     
     /**
-     * Apply the operations specified by the supplied BulkRequest 
+     * Apply the operations specified by the supplied BulkRequest and return a new BulkResponse message
      * @param {typeof SCIMMY.Types.Resource[]} [resourceTypes] - resource type classes to be used while processing bulk operations, defaults to declared resources
      * @param {*} [ctx] - any additional context information to pass to the ingress, egress, and degress handlers
      * @returns {SCIMMY.Messages.BulkResponse} a new BulkResponse Message instance with results of the requested operations 
