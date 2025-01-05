@@ -27,7 +27,7 @@ const hasActualValues = (target) => (Object.values(target).some((v) => typeof v 
 /**
  * Automatically assigned attributes not required in schema extension values
  * @enum {"id"|"schemas"|"meta"} SCIMMY.Types.Schema~ShadowAttributes
- * @private
+ * @ignore
  */
 
 /**
@@ -88,7 +88,7 @@ export class Schema {
     
     /**
      * Remove an attribute, schema extension, or subAttribute from the schema's definition
-     * @param {SCIMMY.Types.Schema|String|SCIMMY.Types.Attribute|Array<String|SCIMMY.Types.Attribute>} attributes - the child attributes to remove from the schema definition
+     * @param {SCIMMY.Types.Schema|String|SCIMMY.Types.Attribute|Array<String>|Array<SCIMMY.Types.Attribute>} attributes - the child attributes to remove from the schema definition
      */
     static truncate(attributes) {
         this.definition.truncate(attributes?.prototype instanceof Schema ? attributes.definition : attributes);
