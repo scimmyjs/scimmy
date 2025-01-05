@@ -36,11 +36,11 @@ export class ErrorResponse extends Error {
     static #id = "urn:ietf:params:scim:api:messages:2.0:Error";
     
     /**
+     * Details of the underlying cause of the error response
      * @typedef {Object} SCIMMY.Messages.ErrorResponse~CauseDetails
      * @property {SCIMMY.Messages.ErrorResponse~ValidStatusCodes} [status=500] - HTTP status code to be sent with the error
      * @property {SCIMMY.Messages.ErrorResponse~ValidScimTypes} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
      * @property {String} [detail] - a human-readable description of what caused the error to occur
-     * @internal
      * @inner
      */
     
