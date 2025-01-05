@@ -192,14 +192,6 @@ export class Packager {
         const input = {[entry]: path.join(src, `${entry}.js`), ...chunks.reduce((chunks, chunk) => Object.assign(chunks, {[chunk]: path.join(src, `${chunk}.js`)}), {})};
         const manualChunks = chunks.reduce((chunks, chunk) => Object.assign(chunks, {[chunk]: [path.join(src, `${chunk}.js`)]}), {});
         const output = [];
-        const config = {
-            exports: "named", interop: "auto",
-            minifyInternalExports: false,
-            hoistTransitiveImports: false,
-            manualChunks, generatedCode: {
-                constBindings: true
-            }
-        };
         
         // Prepare RollupJS bundle with supplied entry points
         const bundle = await rollup.rollup({
@@ -210,8 +202,15 @@ export class Packager {
         // Construct the bundles with specified chunks in specified formats and write to destination
         for (let format of ["esm", "cjs"]) {
             const {output: results} = await bundle.write({
-                ...config, format, dir: (format === "esm" ? dest : `${dest}/${format}`),
-                entryFileNames: fileNameConfig[format], chunkFileNames: fileNameConfig[format]
+                format, exports: "named", interop: "auto",
+                dir: (format === "esm" ? dest : `${dest}/${format}`),
+                entryFileNames: fileNameConfig[format],
+                chunkFileNames: fileNameConfig[format],
+                minifyInternalExports: false,
+                hoistTransitiveImports: false,
+                manualChunks, generatedCode: {
+                    constBindings: true
+                }
             });
             
             output.push(...results.map(file => (format === "esm" ? file.fileName : `${format}/${file.fileName}`)));
@@ -234,7 +233,7 @@ export class Packager {
         
         // Prepare RollupJS with OstensiblyTyped plugin and supplied entry point
         const bundle = await rollup.rollup({
-            external, input: path.join(src, `${entry}.js`), 
+            external, input: path.join(src, `${entry}.js`),
             plugins: [generateDeclarations({moduleName: entry, defaultExport: "SCIMMY"})],
             onwarn: (warning, warn) => (warning.code !== "CIRCULAR_DEPENDENCY" ? warn(warning) : false)
         });
