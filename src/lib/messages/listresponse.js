@@ -13,12 +13,18 @@ export class ListResponse {
     static #id = "urn:ietf:params:scim:api:messages:2.0:ListResponse";
     
     /**
+     * ListResponse sort and pagination constraints
+     * @typedef {Object} SCIMMY.Messages.ListResponse~ListConstraints
+     * @property {String} [sortBy] - the attribute to sort results by, if any
+     * @property {String} [sortOrder="ascending"] - the direction to sort results in, if sortBy is specified
+     * @property {Number} [startIndex=1] - offset index that items start from
+     * @property {Number} [count=20] - maximum number of items returned in this list response
+     */
+    
+    /**
      * Instantiate a new SCIM List Response Message with relevant details
      * @param {Object|SCIMMY.Types.Schema[]} request - contents of the ListResponse message, or items to include in the list response
-     * @param {Object} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
-     * @param {String} [params.sortBy] - the attribute to sort results by, if any
-     * @param {String} [params.sortOrder="ascending"] - the direction to sort results in, if sortBy is specified
-     * @param {Number} [params.startIndex=1] - offset index that items start from
+     * @param {SCIMMY.Messages.ListResponse~ListConstraints} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
      * @property {Array<Object|SCIMMY.Types.Schema>} Resources - resources included in the list response
