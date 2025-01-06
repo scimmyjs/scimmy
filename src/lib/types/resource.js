@@ -6,7 +6,7 @@ import {Filter} from "./filter.js";
 /**
  * Automatically assigned attributes not required in handler return values
  * @enum {"schemas"|"meta"} SCIMMY.Types.Resource~ShadowAttributes
- * @private
+ * @ignore
  */
 
 /**
@@ -57,9 +57,12 @@ export class Resource {
     
     /**
      * Register an extension to the resource's core schema
+     * @template {typeof SCIMMY.Types.Resource<S>} R
+     * @template {SCIMMY.Types.Schema} [S=*] - type of schema instance that will be passed to handlers
      * @param {typeof SCIMMY.Types.Schema} extension - the schema extension to register
      * @param {Boolean} [required] - whether the extension is required
-     * @returns {typeof SCIMMY.Types.Resource} this resource type implementation for chaining
+     * @returns {R} this resource type implementation for chaining
+     * @abstract
      */
     static extend(extension, required) {
         this.schema.extend(extension, required);
@@ -69,7 +72,7 @@ export class Resource {
     
     /**
      * Handler for ingress of a resource
-     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing ingress
+     * @template {SCIMMY.Types.Resource<S>} R - type of resource instance performing ingress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
      * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~IngressHandler
@@ -112,7 +115,8 @@ export class Resource {
      * Sets the method to be called to consume a resource on create
      * @template {typeof SCIMMY.Types.Resource<any>} R
      * @template {SCIMMY.Types.Schema} S
-     * @param {SCIMMY.Types.Resource~IngressHandler<InstanceType<R>, S>} handler - function to invoke to consume a resource on create
+     * @typeParam {S} [V=S]
+     * @param {SCIMMY.Types.Resource~IngressHandler<InstanceType<R>, V>} handler - function to invoke to consume a resource on create
      * @returns {R} this resource type class for chaining
      * @abstract
      */
@@ -122,7 +126,7 @@ export class Resource {
     
     /**
      * Handler for egress of a resource
-     * @template {SCIMMY.Types.Resource<any>} R - type of resource instance performing egress
+     * @template {SCIMMY.Types.Resource<S>} R - type of resource instance performing egress
      * @template {SCIMMY.Types.Schema} S - type of schema instance that will be passed to handler
      * @template {Record<String, *>} [V=Omit<Awaited<S>, Resource.ShadowAttributes>] - shape of return value
      * @callback SCIMMY.Types.Resource~EgressHandler
@@ -161,7 +165,8 @@ export class Resource {
      * Sets the method to be called to retrieve a resource on read
      * @template {typeof SCIMMY.Types.Resource<any>} R
      * @template {SCIMMY.Types.Schema} S
-     * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>, S>} handler - function to invoke to retrieve a resource on read
+     * @typeParam {S} [V=S]
+     * @param {SCIMMY.Types.Resource~EgressHandler<InstanceType<R>, V>} handler - function to invoke to retrieve a resource on read
      * @returns {R} this resource type class for chaining
      * @abstract
      */
@@ -175,6 +180,7 @@ export class Resource {
      * @callback SCIMMY.Types.Resource~DegressHandler
      * @param {R} resource - the resource performing the degress
      * @param {*} [ctx] - external context in which the handler has been called
+     * @returns {void|Promise<void>}
      * @example
      * // Handle a request to delete a specific resource
      * async function degress(resource, ctx) {
@@ -256,7 +262,7 @@ export class Resource {
      * @property {String} [id] - ID of the resource instance being targeted
      * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
      * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
-     * @property {Object} [constraints] - sort and pagination properties parsed from the supplied config
+     * @property {SCIMMY.Messages.ListResponse~ListConstraints} [constraints] - sort and pagination properties parsed from the supplied config
      * @property {String} [constraints.sortBy] - the attribute retrieved resources should be sorted by
      * @property {String} [constraints.sortOrder] - the direction retrieved resources should be sorted in
      * @property {Number} [constraints.startIndex] - offset index that retrieved resources should start from

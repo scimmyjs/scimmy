@@ -34,6 +34,11 @@ export class User extends Types.Resource {
         return Schemas.User;
     }
     
+    /** @implements {SCIMMY.Types.Resource.extend<typeof SCIMMY.Resources.User>} */
+    static extend(...args) {
+        return super.extend(...args);
+    }
+    
     /** @private */
     static #ingress = () => {
         throw new Types.Error(501, null, "Method 'ingress' not implemented by resource 'User'");

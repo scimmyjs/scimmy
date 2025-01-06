@@ -12,12 +12,24 @@
   "types": "./dist/scimmy.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/scimmy.js",
-      "require": "./dist/cjs/scimmy.cjs"
+      "import": {
+        "types": "./dist/scimmy.d.ts",
+        "default": "./dist/scimmy.js"
+      },
+      "require": {
+        "types": "./dist/scimmy.d.ts",
+        "default": "./dist/cjs/scimmy.cjs"
+      }
     },
     "./*": {
-      "import": "./dist/lib/*.js",
-      "require": "./dist/cjs/lib/*.js"
+      "import": {
+        "types": "./dist/scimmy.d.ts",
+        "default": "./dist/lib/*.js"
+      },
+      "require": {
+        "types": "./dist/scimmy.d.ts",
+        "default": "./dist/cjs/lib/*.js"
+      }
     }
   },
   "scripts": {
@@ -70,7 +82,7 @@
     "jsdoc": "^4.0.2",
     "minimist": "^1.2.8",
     "mocha": "^10.4.0",
-    "ostensibly-typed": "^1.0.3",
+    "ostensibly-typed": "^1.2.0",
     "rollup": "^4.25.0",
     "sinon": "^19.0.2",
     "typescript": "^5.4.5"

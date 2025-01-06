@@ -11,6 +11,19 @@ const basepath = path.relative(process.cwd(), path.dirname(url.fileURLToPath(imp
 const fixtures = fs.readFile(path.join(basepath, "./schema.json"), "utf8").then((f) => JSON.parse(f));
 
 describe("SCIMMY.Types.Schema", () => {
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok(typeof Object.getOwnPropertyDescriptor(Schema, "id").get === "function",
+                "Static member 'id' was not defined");
+        });
+        
+        it("should be abstract", () => {
+            assert.throws(() => Schema.id,
+                {name: "TypeError", message: "Method 'get' for static property 'id' must be implemented by subclass"},
+                "Static member 'id' was not abstract");
+        });
+    });
+    
     describe(".definition", () => {
         it("should be defined", () => {
             assert.ok(typeof Object.getOwnPropertyDescriptor(Schema, "definition").get === "function",
@@ -19,7 +32,7 @@ describe("SCIMMY.Types.Schema", () => {
         
         it("should be abstract", () => {
             assert.throws(() => Schema.definition,
-                {name: "TypeError", message: "Method 'get' for property 'definition' must be implemented by subclass"},
+                {name: "TypeError", message: "Method 'get' for static property 'definition' must be implemented by subclass"},
                 "Static member 'definition' was not abstract");
         });
     });

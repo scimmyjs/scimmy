@@ -123,19 +123,24 @@ export default class ResourcesHooks {
     extend = (supported = true) => (() => {
         const TargetResource = this.#target;
         
+        it("should be overridden", () => {
+            assert.ok(Object.getOwnPropertyNames(TargetResource).includes("extend"),
+                "Static method 'extend' was not overridden");
+            assert.ok(typeof TargetResource.extend === "function",
+                "Static method 'extend' was not a function");
+        });
+        
         if (supported) {
-            it("should not be overridden", () => {
-                assert.ok(!Object.getOwnPropertyNames(TargetResource).includes("extend"),
-                    "Static method 'extend' unexpectedly overridden by resource");
+            const sandbox = this.#sandbox;
+            
+            it("should call through to the 'extend' method of the super class", () => {
+                const stub = sandbox.stub(Resource, "extend");
+                
+                TargetResource.extend();
+                assert.ok(stub.calledOnce, "Static method 'extend' did not call through to super class");
+                stub.restore();
             });
         } else {
-            it("should be overridden", () => {
-                assert.ok(Object.getOwnPropertyNames(TargetResource).includes("extend"),
-                    "Static method 'extend' was not overridden");
-                assert.ok(typeof TargetResource.extend === "function",
-                    "Static method 'extend' was not a function");
-            });
-            
             it("should throw an 'unsupported' error", () => {
                 assert.throws(() => TargetResource.extend(),
                     {name: "TypeError", message: `SCIM '${TargetResource.name}' resource does not support extension`},

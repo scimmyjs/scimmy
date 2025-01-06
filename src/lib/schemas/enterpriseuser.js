@@ -8,6 +8,11 @@ import Types from "../types.js";
  * *   Can be used directly, but is typically used to extend the `SCIMMY.Schemas.User` schema definition.
  */
 export class EnterpriseUser extends Types.Schema {
+    /** @type {"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"} */
+    static get id() {
+        return EnterpriseUser.#definition.id;
+    }
+    
     /** @implements {SCIMMY.Types.Schema.definition} */
     static get definition() {
         return EnterpriseUser.#definition;

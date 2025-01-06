@@ -220,6 +220,25 @@ export default class ResourcesHooks {
         });
     });
     
+    id = () => (() => {
+        const TargetSchema = this.#target;
+        
+        it("should be defined", () => {
+            assert.ok("id" in TargetSchema,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof TargetSchema.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match ID from definition instance", async () => {
+            assert.strictEqual(TargetSchema.id, TargetSchema.definition.id,
+                "Static member 'id' did not match 'id' from definition instance");
+        });
+    });
+    
     definition = () => (() => {
         const TargetSchema = this.#target;
         const fixtures = this.#fixtures;

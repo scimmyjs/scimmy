@@ -15,14 +15,44 @@ export class BulkResponse {
     static #id = "urn:ietf:params:scim:api:messages:2.0:BulkResponse";
     
     /**
+     * BulkResponse operation response status codes
+     * @enum {200|201|204|307|308|400|401|403|404|409|412|500|501} SCIMMY.Messages.BulkResponse~ResponseStatusCodes
+     * @inner
+     */
+    
+    /**
+     * BulkResponse operation details for a given BulkRequest operation
+     * @typedef {Object} SCIMMY.Messages.BulkResponse~BulkOpResponse
+     * @property {String} [location] - canonical URI for the target resource of the operation
+     * @property {SCIMMY.Messages.BulkRequest~ValidBulkMethods} method - the HTTP method used for the requested operation
+     * @property {String} [bulkId] - the transient identifier of a newly created resource, unique within a bulk request and created by the client
+     * @property {String} [version] - resource version after operation has been applied
+     * @property {SCIMMY.Messages.BulkResponse~ResponseStatusCodes} status - the HTTP response status code for the requested operation
+     * @property {Object} [response] - the HTTP response body for the specified request operation
+     * @inner
+     */
+    
+    /**
+     * Instantiate a new outbound SCIM BulkResponse message from the results of performed operations
+     * @overload
+     * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} operations - results of performed operations
+     */
+    /**
+     * Instantiate a new inbound SCIM BulkResponse message instance from the received response
+     * @overload
+     * @param {Object} request - contents of the received BulkResponse message
+     * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request.Operations - list of SCIM-compliant bulk operation results
+     */
+    /**
      * Instantiate a new SCIM BulkResponse message from the supplied Operations
-     * @param {Object|Object[]} request - contents of the BulkResponse if object, or results of performed operations if array
-     * @param {Object[]} [request.Operations] - list of applied SCIM-compliant bulk operation results, if request is an object
-     * @property {Object[]} Operations - list of BulkResponse operation results
+     * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request - results of performed operations if array
+     * @param {Object} request - contents of the received BulkResponse message if object
+     * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request.Operations - list of SCIM-compliant bulk operation results
+     * @property {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} Operations - list of BulkResponse operation results
      */
     constructor(request = []) {
-        let outbound = Array.isArray(request),
-            operations = (outbound ? request : request?.Operations ?? []);
+        const outbound = Array.isArray(request);
+        const operations = (outbound ? request : request?.Operations ?? []);
         
         // Verify the BulkResponse contents are valid
         if (!outbound && Array.isArray(request?.schemas) && (!request.schemas.includes(BulkResponse.#id) || request.schemas.length > 1))
