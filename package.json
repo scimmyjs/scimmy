@@ -82,7 +82,7 @@
     "jsdoc": "^4.0.2",
     "minimist": "^1.2.8",
     "mocha": "^10.4.0",
-    "ostensibly-typed": "^1.2.0",
+    "ostensibly-typed": "^1.2.1",
     "rollup": "^4.25.0",
     "sinon": "^19.0.2",
     "typescript": "^5.4.5"
