@@ -54,8 +54,11 @@ describe("SCIMMY.Messages.ListResponse", () => {
         });
         
         it("should ignore 'sortOrder' parameter if 'sortBy' parameter is not defined", () => {
-            assert.doesNotThrow(() => new ListResponse([], {sortOrder: "a string"}), 
-                "ListResponse did not ignore invalid 'sortOrder' parameter when 'sortBy' parameter was not defined");
+            try {
+                new ListResponse([], {sortOrder: "a string"});
+            } catch (ex) {
+                assert.fail(`ListResponse did not ignore invalid 'sortOrder' parameter when 'sortBy' parameter was not defined\r\n[cause]: ${ex}`);
+            }
         });
         
         it("should expect 'sortOrder' parameter to be either 'ascending' or 'descending' if 'sortBy' parameter is defined", () => {
@@ -96,13 +99,41 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "Instance member 'Resources' was not an array");
         });
         
-        it("should not include more resources than 'itemsPerPage' parameter", async () => {
+        it("should equal 'Resources' value included in inbound messages", async () => {
+            const {inbound: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                assert.deepStrictEqual(new ListResponse(fixture, {sortBy: "id", sortOrder: "descending"}).Resources, fixture.Resources,
+                    `Instance member 'Resources' did not equal 'Resources' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
+            }
+        });
+        
+        it("should not include more resources than 'itemsPerPage' value included in inbound messages", async () => {
+            const {outbound: {source}} = await fixtures;
+            const fixture = {...template, Resources: source};
+            
+            for (let itemsPerPage of [2, 5, 10, 200, 1]) {
+                assert.ok(new ListResponse({...fixture, itemsPerPage}).Resources.length <= itemsPerPage,
+                    "Instance member 'Resources' included more resources than specified in 'itemsPerPage' value of inbound message");
+            }
+        });
+        
+        it("should not include more resources than 'itemsPerPage' parameter when preparing outbound messages", async () => {
             const {outbound: {source}} = await fixtures;
             
-            for (let length of [2, 5, 10, 200, 1]) {
-                assert.ok((new ListResponse(source, {itemsPerPage: length})).Resources.length <= length,
-                    "Instance member 'Resources' included more resources than specified in 'itemsPerPage' parameter");
+            for (let itemsPerPage of [2, 5, 10, 200, 1]) {
+                assert.ok(new ListResponse(source, {itemsPerPage}).Resources.length <= itemsPerPage,
+                    "Instance member 'Resources' included more resources than specified in 'itemsPerPage' parameter when preparing outbound messages");
             }
+        });
+        
+        it("should correctly compare Date instances at 'sortBy' path when preparing outbound messages", async () => {
+            const {outbound: {source, targets: {sortBy: suite}}} = await fixtures;
+            const {expected, sortBy} = suite.find(({sortBy}) => sortBy === "date");
+            const actual = new ListResponse(source.map(({id, date}) => ({id, date: new Date(date)})), {sortBy});
+                
+            assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected,
+                "ListResponse did not correctly compare Date instances at 'sortBy' path when preparing outbound message");
         });
     });
     
@@ -121,36 +152,46 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "Instance member 'startIndex' was not a positive integer");
         });
         
-        context("when parsing inbound messages", () => {
-            it("should equal 'startIndex' value included in message", async () => {
-                const {inbound: suite} = await fixtures;
-                
-                for (let fixture of suite) {
-                    assert.strictEqual((new ListResponse(fixture, {startIndex: 20})).startIndex, fixture.startIndex,
-                        `Instance member 'startIndex' did not equal 'startIndex' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
-                }
-            });
+        it("should equal 'startIndex' value included in inbound message", async () => {
+            const {inbound: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                assert.strictEqual(new ListResponse(fixture, {startIndex: 20}).startIndex, fixture.startIndex,
+                    `Instance member 'startIndex' did not equal 'startIndex' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
+            }
         });
         
-        context("when preparing outbound messages", () => {
-            it("should be honoured if 'totalResults' is less than 'itemsPerPage'", async () => {
-                const {outbound: {source}} = await fixtures;
-                
-                assert.strictEqual(new ListResponse(source, {startIndex: source.length}).Resources.length, 1,
-                    "ListResponse did not honour 'startIndex' when 'totalResults' was less than 'itemsPerPage'");
-            });
+        it("should be honoured if 'totalResults' is less than 'itemsPerPage' when preparing outbound messages", async () => {
+            const {outbound: {source}} = await fixtures;
             
-            it("should be honoured if results are not already paginated", async () => {
-                const {outbound: {source, targets: {startIndex: suite}}} = await fixtures;
+            assert.strictEqual(new ListResponse(source, {startIndex: source.length}).Resources.length, 1,
+                "ListResponse did not honour 'startIndex' when 'totalResults' was less than 'itemsPerPage'");
+        });
+        
+        it("should be honoured if results are not already paginated when preparing outbound messages", async () => {
+            const {outbound: {source, targets: {startIndex: suite}}} = await fixtures;
+            
+            for (let fixture of suite) {
+                const {expected, length = source.length, sourceRange: [from = 1, to = length] = [], startIndex, itemsPerPage} = fixture;
+                const actual = new ListResponse(Object.assign(source.slice(from-1, to), {length}), {startIndex, itemsPerPage});
                 
-                for (let fixture of suite) {
-                    const {expected, length = source.length, sourceRange: [from = 1, to = length] = [], startIndex, itemsPerPage} = fixture;
-                    const actual = new ListResponse(Object.assign(source.slice(from-1, to), {length}), {startIndex, itemsPerPage});
-                    
-                    assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected,
-                        `ListResponse startIndex outbound target #${suite.indexOf(fixture)+1} did not honour 'startIndex' value '${startIndex}'`);
-                }
-            });
+                assert.deepStrictEqual(actual.Resources.map(({id}) => id), expected,
+                    `ListResponse startIndex outbound target #${suite.indexOf(fixture)+1} did not honour 'startIndex' value '${startIndex}'`);
+            }
+        });
+        
+        it("should be constrained to a minimum value of one when parsing inbound messages", async () => {
+            const {inbound: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                assert.strictEqual(new ListResponse({...fixture, startIndex: -10}).startIndex, 1,
+                    "Instance member 'startIndex' was not constrained to minimum value one when parsing inbound message");
+            }
+        });
+        
+        it("should be constrained to a minimum value of one when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse([], {startIndex: -10}).startIndex, 1,
+                "Instance member 'startIndex' was not constrained to minimum value one when preparing outbound message");
         });
     });
     
@@ -160,22 +201,56 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "Instance member 'itemsPerPage' was not defined");
         });
         
-        it("should be a positive integer", () => {
+        it("should be a non-negative integer", () => {
             const list = new ListResponse();
             
             assert.ok(typeof list.itemsPerPage === "number" && !Number.isNaN(list.itemsPerPage),
                 "Instance member 'itemsPerPage' was not a number");
-            assert.ok(list.itemsPerPage > 0 && Number.isInteger(list.itemsPerPage),
-                "Instance member 'itemsPerPage' was not a positive integer");
+            assert.ok(list.itemsPerPage >= 0 && Number.isInteger(list.itemsPerPage),
+                "Instance member 'itemsPerPage' was not a non-negative integer");
         });
         
-        it("should equal 'itemsPerPage' value included in inbound requests", async () => {
+        it("should equal 'itemsPerPage' value included in inbound messages", async () => {
             const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                assert.strictEqual((new ListResponse(fixture, {itemsPerPage: 200})).itemsPerPage, fixture.itemsPerPage,
+                assert.strictEqual(new ListResponse(fixture, {itemsPerPage: 200}).itemsPerPage, fixture.itemsPerPage,
                     `Instance member 'itemsPerPage' did not equal 'itemsPerPage' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
             }
+        });
+        
+        it("should equal 'itemsPerPage' parameter specified at instantiation when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse([], {itemsPerPage: 1}).itemsPerPage, 1,
+                "Instance member 'itemsPerPage' did not equal 'itemsPerPage' parameter specified at instantiation when preparing outbound messages");
+        });
+        
+        it("should equal 'count' parameter when 'itemsPerPage' parameter is not specified at instantiation", () => {
+            assert.strictEqual(new ListResponse([], {count: 1}).itemsPerPage, 1,
+                "Instance member 'itemsPerPage' did not equal 'count' parameter when 'itemsPerPage' parameter was not specified");
+        });
+        
+        it("should prefer 'itemsPerPage' parameter over 'count' parameter specified at instantiation", () => {
+            assert.strictEqual(new ListResponse([], {count: 10, itemsPerPage: 1}).itemsPerPage, 1,
+                "Instance member 'itemsPerPage' did not prefer 'itemsPerPage' parameter over 'count' parameter specified at instantiation");
+        });
+        
+        it("should fall back to the default value when 'itemsPerPage' and 'count' parameters are not specified at instantiation", () => {
+            assert.strictEqual(new ListResponse([]).itemsPerPage, 20,
+                "Instance member 'itemsPerPage' did not fall back to default value when 'itemsPerPage' and 'count' parameters were not specified");
+        });
+        
+        it("should be constrained to a minimum value of zero when parsing inbound messages", async () => {
+            const {inbound: suite} = await fixtures;
+            
+            for (let fixture of suite) {
+                assert.strictEqual(new ListResponse({...fixture, itemsPerPage: -10}).itemsPerPage, 0,
+                    "Instance member 'itemsPerPage' was not constrained to minimum value zero when parsing inbound message");
+            }
+        });
+        
+        it("should be constrained to a minimum value of zero when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse([], {itemsPerPage: -1}).itemsPerPage, 0,
+                "Instance member 'itemsPerPage' was not constrained to minimum value zero when preparing outbound message");
         });
     });
     
@@ -185,22 +260,37 @@ describe("SCIMMY.Messages.ListResponse", () => {
                 "Instance member 'totalResults' was not defined");
         });
         
-        it("should be a positive integer", () => {
+        it("should be a non-negative integer", () => {
             const list = new ListResponse();
             
             assert.ok(typeof list.totalResults === "number" && !Number.isNaN(list.totalResults),
                 "Instance member 'totalResults' was not a number");
             assert.ok(list.totalResults >= 0 && Number.isInteger(list.totalResults),
-                "Instance member 'totalResults' was not a positive integer");
+                "Instance member 'totalResults' was not a non-negative integer");
         });
         
-        it("should equal 'totalResults' value included in inbound requests", async () => {
+        it("should equal 'totalResults' value included in inbound messages", async () => {
             const {inbound: suite} = await fixtures;
             
             for (let fixture of suite) {
-                assert.strictEqual((new ListResponse(fixture, {totalResults: 200})).totalResults, fixture.totalResults,
+                assert.strictEqual(new ListResponse(fixture, {totalResults: 200}).totalResults, fixture.totalResults,
                     `Instance member 'totalResults' did not equal 'totalResults' value included in inbound fixture #${suite.indexOf(fixture) + 1}`);
             }
+        });
+        
+        it("should equal 'totalResults' property of resources array when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse(Object.assign([], {totalResults: 100})).totalResults, 100,
+                "Instance member 'totalResults' did not equal 'totalResults' property of resources array when preparing outbound messages");
+        });
+        
+        it("should equal 'length' property of resources array when 'totalResults' property is not specified", () => {
+            assert.strictEqual(new ListResponse(Object.assign([], {length: 100})).totalResults, 100,
+                "Instance member 'totalResults' did not equal 'length' property of resources array when 'totalResults' property was not specified");
+        });
+        
+        it("should prefer 'totalResults' property over 'length' property of resources array when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse(Object.assign([], {length: 1000, totalResults: 100})).totalResults, 100,
+                "Instance member 'totalResults' did not prefer 'totalResults' property over 'length' property of resources array when preparing outbound messages");
         });
     });
 });
