@@ -15,22 +15,22 @@
   ],
   "outbound": {
     "source": [
-      {"id": 1, "userName": "AdeleV", "name": {"formatted": "Adele Vance"}, "date": "2021-07-25T12:37:58.132Z", "number": 4},
-      {"id": 2, "userName": "GradyA", "name": {"formatted": "Grady Archie"}, "date": "2021-09-22T02:32:12.026Z", "number": 6},
-      {"id": 3, "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}, "date": "2021-08-05T10:11:57.910Z", "number": 14},
-      {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9},
-      {"id": 5, "userName": "DiegoS", "name": {"formatted": "Diego Siciliani"}, "date": "2021-07-13T11:03:28.202Z", "number": 12},
-      {"id": 6, "userName": "PradeepG", "name": {"formatted": "Pradeep Gupta"}, "date": "2021-09-11T15:57:40.114Z", "number": 1},
-      {"id": 7, "userName": "HenriettaM", "name": {"formatted": "Henrietta Mueller"}, "date": "2021-08-25T14:00:23.925Z", "number": 10},
-      {"id": 8, "userName": "AlexW", "name": {"formatted": "Alex Wilber"}, "date": "2021-10-25T18:45:22.984Z", "number": 2},
-      {"id": 9, "userName": "NestorW", "name": {"formatted": "Nestor Wilke"}, "date": "2021-10-19T04:00:08.652Z", "number": 3},
-      {"id": 10, "userName": "PattiF", "name": {"formatted": "Patti Fernandez"}, "date": "2021-07-19T00:15:28.313Z", "number": 11},
-      {"id": 11, "userName": "MiriamG", "name": {"formatted": "Miriam Graham"}, "date": "2021-10-15T21:24:51.391Z", "number": 13},
-      {"id": 12, "userName": "LeeG", "name": {"formatted": "Lee Gu"}, "date": "2021-10-12T23:30:26.847Z", "number": 5},
-      {"id": 13, "userName": "IsaiahL", "name": {"formatted": "Isaiah Langer"}, "date": "2021-09-30T16:03:02.186Z", "number": 7},
-      {"id": 14, "userName": "JoniS", "name": {"formatted": "Joni Sherman"}, "date": "2021-10-18T04:31:09.963Z", "number": 8},
-      {"id": 15, "userName": "LidiaH", "name": {"formatted": "Lidia Holloway"}, "date": "2021-10-15T21:37:36.111Z", "number": 15},
-      {"id": 16, "userName": "JohannaL", "name": {"formatted": "Johanna Lorenz"}, "date": "2021-07-19T19:39:26.251Z", "number": 16}
+      {"id": 1, "userName": "AdeleV", "name": {"formatted": "Adele Vance"}, "date": "2021-07-25T12:37:58.132Z", "number": 4, "list": ["a", "b"], "emails": [{"value": "asdf@dsaf.org"}, {"value": "AdeleV@example.com", "primary": true}]},
+      {"id": 2, "userName": "GradyA", "name": {"formatted": "Grady Archie"}, "date": "2021-09-22T02:32:12.026Z", "number": 6, "emails": [{"value": "GradyA@example.com"}, {"value": "asdf@dsaf.com"}]},
+      {"id": 3, "userName": "LynneR", "name": {"formatted": "Lynne Robbins"}, "date": "2021-08-05T10:11:57.910Z", "number": 14, "emails": [{"value": "LynneR@example.com"}]},
+      {"id": 4, "userName": "MeganB", "name": {"formatted": "Megan Bowen"}, "date": "2021-09-08T23:02:28.986Z", "number": 9, "emails": [{"value": "MeganB@example.com"}]},
+      {"id": 5, "userName": "DiegoS", "name": {"formatted": "Diego Siciliani"}, "date": "2021-07-13T11:03:28.202Z", "number": 12, "emails": [{"value": "DiegoS@example.com", "primary": true}]},
+      {"id": 6, "userName": "PradeepG", "name": {"formatted": "Pradeep Gupta"}, "date": "2021-09-11T15:57:40.114Z", "number": 1, "emails": [{"value": "PradeepG@example.com"}]},
+      {"id": 7, "userName": "HenriettaM", "name": {"formatted": "Henrietta Mueller"}, "date": "2021-08-25T14:00:23.925Z", "number": 10, "emails": [{"value": "HenriettaM@example.com"}]},
+      {"id": 8, "userName": "AlexW", "name": {"formatted": "Alex Wilber"}, "date": "2021-10-25T18:45:22.984Z", "number": 2, "emails": [{"value": "AlexW@example.com"}]},
+      {"id": 9, "userName": "NestorW", "name": {"formatted": "Nestor Wilke"}, "date": "2021-10-19T04:00:08.652Z", "number": 3, "emails": [{"value": "NestorW@example.com"}]},
+      {"id": 10, "userName": "PattiF", "name": {"formatted": "Patti Fernandez"}, "date": "2021-07-19T00:15:28.313Z", "number": 11, "emails": [{"value": "PattiF@example.com"}]},
+      {"id": 11, "userName": "MiriamG", "name": {"formatted": "Miriam Graham"}, "date": "2021-10-15T21:24:51.391Z", "number": 13, "emails": [{"value": "MiriamG@example.com"}]},
+      {"id": 12, "userName": "LeeG", "name": {"formatted": "Lee Gu"}, "date": "2021-10-12T23:30:26.847Z", "number": 5, "emails": [{"value": "LeeG@example.com"}]},
+      {"id": 13, "userName": "IsaiahL", "name": {"formatted": "Isaiah Langer"}, "date": "2021-09-30T16:03:02.186Z", "number": 7, "emails": null},
+      {"id": 14, "userName": "JoniS", "name": {"formatted": "Joni Sherman"}, "date": "2021-10-18T04:31:09.963Z", "number": 8, "emails": null},
+      {"id": 15, "userName": "LidiaH", "name": {"formatted": "Lidia Holloway"}, "date": "2021-10-15T21:37:36.111Z", "number": 15, "list": ["d", "e"]},
+      {"id": 16, "userName": "JohannaL", "name": {"formatted": "Johanna Lorenz"}, "date": "2021-07-19T19:39:26.251Z", "number": 16, "list": ["c"]}
     ],
     "targets": {
       "sortBy": [
@@ -55,6 +55,14 @@
           "sortBy": "number",
           "sortOrder": "descending",
           "expected": [16, 15, 3, 11, 5, 10, 7, 4, 14, 13, 2, 12, 1, 9, 8, 6]
+        },
+        {
+          "sortBy": "emails",
+          "expected": [1, 8, 5, 2, 7, 12, 3, 4, 11, 9, 10, 6, 13, 14, 15, 16]
+        },
+        {
+          "sortBy": "list",
+          "expected": [1, 16, 15, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         }
       ],
       "startIndex": [

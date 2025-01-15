@@ -1,8 +1,17 @@
 /**
  * SCIM List Response Message
  * @alias SCIMMY.Messages.ListResponse
+ * @template {SCIMMY.Types.Schema} [T=*] - type of schema instance that will be passed to handlers
  * @summary
  * *   Formats supplied service provider resources as [ListResponse messages](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2), handling pagination and sort when required.
+ * @description
+ * The `ListResponse` class creates a SCIM [ListResponse message](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2) for a supplied set of resources, and automates pagination and sorting of the included set.
+ * It is used internally by the `read()` method in each of {@link SCIMMY.Resources|SCIMMY's Resource classes} when requesting a list of resources matching a given query,
+ * and in the {@link SCIMMY.Messages.SearchRequest#apply|`apply()`} instance method of the {@link SCIMMY.Messages.SearchRequest|SearchRequest} message class.
+ * 
+ * > **Tip:**  
+ * > When using the {@link SCIMMY.Resources.User|`User`} and {@link SCIMMY.Resources.Group|`Group`} resource classes, their instance `read()` methods will wrap the set of matching query results in a `ListResponse` instance.
+ * > This happens automatically when retrieving multiple resources, meaning their {@link SCIMMY.Types.Resource~EgressHandler|egress handlers} need only return the array of matching resources, not a `ListResponse` instance of their own.
  */
 export class ListResponse {
     /**
@@ -23,11 +32,11 @@ export class ListResponse {
     
     /**
      * Instantiate a new SCIM List Response Message with relevant details
-     * @param {Object|SCIMMY.Types.Schema[]} request - contents of the ListResponse message, or items to include in the list response
+     * @param {SCIMMY.Messages.ListResponse<T>|T[]} request - contents of the ListResponse message, or items to include in the list response
      * @param {SCIMMY.Messages.ListResponse~ListConstraints} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
-     * @property {Array<Object|SCIMMY.Types.Schema>} Resources - resources included in the list response
+     * @property {Array<T>} Resources - resources included in the list response
      * @property {Number} totalResults - the total number of resources matching a given request
      * @property {Number} startIndex - index within total results that included resources start from
      * @property {Number} itemsPerPage - maximum number of items returned in this list response
@@ -36,7 +45,7 @@ export class ListResponse {
         const outbound = Array.isArray(request);
         const resources = (outbound ? request : request?.Resources ?? []);
         const totalResults = (outbound ? resources.totalResults ?? resources.length : request.totalResults);
-        const {sortBy, sortOrder = "ascending"} = params ?? {};
+        const {sortBy, sortOrder = "ascending"} = (outbound ? params : {});
         const {startIndex = 1, count = 20, itemsPerPage = count} = (outbound ? params : request);
         
         // Verify the ListResponse contents are valid
@@ -70,8 +79,9 @@ export class ListResponse {
             // Do the sort!
             this.Resources = this.Resources.sort((a, b) => {
                 // Resolve target sort values for each side of the comparison (either the "primary" entry, or first entry, in a multi-valued attribute, or the target value)
-                const ta = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), a);
-                const tb = paths.reduce((res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[0])?.value) ?? ""), b);
+                const reducer = (res = {}, path = "") => ((!Array.isArray(res[path]) ? res[path] : (res[path].find(v => !!v.primary) ?? res[path][0])?.value ?? res[path][0]));
+                const ta = paths.reduce(reducer, a);
+                const tb = paths.reduce(reducer, b);
                 const list = [ta, tb];
                 
                 // If some or all of the targets are unspecified, sort specified value above unspecified value
