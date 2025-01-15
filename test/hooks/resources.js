@@ -105,18 +105,40 @@ export default class ResourcesHooks {
         it("should be implemented", () => {
             assert.ok(Object.getOwnPropertyNames(TargetResource).includes("basepath"),
                 "Static method 'basepath' was not implemented");
-            assert.ok(typeof this.#target.basepath === "function",
+            assert.strictEqual(typeof TargetResource.basepath, "function",
                 "Static method 'basepath' was not a function");
         });
         
-        it("should be mutable", () => {
-            TargetResource.basepath("/scim");
-            assert.ok(this.#target.basepath() === (`/scim${TargetResource.endpoint}`),
-                `Static method 'basepath' did not set resource basepath to '/scim${TargetResource.endpoint}'`);
+        it("should expect 'path' argument to be a string", () => {
+            for (let value of [null, 5, false, {}]) {
+                assert.throws(() => TargetResource.basepath(value),
+                    "Static method 'basepath' did not expect 'path' argument to be a string");
+            }
             
+            try {
+                TargetResource.basepath("/scim");
+            } catch (ex) {
+                assert.fail(`Static method 'basepath' did not accept 'path' argument with string value\r\n[cause]:${ex}`)
+            } finally {
+                assert.strictEqual(TargetResource.basepath(), `/scim${TargetResource.endpoint}`,
+                    `Static method 'basepath' did not set resource basepath to '/scim${TargetResource.endpoint}'`);
+            }
+        });
+        
+        it("should be mutable", () => {
             TargetResource.basepath("/test");
-            assert.ok(this.#target.basepath() === (`/test${TargetResource.endpoint}`),
-                `Static method 'basepath' did not set resource basepath to '/test${TargetResource.endpoint}'`);
+            assert.strictEqual(TargetResource.basepath(), `/test${TargetResource.endpoint}`,
+                `Static method 'basepath' did not update resource basepath to '/test${TargetResource.endpoint}'`);
+        });
+        
+        it("should always end in resource endpoint value", () => {
+            const expected = `/scim${TargetResource.endpoint}`;
+            
+            for (let path of ["/scim", expected]) {
+                TargetResource.basepath(path);
+                assert.strictEqual(TargetResource.basepath(), expected,
+                    `Static method 'basepath' did not set resource basepath to '${expected}'`);
+            }
         });
     });
     
