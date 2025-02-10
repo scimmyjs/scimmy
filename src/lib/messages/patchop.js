@@ -52,6 +52,7 @@ const hasChanges = (original, current, keys) => (
 export class PatchOp {
     /**
      * SCIM Patch Operation Message Schema ID
+     * @typedef {String} SCIMMY.Messages.PatchOp~id
      * @type {String}
      * @private
      */
