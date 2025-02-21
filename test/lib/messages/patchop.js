@@ -144,6 +144,23 @@ describe("SCIMMY.Messages.PatchOp", () => {
         });
     });
     
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in PatchOp,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof PatchOp.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM Patch Operation Message schema ID", async () => {
+            assert.strictEqual(PatchOp.id, params.id,
+                "Static member 'id' did not match SCIM Patch Operation Message schema ID");
+        });
+    });
+    
     describe("#apply()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new PatchOp({...template, Operations: [{op: "add", value: {}}]})).apply === "function",
