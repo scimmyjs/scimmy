@@ -50,12 +50,16 @@ const hasChanges = (original, current, keys) => (
  * *   Provides a method to atomically apply PatchOp operations to a resource instance, handling any exceptions that occur along the way.
  */
 export class PatchOp {
+    /** @private */
+    static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
+    
     /**
      * SCIM Patch Operation Message Schema ID
-     * @type {String}
-     * @private
+     * @type {"urn:ietf:params:scim:api:messages:2.0:PatchOp"}
      */
-    static #id = "urn:ietf:params:scim:api:messages:2.0:PatchOp";
+    static get id() {
+        return PatchOp.#id;
+    }
     
     /**
      * Whether the PatchOp message has been fully formed.
@@ -75,8 +79,10 @@ export class PatchOp {
     
     /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
-     * @param {Object} request - contents of the patch operation request being performed
+     * @param {Object} [request] - contents of the patch operation request being performed
+     * @param {typeof SCIMMY.Messages.PatchOp.id[]} request.schemas - list exclusively containing SCIM PatchOp message schema ID
      * @param {SCIMMY.Messages.PatchOp~PatchOpOperation[]} request.Operations - list of SCIM-compliant patch operations to apply to the given resource
+     * @property {typeof SCIMMY.Messages.PatchOp.id[]} schemas - list exclusively containing the SCIM PatchOp message schema ID
      * @property {SCIMMY.Messages.PatchOp~PatchOpOperation[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {

@@ -356,6 +356,7 @@ export class Resource {
      * Emits patched resources for consumption with resource's ingress method.
      * @template [T=*] - external context object passed to ingress handler
      * @param {Object} message - the PatchOp message to apply to the received resource
+     * @param {typeof SCIMMY.Messages.PatchOp.id[]} message.schemas - list exclusively containing SCIM PatchOp message schema ID
      * @param {SCIMMY.Messages.PatchOp~PatchOpOperation[]} message.Operations - PatchOp operations to be applied
      * @param {T} [ctx] - any additional context information to pass to the ingress/egress handlers
      * @returns {S} the resource type instance after patching and consumption by ingress method
