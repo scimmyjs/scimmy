@@ -37,10 +37,18 @@ describe("SCIMMY.Messages.ListResponse", () => {
         });
         
         it("should expect 'itemsPerPage' parameter to be a number", () => {
-            for (let value of ["a string", false, {}]) {
+            for (let value of ["a string", false, {}, "1"]) {
                 assert.throws(() => new ListResponse([], {itemsPerPage: value}),
                     {name: "TypeError", message: "Expected 'itemsPerPage' parameter to be a non-negative integer in ListResponse message constructor"},
                     `ListResponse instantiated with invalid 'itemsPerPage' parameter value '${value}'`);
+            }
+        });
+        
+        it("should expect 'totalResults' parameter to be a number", () => {
+            for (let value of ["a string", false, {}, "1"]) {
+                assert.throws(() => new ListResponse([], {totalResults: value}),
+                    {name: "TypeError", message: "Expected 'totalResults' parameter to be a non-negative integer in ListResponse message constructor"},
+                    `ListResponse instantiated with invalid 'totalResults' parameter value '${value}'`);
             }
         });
         
@@ -278,19 +286,19 @@ describe("SCIMMY.Messages.ListResponse", () => {
             }
         });
         
-        it("should equal 'totalResults' property of resources array when preparing outbound messages", () => {
-            assert.strictEqual(new ListResponse(Object.assign([], {totalResults: 100})).totalResults, 100,
-                "Instance member 'totalResults' did not equal 'totalResults' property of resources array when preparing outbound messages");
+        it("should equal 'totalResults' parameter when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse([], {totalResults: 100}).totalResults, 100,
+                "Instance member 'totalResults' did not equal 'totalResults' parameter when preparing outbound messages");
         });
         
-        it("should equal 'length' property of resources array when 'totalResults' property is not specified", () => {
+        it("should equal 'length' property of resources array when 'totalResults' parameter is not specified", () => {
             assert.strictEqual(new ListResponse(Object.assign([], {length: 100})).totalResults, 100,
-                "Instance member 'totalResults' did not equal 'length' property of resources array when 'totalResults' property was not specified");
+                "Instance member 'totalResults' did not equal 'length' property of resources array when 'totalResults' parameter and property were not specified");
         });
         
-        it("should prefer 'totalResults' property over 'length' property of resources array when preparing outbound messages", () => {
-            assert.strictEqual(new ListResponse(Object.assign([], {length: 1000, totalResults: 100})).totalResults, 100,
-                "Instance member 'totalResults' did not prefer 'totalResults' property over 'length' property of resources array when preparing outbound messages");
+        it("should prefer 'totalResults' parameter over 'length' property of resources array when preparing outbound messages", () => {
+            assert.strictEqual(new ListResponse(Object.assign([], {length: 1000}), {totalResults: 100}).totalResults, 100,
+                "Instance member 'totalResults' did not prefer 'totalResults' parameter over 'length' property of resources array when preparing outbound messages");
         });
     });
 });
