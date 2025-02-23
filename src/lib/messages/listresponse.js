@@ -12,6 +12,29 @@
  * > **Tip:**  
  * > When using the {@link SCIMMY.Resources.User|`User`} and {@link SCIMMY.Resources.Group|`Group`} resource classes, their instance `read()` methods will wrap the set of matching query results in a `ListResponse` instance.
  * > This happens automatically when retrieving multiple resources, meaning their {@link SCIMMY.Types.Resource~EgressHandler|egress handlers} need only return the array of matching resources, not a `ListResponse` instance of their own.
+ * 
+ * @example <caption>Basic usage with no constraints</caption>
+ * // Retrieve the list of resources from somewhere, and pass it to the ListResponse constructor
+ * const resources = [{id: "1", userName: "AdeleV"}, {id: "2", userName: "GradyA"}];
+ * const response = new SCIMMY.Messages.ListResponse(resources);
+ * 
+ * @example <caption>Basic usage with specified total results</caption>
+ * // Retrieve the list of resources from somewhere...
+ * const resources = [{id: "1", userName: "AdeleV"}, {id: "2", userName: "GradyA"}];
+ * // ...and separately retrieve the total number of matching results
+ * const totalResults = 1005;
+ * 
+ * // Instantiate the list response with the resources array, specifying totalResults
+ * const response = new SCIMMY.Messages.ListResponse(resources, {totalResults});
+ * 
+ * @example <caption>Advanced usage with manipulation of array length</caption>
+ * // Retrieve the list of resources from somewhere...
+ * const resources = [{id: "1", userName: "AdeleV"}, {id: "2", userName: "GradyA"}];
+ * // ...and set the length of the list to match the desired total
+ * resources.length = 1005;
+ * 
+ * // Instantiate the list response with the (mostly) sparse resources array
+ * const response = new SCIMMY.Messages.ListResponse(resources, {itemsPerPage: 2});
  */
 export class ListResponse {
     /**
@@ -34,8 +57,12 @@ export class ListResponse {
      * Instantiate a new SCIM List Response Message with relevant details
      * @param {SCIMMY.Messages.ListResponse<T>|T[]} request - contents of the ListResponse message, or items to include in the list response
      * @param {SCIMMY.Messages.ListResponse~ListConstraints} [params] - parameters for the list response (i.e. sort details, start index, and items per page)
+     * @param {String} [params.sortBy] - the attribute to sort results by, if any
+     * @param {String} [params.sortOrder="ascending"] - the direction to sort results in, if sortBy is specified
+     * @param {Number} [params.startIndex=1] - offset index that items start from
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
+     * @param {Number} [params.totalResults] - the total number of resources matching a given request
      * @property {Array<T>} Resources - resources included in the list response
      * @property {Number} totalResults - the total number of resources matching a given request
      * @property {Number} startIndex - index within total results that included resources start from
@@ -44,7 +71,7 @@ export class ListResponse {
     constructor(request = [], params = {}) {
         const outbound = Array.isArray(request);
         const resources = (outbound ? request : request?.Resources ?? []);
-        const totalResults = (outbound ? resources.totalResults ?? resources.length : request.totalResults);
+        const totalResults = (outbound ? params.totalResults ?? resources.length : request.totalResults);
         const {sortBy, sortOrder = "ascending"} = (outbound ? params : {});
         const {startIndex = 1, count = 20, itemsPerPage = count} = (outbound ? params : request);
         
@@ -57,7 +84,7 @@ export class ListResponse {
             throw new TypeError("Expected 'sortOrder' parameter to be either 'ascending' or 'descending' in ListResponse message constructor");
         
         // Check supplied itemsPerPage and startIndex are valid integers...
-        for (let [key, val, min] of Object.entries({itemsPerPage, startIndex}).map(([key, val], index) => ([key, val, index]))) {
+        for (let [key, val, min] of Object.entries({totalResults, itemsPerPage, startIndex}).map(([key, val], index) => ([key, val, Math.max(index - 1, 0)]))) {
             // ...but only expect actual number primitives when preparing an outbound list response
             if (Number.isNaN(Number.parseInt(val)) || !`${val}`.match(/^-?\d*$/) || (outbound && (typeof val !== "number" || !Number.isInteger(val)))) {
                 throw new TypeError(`Expected '${key}' parameter to be a ${min ? "positive" : "non-negative"} integer in ListResponse message constructor`);
@@ -66,11 +93,11 @@ export class ListResponse {
         
         // Construct the ListResponse message
         this.schemas = [ListResponse.#id];
-        this.totalResults = totalResults;
         this.Resources = resources.filter(r => r);
         // Constrain integer properties to their minimum values
         this.startIndex = Math.max(Number.parseInt(startIndex), 1);
         this.itemsPerPage = Math.max(Number.parseInt(itemsPerPage), 0);
+        this.totalResults = Math.max(totalResults, 0);
         
         // Handle sorting if sortBy is defined
         if (sortBy !== undefined) {
