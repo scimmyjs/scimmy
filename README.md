@@ -17,6 +17,9 @@ designed to simplify resource provisioning and identity management in cloud-base
 SCIMMY aims to make it easier to rapidly implement code that sends and receives data conforming to these standards.
 It does this by providing a set of tools that can be used to parse incoming, and format outgoing data according to these standards.
 
+> Want to use SCIMMY to quickly implement the SCIM protocol HTTP endpoints in express?  
+> **Check out the [SCIMMY Routers](https://github.com/scimmyjs/scimmy-routers) middleware package!**
+
 ##### Requirements
 
 * [Node.js](https://nodejs.org) v16+ with NPM 7+
