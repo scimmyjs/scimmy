@@ -37,12 +37,16 @@
  * const response = new SCIMMY.Messages.ListResponse(resources, {itemsPerPage: 2});
  */
 export class ListResponse {
+    /** @private */
+    static #id = "urn:ietf:params:scim:api:messages:2.0:ListResponse";
+    
     /**
      * SCIM List Response Message Schema ID
-     * @type {String}
-     * @private
+     * @type {"urn:ietf:params:scim:api:messages:2.0:ListResponse"}
      */
-    static #id = "urn:ietf:params:scim:api:messages:2.0:ListResponse";
+    static get id() {
+        return this.#id;
+    }
     
     /**
      * ListResponse sort and pagination constraints
@@ -63,6 +67,7 @@ export class ListResponse {
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
      * @param {Number} [params.totalResults] - the total number of resources matching a given request
+     * @property {typeof SCIMMY.Messages.ListResponse.id[]} schemas - list exclusively containing the SCIM ListResponse message schema ID
      * @property {Array<T>} Resources - resources included in the list response
      * @property {Number} totalResults - the total number of resources matching a given request
      * @property {Number} startIndex - index within total results that included resources start from

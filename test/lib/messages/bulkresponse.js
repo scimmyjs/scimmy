@@ -28,6 +28,23 @@ describe("SCIMMY.Messages.BulkResponse", () => {
         });
     });
     
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in BulkResponse,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof BulkResponse.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM Bulk Response Message schema ID", async () => {
+            assert.strictEqual(BulkResponse.id, params.id,
+                "Static member 'id' did not match SCIM Bulk Response Message schema ID");
+        });
+    });
+    
     describe("#resolve()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new BulkResponse()).resolve === "function",

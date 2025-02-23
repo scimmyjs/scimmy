@@ -142,6 +142,23 @@ describe("SCIMMY.Messages.SearchRequest", () => {
         });
     });
     
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in SearchRequest,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof SearchRequest.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM Search Request Message schema ID", async () => {
+            assert.strictEqual(SearchRequest.id, params.id,
+                "Static member 'id' did not match SCIM Search Request Message schema ID");
+        });
+    });
+    
     describe("#prepare()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new SearchRequest()).prepare === "function",

@@ -135,6 +135,23 @@ describe("SCIMMY.Messages.BulkRequest", () => {
         });
     });
     
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in BulkRequest,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof BulkRequest.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM Bulk Request Message schema ID", async () => {
+            assert.strictEqual(BulkRequest.id, params.id,
+                "Static member 'id' did not match SCIM Bulk Request Message schema ID");
+        });
+    });
+    
     describe("#apply()", () => {
         it("should be implemented", () => {
             assert.ok(typeof (new BulkRequest({...template})).apply === "function",
