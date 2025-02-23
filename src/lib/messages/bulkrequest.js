@@ -19,12 +19,17 @@ const validMethods = ["POST", "PUT", "PATCH", "DELETE"];
  * *   Provides a method to apply BulkRequest operations and return the results as a BulkResponse.
  */
 export class BulkRequest {
+    /** @private */
+    static #id = "urn:ietf:params:scim:api:messages:2.0:BulkRequest";
+    
     /**
      * SCIM BulkRequest Message Schema ID
-     * @type {String}
-     * @private
+     * @type {"urn:ietf:params:scim:api:messages:2.0:BulkRequest"}
      */
-    static #id = "urn:ietf:params:scim:api:messages:2.0:BulkRequest";
+    static get id() {
+        return this.#id;
+    }
+    
     
     /**
      * Whether the incoming BulkRequest has been applied 
@@ -47,9 +52,11 @@ export class BulkRequest {
     /**
      * Instantiate a new SCIM BulkRequest message from the supplied operations
      * @param {Object} request - contents of the BulkRequest operation being performed
+     * @param {typeof SCIMMY.Messages.BulkRequest.id[]} request.schemas - list exclusively containing the SCIM BulkRequest message schema ID
      * @param {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} request.Operations - list of SCIM-compliant bulk operations to apply
      * @param {Number} [request.failOnErrors] - number of error results to encounter before aborting any following operations
      * @param {Number} [maxOperations] - maximum number of operations supported in the request, as specified by the service provider
+     * @property {typeof SCIMMY.Messages.BulkRequest.id[]} schemas - list exclusively containing the SCIM BulkRequest message schema ID
      * @property {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} Operations - list of operations in this BulkRequest instance
      * @property {Number} [failOnErrors] - number of error results a service provider should tolerate before aborting any following operations
      */
@@ -101,7 +108,7 @@ export class BulkRequest {
         
         // Get a map of POST ops with bulkIds for direct and circular reference resolution
         const bulkIds = new Map(this.Operations
-            .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
+            .filter(o => String(o.method) === "POST" && !!o.bulkId && typeof o.bulkId === "string")
             .map(({bulkId}, index, postOps) => {
                 // Establish who waits on what, and provide a way for that to happen
                 const handlers = {referencedBy: postOps.filter(({data}) => JSON.stringify(data ?? {}).includes(`bulkId:${bulkId}`)).map(({bulkId}) => bulkId)};

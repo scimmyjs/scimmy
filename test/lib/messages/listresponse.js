@@ -96,6 +96,23 @@ describe("SCIMMY.Messages.ListResponse", () => {
         });
     });
     
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in ListResponse,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof ListResponse.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM List Response Message schema ID", async () => {
+            assert.strictEqual(ListResponse.id, params.id,
+                "Static member 'id' did not match SCIM List Response Message schema ID");
+        });
+    });
+    
     describe("#Resources", () => {
         it("should be defined", () => {
             assert.ok("Resources" in new ListResponse(),

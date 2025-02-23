@@ -58,7 +58,7 @@ export class PatchOp {
      * @type {"urn:ietf:params:scim:api:messages:2.0:PatchOp"}
      */
     static get id() {
-        return PatchOp.#id;
+        return this.#id;
     }
     
     /**

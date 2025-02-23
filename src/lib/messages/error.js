@@ -28,12 +28,16 @@ const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: 
  * *   When used to parse service provider responses, throws a new instance of `SCIMMY.Types.Error` with details sourced from the message.
  */
 export class ErrorResponse extends Error {
+    /** @private */
+    static #id = "urn:ietf:params:scim:api:messages:2.0:Error";
+    
     /**
      * SCIM Error Message Schema ID
-     * @type {String}
-     * @private
+     * @type {"urn:ietf:params:scim:api:messages:2.0:Error"}
      */
-    static #id = "urn:ietf:params:scim:api:messages:2.0:Error";
+    static get id() {
+        return this.#id;
+    }
     
     /**
      * Details of the underlying cause of the error response
@@ -47,6 +51,7 @@ export class ErrorResponse extends Error {
     /**
      * Instantiate a new SCIM Error Message with relevant details
      * @param {typeof SCIMMY.Types.Error|SCIMMY.Messages.ErrorResponse~CauseDetails|Error} [ex={}] - the initiating exception to parse into a SCIM error message
+     * @property {typeof SCIMMY.Messages.ErrorResponse.id[]} schemas - list exclusively containing the SCIM Error message schema ID
      * @property {SCIMMY.Messages.ErrorResponse~ValidStatusCodes} status - stringified HTTP status code to be sent with the error
      * @property {SCIMMY.Messages.ErrorResponse~ValidScimTypes} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
      * @property {String} [detail] - a human-readable description of what caused the error to occur

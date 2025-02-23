@@ -7,12 +7,16 @@
  * *   Provides a method to unwrap BulkResponse results into operation success status, and map newly created resource IDs to their BulkRequest bulkIds.
  */
 export class BulkResponse {
+    /** @private */
+    static #id = "urn:ietf:params:scim:api:messages:2.0:BulkResponse";
+    
     /**
      * SCIM BulkResponse Message Schema ID
-     * @type {String}
-     * @private
+     * @type {"urn:ietf:params:scim:api:messages:2.0:BulkResponse"}
      */
-    static #id = "urn:ietf:params:scim:api:messages:2.0:BulkResponse";
+    static get id() {
+        return this.#id;
+    }
     
     /**
      * BulkResponse operation response status codes
@@ -48,6 +52,7 @@ export class BulkResponse {
      * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request - results of performed operations if array
      * @param {Object} request - contents of the received BulkResponse message if object
      * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request.Operations - list of SCIM-compliant bulk operation results
+     * @property {typeof SCIMMY.Messages.BulkResponse.id[]} schemas - list exclusively containing the SCIM BulkResponse message schema ID
      * @property {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} Operations - list of BulkResponse operation results
      */
     constructor(request = []) {
@@ -74,7 +79,7 @@ export class BulkResponse {
     resolve() {
         return new Map(this.Operations
             // Only target POST operations with valid bulkIds
-            .filter(o => o.method === "POST" && !!o.bulkId && typeof o.bulkId === "string")
+            .filter(o => String(o.method) === "POST" && !!o.bulkId && typeof o.bulkId === "string")
             .map(o => ([o.bulkId, (typeof o.location === "string" && !!o.location ? o.location.split("/").pop() : false)])));
     }
 }

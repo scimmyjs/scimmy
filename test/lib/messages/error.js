@@ -63,4 +63,21 @@ describe("SCIMMY.Messages.Error", () => {
             }
         });
     });
+    
+    describe(".id", () => {
+        it("should be defined", () => {
+            assert.ok("id" in ErrorResponse,
+                "Static member 'id' not defined");
+        });
+        
+        it("should be a string", () => {
+            assert.ok(typeof ErrorResponse.id === "string",
+                "Static member 'id' was not a string");
+        });
+        
+        it("should match SCIM Error Message schema ID", async () => {
+            assert.strictEqual(ErrorResponse.id, params.id,
+                "Static member 'id' did not match SCIM Error Message schema ID");
+        });
+    });
 });
