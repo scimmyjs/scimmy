@@ -86,8 +86,9 @@ export class SchemaDefinition {
     
     /**
      * Find an attribute or extension instance belonging to the schema definition by its name
+     * @template {SCIMMY.Types.Attribute|SCIMMY.Types.SchemaDefinition} [T=SCIMMY.Types.Attribute] - expected type of matching instance
      * @param {String} name - the name of the attribute to look for (namespaced or direct)
-     * @returns {SCIMMY.Types.Attribute|SCIMMY.Types.SchemaDefinition} the Attribute or SchemaDefinition instance with matching name
+     * @returns {T} the Attribute or SchemaDefinition instance with matching name
      */
     attribute(name) {
         if (name.toLowerCase().startsWith("urn:")) {
@@ -118,7 +119,7 @@ export class SchemaDefinition {
             // Evaluate the rest of the path
             while (path.length > 0) {
                 // If the attribute isn't complex, it can't declare sub-attributes
-                if (attribute.type !== "complex")
+                if (String(attribute.type) !== "complex")
                     throw new TypeError(`Attribute '${spent.join(".")}' of schema '${this.id}' is not of type 'complex' and does not define any subAttributes`);
                 
                 // Find the next attribute in the path
