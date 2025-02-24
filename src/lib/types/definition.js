@@ -46,7 +46,7 @@ export class SchemaDefinition {
         this.attributes = [
             new Attribute("reference", "schemas", {shadow: true, multiValued: true, referenceTypes: ["uri"]}),
             new Attribute("string", "id", {shadow: true, direction: "out", returned: "always", required: true, mutable: false, caseExact: true, uniqueness: "global"}),
-            new Attribute("string", "externalId", {shadow: true, direction: "in", caseExact: true}),
+            new Attribute("string", "externalId", {shadow: true, caseExact: true}),
             new Attribute("complex", "meta", {shadow: true, required: true, mutable: false}, [
                 new Attribute("string", "resourceType", {required: true, mutable: false, caseExact: true}),
                 new Attribute("dateTime", "created", {direction: "out", mutable: false}),
