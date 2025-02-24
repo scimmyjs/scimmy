@@ -240,18 +240,12 @@ export class Packager {
         
         // Construct the bundles with specified chunks in specified formats and write to destination
         const {output: [{originalFileNames}]} = await bundle.write({dir: dest, format: "esm", plugins: [filterGeneratedBundle({emitDeclarationOnly: true})]});
-        
         return originalFileNames.map((fileName) => `./${path.relative(cwd, fileName)}`);
     }
 }
 
 if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
-    const config = minimist(process.argv, {
-        alias: {
-            t: "target",
-            f: "testFilter"
-        }
-    });
+    const config = minimist(process.argv, {alias: {t: "target", f: "testFilter"}});
     
     switch (config.target) {
         case "clean":
