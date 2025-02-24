@@ -51,7 +51,7 @@ export class ErrorResponse extends Error {
     /**
      * Instantiate a new SCIM Error Message with relevant details
      * @param {typeof SCIMMY.Types.Error|SCIMMY.Messages.ErrorResponse~CauseDetails|Error} [ex={}] - the initiating exception to parse into a SCIM error message
-     * @property {typeof SCIMMY.Messages.ErrorResponse.id[]} schemas - list exclusively containing the SCIM Error message schema ID
+     * @property {[typeof SCIMMY.Messages.ErrorResponse.id]} schemas - list exclusively containing the SCIM Error message schema ID
      * @property {SCIMMY.Messages.ErrorResponse~ValidStatusCodes} status - stringified HTTP status code to be sent with the error
      * @property {SCIMMY.Messages.ErrorResponse~ValidScimTypes} [scimType] - the SCIM detail error keyword as per [RFC7644§3.12]{@link https://datatracker.ietf.org/doc/html/rfc7644#section-3.12}
      * @property {String} [detail] - a human-readable description of what caused the error to occur

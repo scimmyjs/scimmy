@@ -52,11 +52,11 @@ export class BulkRequest {
     /**
      * Instantiate a new SCIM BulkRequest message from the supplied operations
      * @param {Object} request - contents of the BulkRequest operation being performed
-     * @param {typeof SCIMMY.Messages.BulkRequest.id[]} request.schemas - list exclusively containing the SCIM BulkRequest message schema ID
+     * @param {[typeof SCIMMY.Messages.BulkRequest.id]} request.schemas - list exclusively containing the SCIM BulkRequest message schema ID
      * @param {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} request.Operations - list of SCIM-compliant bulk operations to apply
      * @param {Number} [request.failOnErrors] - number of error results to encounter before aborting any following operations
      * @param {Number} [maxOperations] - maximum number of operations supported in the request, as specified by the service provider
-     * @property {typeof SCIMMY.Messages.BulkRequest.id[]} schemas - list exclusively containing the SCIM BulkRequest message schema ID
+     * @property {[typeof SCIMMY.Messages.BulkRequest.id]} schemas - list exclusively containing the SCIM BulkRequest message schema ID
      * @property {SCIMMY.Messages.BulkRequest~BulkOpOperation[]} Operations - list of operations in this BulkRequest instance
      * @property {Number} [failOnErrors] - number of error results a service provider should tolerate before aborting any following operations
      */

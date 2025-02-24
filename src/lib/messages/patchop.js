@@ -80,9 +80,9 @@ export class PatchOp {
     /**
      * Instantiate a new SCIM Patch Operation Message with relevant details
      * @param {Object} [request] - contents of the patch operation request being performed
-     * @param {typeof SCIMMY.Messages.PatchOp.id[]} request.schemas - list exclusively containing SCIM PatchOp message schema ID
+     * @param {[typeof SCIMMY.Messages.PatchOp.id]} request.schemas - list exclusively containing SCIM PatchOp message schema ID
      * @param {SCIMMY.Messages.PatchOp~PatchOpOperation[]} request.Operations - list of SCIM-compliant patch operations to apply to the given resource
-     * @property {typeof SCIMMY.Messages.PatchOp.id[]} schemas - list exclusively containing the SCIM PatchOp message schema ID
+     * @property {[typeof SCIMMY.Messages.PatchOp.id]} schemas - list exclusively containing the SCIM PatchOp message schema ID
      * @property {SCIMMY.Messages.PatchOp~PatchOpOperation[]} Operations - list of SCIM-compliant patch operations to apply to the given resource
      */
     constructor(request) {

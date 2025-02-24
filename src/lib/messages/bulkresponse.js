@@ -52,7 +52,7 @@ export class BulkResponse {
      * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request - results of performed operations if array
      * @param {Object} request - contents of the received BulkResponse message if object
      * @param {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} request.Operations - list of SCIM-compliant bulk operation results
-     * @property {typeof SCIMMY.Messages.BulkResponse.id[]} schemas - list exclusively containing the SCIM BulkResponse message schema ID
+     * @property {[typeof SCIMMY.Messages.BulkResponse.id]} schemas - list exclusively containing the SCIM BulkResponse message schema ID
      * @property {SCIMMY.Messages.BulkResponse~BulkOpResponse[]} Operations - list of BulkResponse operation results
      */
     constructor(request = []) {

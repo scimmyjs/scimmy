@@ -25,7 +25,7 @@ export class SearchRequest {
     /**
      * Instantiate a new SCIM SearchRequest message from the supplied request
      * @param {Object} [request] - contents of the SearchRequest received by the service provider
-     * @param {typeof SCIMMY.Messages.SearchRequest.id[]} request.schemas - list exclusively containing the SCIM SearchRequest message schema ID
+     * @param {[typeof SCIMMY.Messages.SearchRequest.id]} request.schemas - list exclusively containing the SCIM SearchRequest message schema ID
      * @param {String} [request.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String[]} [request.excludedAttributes] - the string list of attributes or filters to exclude on egress
      * @param {String[]} [request.attributes] - the string list of attributes or filters to include on egress
@@ -33,7 +33,7 @@ export class SearchRequest {
      * @param {String} [request.sortOrder] - the direction retrieved resources should be sorted in
      * @param {Number} [request.startIndex] - offset index that retrieved resources should start from
      * @param {Number} [request.count] - maximum number of retrieved resources that should be returned in one operation
-     * @property {typeof SCIMMY.Messages.SearchRequest.id[]} schemas - list exclusively containing the SCIM SearchRequest message schema ID
+     * @property {[typeof SCIMMY.Messages.SearchRequest.id]} schemas - list exclusively containing the SCIM SearchRequest message schema ID
      * @property {String} [filter] - the filter to be applied on ingress/egress by implementing resource
      * @property {String[]} [excludedAttributes] - the string list of attributes or filters to exclude on egress
      * @property {String[]} [attributes] - the string list of attributes or filters to include on egress

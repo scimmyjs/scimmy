@@ -67,7 +67,7 @@ export class ListResponse {
      * @param {Number} [params.count=20] - alias property for itemsPerPage, used only if itemsPerPage is unset
      * @param {Number} [params.itemsPerPage=20] - maximum number of items returned in this list response
      * @param {Number} [params.totalResults] - the total number of resources matching a given request
-     * @property {typeof SCIMMY.Messages.ListResponse.id[]} schemas - list exclusively containing the SCIM ListResponse message schema ID
+     * @property {[typeof SCIMMY.Messages.ListResponse.id]} schemas - list exclusively containing the SCIM ListResponse message schema ID
      * @property {Array<T>} Resources - resources included in the list response
      * @property {Number} totalResults - the total number of resources matching a given request
      * @property {Number} startIndex - index within total results that included resources start from
