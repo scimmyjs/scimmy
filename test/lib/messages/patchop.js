@@ -3,6 +3,7 @@ import path from "path";
 import url from "url";
 import assert from "assert";
 import {Attribute} from "#@/lib/types/attribute.js";
+import {SchemaDefinition} from "#@/lib/types/definition.js";
 import {PatchOp} from "#@/lib/messages/patchop.js";
 import {createSchemaClass} from "../../hooks/schemas.js";
 
@@ -233,6 +234,26 @@ describe("SCIMMY.Messages.PatchOp", () => {
                     
                     assert.deepStrictEqual(actual, expected,
                         `PatchOp 'apply' did not support '${op}' op specified in inbound fixture ${suite.indexOf(fixture) + 1}`);
+                }
+            });
+            
+            it(`should support namespaced attributes in '${op}' operations`, async () => {
+                const attributes = [new Attribute("string", "organization"), new Attribute("string", "test")];
+                const extension = new SchemaDefinition("Extension", TestSchema.definition.id.replace("Test", "Extension"), "", attributes);
+                const source = {id: "1234", userName: "asdf", [`${extension.id}:test`]: "value", ...(op === "add" ? {} : {[`${extension.id}:organization`]: "COMPANY1"})};
+                const target = {id: "1234", userName: "asdf", [extension.id]: {test: "value", ...(op === "remove" ? {} : {organization: "COMPANY2"})}};
+                const Operations = [{op, path: `${extension.id}:organization`, ...(op === "remove" ? {} : {value: "COMPANY2"})}];
+                
+                try {
+                    TestSchema.definition.extend(extension);
+                    
+                    const expected = new TestSchema(target, "out");
+                    const actual = await new PatchOp({...template, Operations}).apply(new TestSchema(source));
+                    
+                    assert.deepStrictEqual(actual, expected,
+                        `PatchOp 'apply' did not support namespaced attributes in '${op}' operations`);
+                } finally {
+                    TestSchema.definition.truncate(extension);
                 }
             });
             
