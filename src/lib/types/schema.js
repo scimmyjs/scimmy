@@ -25,6 +25,49 @@ const defineToJSONProperty = (target, definition, resource) => Object.defineProp
 const hasActualValues = (target) => (Object.values(target).some((v) => typeof v === "object" ? hasActualValues(v) : v !== undefined));
 
 /**
+ * Create property descriptor definitions for an attribute
+ * @param {SCIMMY.Types.Attribute} attribute - the attribute to create the property descriptors for
+ * @param {Object} resource - the object storing underlying data
+ * @param {Object} receiver - the object where the accessors are being defined
+ * @param {String} direction - whether the resource is inbound from a request or outbound for a response
+ * @returns {Object} the property descriptors for the attribute, to be passed to Object.defineProperties
+ * @private
+ */
+const describeAttributeAccessors = (attribute, resource, receiver, direction) => ({
+    // Because why bother with case-sensitivity in a JSON-based standard?
+    // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
+    [attribute.name.toLowerCase()]: {
+        get: () => (receiver[attribute.name]),
+        set: (value) => (receiver[attribute.name] = value)
+    },
+    // Now set the handles for the actual name
+    // Overrides above if attribute.name is already all lower case
+    [attribute.name]: {
+        enumerable: true,
+        // Get and set the value from the internally scoped object
+        get: () => (resource[attribute.name]),
+        set: (value) => {
+            const {name, config: {mutable}} = attribute;
+            
+            // Check for mutability of attribute before setting the value
+            if (mutable !== true && receiver[name] !== undefined && receiver[name] !== value)
+                throw new SCIMError(400, "mutability", `Attribute '${name}' already defined and is not mutable`);
+            
+            try {
+                // Validate the supplied value through attribute coercion
+                resource[name] = attribute.coerce(value, direction);
+            } catch (ex) {
+                // Rethrow attribute coercion exceptions as SCIM errors
+                throw new SCIMError(400, "invalidValue", ex.message);
+            }
+            
+            // Indicate resource value has been set
+            return true;
+        }
+    }
+});
+
+/**
  * Automatically assigned attributes not required in schema extension values
  * @enum {"id"|"schemas"|"meta"} SCIMMY.Types.Schema~ShadowAttributes
  * @ignore
@@ -107,7 +150,7 @@ export class Schema {
      * @property {Date} [meta.lastModified] - when this resource was last updated at the service provider
      * @property {String} meta.location - full, canonical URI of the resource being returned
      * @property {String} [meta.version] - version of the resource being returned, if any
-    */
+     */
     constructor(data = {}, direction) {
         const {schemas = []} = data;
         // Create internally scoped storage object
@@ -137,36 +180,7 @@ export class Schema {
         defineToJSONProperty(this, definition, resource);
         
         // Predefine getters and setters for all possible attributes
-        for (let attribute of attributes) Object.defineProperties(this, {
-            // Because why bother with case-sensitivity in a JSON-based standard?
-            // See: RFC7643§2.1 (https://datatracker.ietf.org/doc/html/rfc7643#section-2.1)
-            [attribute.name.toLowerCase()]: {
-                get: () => (this[attribute.name]),
-                set: (value) => (this[attribute.name] = value)
-            },
-            // Now set the handles for the actual name
-            // Overrides above if attribute.name is already all lower case
-            [attribute.name]: {
-                enumerable: true,
-                // Get and set the value from the internally scoped object
-                get: () => (resource[attribute.name]),
-                set: (value) => {
-                    const {name, config: {mutable}} = attribute;
-                    
-                    // Check for mutability of attribute before setting the value
-                    if (mutable !== true && this[name] !== undefined && this[name] !== value)
-                        throw new SCIMError(400, "mutability", `Attribute '${name}' already defined and is not mutable`);
-                    
-                    try {
-                        // Validate the supplied value through attribute coercion
-                        return (resource[name] = attribute.coerce(value, direction));
-                    } catch (ex) {
-                        // Rethrow attribute coercion exceptions as SCIM errors
-                        throw new SCIMError(400, "invalidValue", ex.message);
-                    }
-                }
-            }
-        });
+        for (let attribute of attributes) Object.defineProperties(this, describeAttributeAccessors(attribute, resource, this, direction));
         
         // Predefine getters and setters for all schema extensions
         for (let extension of extensions) Object.defineProperties(this, {
@@ -182,26 +196,52 @@ export class Schema {
                 get: () => {
                     // Go through and delete any undefined properties or complex attributes without actual values
                     for (let [key, value] of Object.entries(resource[extension.id] ?? {})) {
-                        if (value === undefined || (Object(value) === value && !hasActualValues(value))) {
+                        if (value === undefined || (Object(value) === value && !hasActualValues(value)))
                             delete resource[extension.id][key];
-                        }
                     }
                     
                     // If no attributes with values remaining, return undefined
-                    return !hasActualValues(resource[extension.id] ?? {}) ? undefined : resource[extension.id];
+                    if (!hasActualValues(resource[extension.id] ?? {})) return undefined;
+                    // Otherwise, return a pre-structured receiver for the extension
+                    else {
+                        // Set up the receiver with JSON stringifier attached
+                        const receiver = defineToJSONProperty({}, extension, resource[extension.id]);
+                        
+                        // Predefine getters and setters for all possible extension attributes
+                        for (let attribute of extension.attributes)
+                            Object.defineProperties(receiver, describeAttributeAccessors(attribute, resource[extension.id], receiver, direction));
+                        
+                        // Prevent additional attributes being added to the extension
+                        return Object.preventExtensions(receiver);
+                    }
                 },
                 set: (value) => {
                     try {
-                        // Validate the supplied value through schema extension coercion
-                        resource[extension.id] = extension.coerce(value, direction);
-                        
-                        // Return the value with JSON stringifier attached, marked as 
-                        defineToJSONProperty(resource[extension.id], extension, resource[extension.id]);
-                        return Object.assign(Object.preventExtensions(resource[extension.id]), value);
+                        // If no actual values, remove extension schema ID from schemas and unset value
+                        if (!hasActualValues(value)) {
+                            resource.schemas = resource.schemas.filter(id => id !== extension.id);
+                            delete resource[extension.id];
+                        }
+                        // Otherwise, add extension schema ID and set the value
+                        else {
+                            // Validate the supplied value through schema extension coercion
+                            resource[extension.id] = extension.coerce(value, direction);
+                            
+                            // If the extension now has a value when it didn't before, add schema ID to schemas
+                            if (!!resource[extension.id] && !resource.schemas.includes(extension.id))
+                                resource.schemas.push(extension.id);
+                            
+                            // Attach JSON stringifier and set the value back to the instance
+                            defineToJSONProperty(resource[extension.id], extension, resource[extension.id]);
+                            Object.assign(Object.preventExtensions(this[extension.id] ?? {}), value);
+                        }
                     } catch (ex) {
                         // Rethrow attribute coercion exceptions as SCIM errors
                         throw new SCIMError(400, "invalidValue", ex.message);
                     }
+                    
+                    // Indicate resource value has been set
+                    return true;
                 }
             },
             // Predefine namespaced getters and setters for schema extension attributes
@@ -238,11 +278,13 @@ export class Schema {
                                 target = target[path] = {...(target?.[path] ?? {})};
                             }
                             
-                            // Set the actual value
+                            // Set the actual value...
                             target[attribute.name] = value;
+                            // ...then assign it back to the extension for coercion
+                            this[extension.id] = Object.assign(this[extension.id] ?? {}, data);
                             
-                            // Then assign it back to the extension for coercion
-                            return (this[extension.id] = Object.assign(this[extension.id] ?? {}, data));
+                            // Indicate resource value has been set
+                            return true;
                         }
                     },
                     // Go through the process again for subAttributes
