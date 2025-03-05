@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert, {AssertionError} from "assert";
 import {Attribute} from "#@/lib/types/attribute.js";
 import {SchemaDefinition} from "#@/lib/types/definition.js";
 import {Schema} from "#@/lib/types/schema.js";
@@ -89,29 +89,49 @@ export default class ResourcesHooks {
             
             try {
                 instance[key.toLowerCase()] = value.toUpperCase();
-                assert.strictEqual(instance[key], value.toUpperCase(),
-                    "Schema instance did not include lower-case attribute aliases");
             } catch (ex) {
                 if (ex.scimType !== "mutability") throw ex;
             }
+            
+            assert.strictEqual(instance[key.toLowerCase()], instance[key],
+                "Schema instance did not include lower-case attribute aliases");
         });
         
         it("should include extension schema attribute property accessor aliases", async () => {
+            const attributes = [new Attribute("string", "testValue"), new Attribute("complex", "complexValue", {}, [new Attribute("string", "subValue")])];
+            const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
+            const {constructor = {}} = await fixtures;
+            
             try {
-                // Add an extension with one attribute
-                TargetSchema.extend(new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", [new Attribute("string", "testValue")]));
+                // Add the extension, including complex attributes
+                TargetSchema.extend(extension);
                 
                 // Construct an instance to test against
-                const {constructor = {}} = await fixtures;
-                const target = "urn:ietf:params:scim:schemas:Extension:testValue";
                 const instance = new TargetSchema(constructor);
                 
-                instance[target] = "a string";
-                assert.strictEqual(instance[target], "a string",
+                // Make sure instance includes namespaced extension attribute accessors...
+                instance[`${extension.id}:testValue`] = "a string";
+                assert.strictEqual(instance[`${extension.id}:testValue`], "a string",
                     "Schema instance did not include schema extension attribute aliases");
-                instance[target.toLowerCase()] = "another string";
-                assert.strictEqual(instance[target], "another string",
+                // ...as well as lower-case aliases
+                instance[`${extension.id}:testValue`.toLowerCase()] = "another string";
+                assert.strictEqual(instance[`${extension.id}:testValue`.toLowerCase()], "another string",
                     "Schema instance did not include lower-case schema extension attribute aliases");
+                // Make sure instance includes accessors for nested complex attributes in the extension...
+                instance[`${extension.id}:complexValue.subValue`] = "a string";
+                assert.strictEqual(instance[`${extension.id}:complexValue.subValue`], "a string",
+                    "Schema instance did not include schema extension complex attribute aliases");
+                // ...as well as lower-case aliases for these too
+                instance[`${extension.id}:complexValue.subValue`.toLowerCase()] = "another string";
+                assert.strictEqual(instance[`${extension.id}:complexValue.subValue`.toLowerCase()], "another string",
+                    "Schema instance did not include lower-case schema extension complex attribute aliases");
+                // Make sure instance includes a lower-case alias for the extension ID accessors
+                instance[extension.id.toLowerCase()] = {testValue: "a string"};
+                assert.strictEqual(instance[extension.id.toLowerCase()].testValue, "a string",
+                    "Schema instance did not include schema extension alias");
+            } catch (ex) {
+                if (ex instanceof AssertionError) throw ex;
+                assert.fail(`Schema instance did not include extension schema attribute property accessor aliases\r\n[cause]: ${ex}`);
             } finally {
                 // Remove the extension so it doesn't interfere later
                 TargetSchema.truncate("urn:ietf:params:scim:schemas:Extension");
@@ -171,6 +191,7 @@ export default class ResourcesHooks {
         it("should clean up empty extension schema properties", async () => {
             // Get attributes for the extension ready
             const attributes = [
+                new Attribute("string", "deletedValue"),
                 new Attribute("complex", "testValue", {}, [
                     new Attribute("string", "stringValue"),
                     new Attribute("complex", "value", {}, [
@@ -184,6 +205,7 @@ export default class ResourcesHooks {
             const extension = new SchemaDefinition("Extension", "urn:ietf:params:scim:schemas:Extension", "", attributes);
             const source = {
                 ...constructor,
+                [`${extension.id}:deletedValue`]: "a string",
                 [`${extension.id}:testValue.stringValue`]: "a string",
                 [`${extension.id}:testValue.value.value`]: "a string"
             };
@@ -195,10 +217,14 @@ export default class ResourcesHooks {
                 // Construct an instance to test against
                 const instance = new TargetSchema(source);
                 
-                // Unset the extension value and check for cleanup
-                instance[`${extension.id}:testValue.value.value`] = undefined;
+                // Unset the extension values and check for cleanup
+                instance[`${extension.id}:deletedValue`] = undefined;
+                assert.strictEqual(instance[extension.id].deletedValue, undefined,
+                    "Schema instance did not clean up empty extension schema attribute properties");
                 instance[`${extension.id}:testValue.stringValue`] = undefined;
-                
+                assert.strictEqual(instance[extension.id].testValue.stringValue, undefined,
+                    "Schema instance did not clean up empty extension schema sub-attribute properties");
+                instance[`${extension.id}:testValue.value.value`] = undefined;
                 assert.strictEqual(instance[extension.id], undefined,
                     "Schema instance did not clean up empty extension schema properties");
             } finally {

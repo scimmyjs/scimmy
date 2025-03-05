@@ -96,9 +96,9 @@ export class SchemaDefinition {
             const extension = (this.attributes.find(a => a instanceof SchemaDefinition && name.toLowerCase().startsWith(a.id.toLowerCase()))
                 ?? (name.toLowerCase().startsWith(`${this.id.toLowerCase()}:`) || name.toLowerCase() === this.id.toLowerCase() ? this : false));
             // Get the actual attribute name minus extension ID
-            const attribute = (extension ? name.substring(extension.id.length+1) : "");
+            const attribute = (extension ? name.substring(extension.id.length + 1) : "");
             
-            // Bail out if no schema extension found with matching ID 
+            // Bail out if no schema extension found with matching ID
             if (!extension)
                 throw new TypeError(`Schema definition '${this.id}' does not declare schema extension for namespaced target '${name}'`);
             
@@ -245,7 +245,7 @@ export class SchemaDefinition {
         const schemas = [...new Set([
             this.id,
             ...(this.attributes.filter(a => a instanceof SchemaDefinition).map(s => s.id)
-                .filter(id => !!data[id] || Object.keys(data).some(d => d.startsWith(`${id}:`)))),
+                .filter(id => (data[id] !== undefined || Object.entries(data).some(([k, v]) => v !== undefined && k.startsWith(`${id}:`))))),
             ...(Array.isArray(data.schemas) ? data.schemas : [])
         ])];
         
@@ -324,7 +324,7 @@ export class SchemaDefinition {
                         // Start by only dealing with expressions that contain this extension...
                         .map((filter) => Object.entries(filter).filter(([k]) => k.startsWith(`${name}:`))).filter((filter) => filter.length)
                         // ...then remove the extension prefix
-                        .map((filter) => filter.reduce((res, [key, val]) => Object.assign(res, {[key.replace(`${name}:`, "")]: val}), {}))
+                        .map((filter) => filter.reduce((res, [key, val]) => Object.assign(res, {[key.replace(`${name}:`, "")]: val}), {}));
                     
                     try {
                         // Coerce the mixed value, using only namespaced attributes for this extension
