@@ -1,6 +1,5 @@
 import {SCIMError} from "./error.js";
 import {SchemaDefinition} from "./definition.js";
-import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
