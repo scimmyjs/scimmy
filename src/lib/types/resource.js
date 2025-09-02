@@ -260,8 +260,8 @@ export class Resource {
      * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
      * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
      * @property {String} [id] - ID of the resource instance being targeted
-     * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
-     * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
+     * @property {SCIMMY.Types.Filter<S>} [filter] - filter parsed from the supplied config
+     * @property {SCIMMY.Types.Filter<S>} [attributes] - attributes or excluded attributes parsed from the supplied config
      * @property {SCIMMY.Messages.ListResponse~ListConstraints} [constraints] - sort and pagination properties parsed from the supplied config
      * @property {String} [constraints.sortBy] - the attribute retrieved resources should be sorted by
      * @property {String} [constraints.sortOrder] - the direction retrieved resources should be sorted in
