@@ -1,6 +1,5 @@
 import {SCIMError} from "./error.js";
 import {SchemaDefinition} from "./definition.js";
-import {Schema} from "./schema.js";
 import {Filter} from "./filter.js";
 
 /**
@@ -249,9 +248,21 @@ export class Resource {
     }
     
     /**
+     * Instantiate a new SCIM resource with supplied configuration
+     * @overload
+     * @param {Object} config - the parameters of the resource instance request
+     * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
+     * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
+     * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
+     * @param {String} [config.sortBy] - the attribute retrieved resources should be sorted by
+     * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
+     * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
+     * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
+     */
+    /**
      * Instantiate a new SCIM resource and parse any supplied parameters
      * @param {String} [id] - the ID of the requested resource
-     * @param {Object} [config={}] - the parameters of the resource instance request
+     * @param {Object} [config] - the parameters of the resource instance request
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
      * @param {String} [config.attributes] - the comma-separated string list of attributes or filters to include on egress
