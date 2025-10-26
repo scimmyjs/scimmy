@@ -248,10 +248,7 @@ export class Resource {
     }
     
     /**
-     * Instantiate a new SCIM resource and parse any supplied parameters
-     * @overload
-     * @description Create a new resource instance without any parameters
-     *
+     * Instantiate a new SCIM resource with supplied configuration
      * @overload
      * @param {Object} config - the parameters of the resource instance request
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
@@ -261,10 +258,10 @@ export class Resource {
      * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
      * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
      * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
-     * @description Create a new resource instance with configuration parameters
-     *
-     * @overload
-     * @param {String} id - the ID of the requested resource
+     */
+    /**
+     * Instantiate a new SCIM resource and parse any supplied parameters
+     * @param {String} [id] - the ID of the requested resource
      * @param {Object} [config] - the parameters of the resource instance request
      * @param {String} [config.filter] - the filter to be applied on ingress/egress by implementing resource
      * @param {String} [config.excludedAttributes] - the comma-separated string list of attributes or filters to exclude on egress
@@ -273,8 +270,6 @@ export class Resource {
      * @param {String} [config.sortOrder] - the direction retrieved resources should be sorted in
      * @param {Number} [config.startIndex] - offset index that retrieved resources should start from
      * @param {Number} [config.count] - maximum number of retrieved resources that should be returned in one operation
-     * @description Create a new resource instance with an ID and optional configuration parameters
-     * 
      * @property {String} [id] - ID of the resource instance being targeted
      * @property {SCIMMY.Types.Filter} [filter] - filter parsed from the supplied config
      * @property {SCIMMY.Types.Filter} [attributes] - attributes or excluded attributes parsed from the supplied config
