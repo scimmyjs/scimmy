@@ -48,10 +48,9 @@ describe("SCIMMY.Types.SchemaDefinition", () => {
                 "SchemaDefinition instantiated with complex object 'id' parameter value");
         });
         
-        it("should require 'id' to start with 'urn:ietf:params:scim:schemas:'", () => {
-            assert.throws(() => (new SchemaDefinition("Test", "test")),
-                {name: "TypeError", message: "Invalid SCIM schema URN namespace 'test' in SchemaDefinition instantiation"},
-                "SchemaDefinition instantiated with invalid 'id' parameter value 'test'");
+        it("should allow any non-empty 'id' value", () => {
+            assert.doesNotThrow(() => (new SchemaDefinition("Test", "test")),
+                "SchemaDefinition instantiation rejected non-SCIM URN 'id'");
         });
         
         it("should require valid 'description' argument", () => {
