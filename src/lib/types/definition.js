@@ -33,10 +33,6 @@ export class SchemaDefinition {
                 throw new TypeError(`Expected '${param}' to be a ${param !== "description" ? "non-empty string" : "string"} in SchemaDefinition instantiation`);
         }
         
-        // Make sure ID is a valid SCIM schema URN namespace
-        if (!id.startsWith("urn:ietf:params:scim:schemas:"))
-            throw new TypeError(`Invalid SCIM schema URN namespace '${id}' in SchemaDefinition instantiation`);
-        
         // Store the schema name, ID, and description
         this.name = name;
         this.id = id;
