@@ -34,7 +34,7 @@ export class SchemaDefinition {
         }
         
         // Make sure ID is a valid SCIM schema URN namespace
-        if (!id.startsWith("urn:ietf:params:scim:schemas:"))
+        if (!id.startsWith("urn:"))
             throw new TypeError(`Invalid SCIM schema URN namespace '${id}' in SchemaDefinition instantiation`);
         
         // Store the schema name, ID, and description
