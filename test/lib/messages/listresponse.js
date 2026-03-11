@@ -218,6 +218,19 @@ describe("SCIMMY.Messages.ListResponse", () => {
             assert.strictEqual(new ListResponse([], {startIndex: -10}).startIndex, 1,
                 "Instance member 'startIndex' was not constrained to minimum value one when preparing outbound message");
         });
+
+        it("should return empty Resources when startIndex exceeds total number of resources", async () => {
+            const {outbound: {source}} = await fixtures;
+            const totalResults = source.length;
+            const response = new ListResponse(source, {startIndex: totalResults + 10, itemsPerPage: 5});
+
+            assert.strictEqual(response.Resources.length, 0,
+                "ListResponse did not return empty Resources when startIndex exceeded total results");
+            assert.strictEqual(response.totalResults, totalResults,
+                "ListResponse did not preserve totalResults when startIndex exceeded total results");
+            assert.strictEqual(response.startIndex, totalResults + 10,
+                "ListResponse did not preserve startIndex when it exceeded total results");
+        });
     });
     
     describe("#itemsPerPage", () => {
