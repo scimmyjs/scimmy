@@ -24,7 +24,7 @@
         "scimType": "uniqueness"
       },
       {
-        "status": "413",
+        "status": "400",
         "scimType": "tooMany"
       }
     ],
