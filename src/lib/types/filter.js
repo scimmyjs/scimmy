@@ -283,7 +283,7 @@ export class Filter extends Array {
      */
     match(values) {
         // Match against any of the filters in the set
-        return values.filter(value => 
+        return values?.filter(value => 
             this.some(f => Object.entries(f).every(([attr, expressions]) => {
                 const [,actual] = Object.entries(value).find(([key]) => key.toLowerCase() === attr.toLowerCase()) ?? [];
                 const isActualDate = (actual instanceof Date || (new Date(actual).toString() !== "Invalid Date" && String(actual).match(isoDate)));
