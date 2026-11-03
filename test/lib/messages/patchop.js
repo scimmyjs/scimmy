@@ -213,6 +213,25 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 "Instance method 'apply' did not return nothing when resource was not modified");
         });
         
+        for (const emails of [[{type: "work", value: "new@example.com"}], []]) {
+            it(`should ${emails.length ? "replace" : "clear"} multivalued attributes in pathless 'replace' operations`, async () => {
+                const source = {
+                    id: "1234",
+                    userName: "asdf",
+                    displayName: "Existing User",
+                    emails: [{type: "home", value: "old@example.com"}]
+                };
+                const message = new PatchOp({
+                    ...template, Operations: [{op: "replace", value: {emails}}]
+                });
+                const expected = new TestSchema({...source, emails});
+                const actual = await message.apply(new TestSchema(source));
+
+                assert.deepStrictEqual(actual, expected,
+                    "Pathless 'replace' did not replace supplied attributes while preserving omitted attributes");
+            });
+        }
+
         for (let op of ["add", "remove", "replace"]) {
             it(`should support simple and complex '${op}' operations`, async () => {
                 const {inbound: {[op]: suite}} = await fixtures;

@@ -416,6 +416,10 @@ export class PatchOp {
      */
     #replace(index, path, value) {
         try {
+            if (path === undefined && value !== null && typeof value === "object" && !Array.isArray(value)) {
+                for (const [key, val] of Object.entries(value)) this.#replace(index, key, val);
+                return;
+            }
             // Call remove, then call add!
             try {
                 if (path !== undefined) this.#remove(index, path);
