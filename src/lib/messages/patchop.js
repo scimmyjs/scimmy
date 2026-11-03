@@ -380,7 +380,7 @@ export class PatchOp {
                         // Filter out any values that exist in removals list
                         target[property] = (target[property] ?? []).filter(v => !removals.includes(v));
                         // Unset the property if it's now empty
-                        if (target[property].length === 0) target[property] = undefined;
+                        if ((target[property] ?? []).length === 0) target[property] = undefined;
                     }
                 } catch (ex) {
                     if (ex instanceof Types.Error) {
