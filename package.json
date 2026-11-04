@@ -81,7 +81,7 @@
     "classy-template": "^1.5.4",
     "jsdoc": "^4.0.4",
     "minimist": "^1.2.8",
-    "mocha": "^11.1.0",
+    "mocha": "^12.0.3",
     "ostensibly-typed": "^1.2.2",
     "rollup": "^4.34.9",
     "sinon": "^19.0.2",
