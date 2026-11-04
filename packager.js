@@ -196,7 +196,7 @@ export class Packager {
         // Prepare RollupJS bundle with supplied entry points
         const bundle = await rollup.rollup({
             external, input, onwarn: (warning, warn) =>
-                (warning.code !== "CIRCULAR_DEPENDENCY" ? warn(warning) : false)
+                (!["CIRCULAR_CHUNK", "CIRCULAR_DEPENDENCY"].includes(warning.code) ? warn(warning) : false)
         });
         
         // Construct the bundles with specified chunks in specified formats and write to destination
@@ -235,7 +235,7 @@ export class Packager {
         const bundle = await rollup.rollup({
             external, input: path.join(src, `${entry}.js`),
             plugins: [generateDeclarations({moduleName: entry, defaultExport: "SCIMMY"})],
-            onwarn: (warning, warn) => (warning.code !== "CIRCULAR_DEPENDENCY" ? warn(warning) : false)
+            onwarn: (warning, warn) => (!["CIRCULAR_CHUNK", "CIRCULAR_DEPENDENCY"].includes(warning.code) ? warn(warning) : false)
         });
         
         // Construct the bundles with specified chunks in specified formats and write to destination
