@@ -276,6 +276,16 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 }
             });
             
+            it(`should resolve case-insensitive qualified core paths in '${op}' operations`, async () => {
+                const source = new TestSchema({userName: "asdf", name: {formatted: "Original", honorificPrefix: "Ms"}});
+                const Operations = [{op, path: `${TestSchema.definition.id.toUpperCase()}:name.honorificPrefix`,
+                    ...(op !== "remove" ? {value: "Dr"} : {})}];
+                const actual = await new PatchOp({...template, Operations}).apply(source);
+                assert.strictEqual(actual.name.honorificPrefix, op === "remove" ? undefined : "Dr");
+                assert.strictEqual(actual.name.formatted, "Original");
+                assert.strictEqual(source.name.honorificPrefix, "Ms");
+            });
+
             if (["add", "replace"].includes(op)) {
                 it(`should expect 'value' to be an object when 'path' is not specified in '${op}' operations`, async () => {
                     const Operations = [{op, value: false}];
