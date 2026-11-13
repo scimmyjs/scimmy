@@ -115,9 +115,9 @@ export class PatchOp {
             if (typeof op !== "string" || !validOps.includes(op.toLowerCase()))
                 throw new Types.Error(400, "invalidSyntax", `Invalid operation '${op}' for operation ${index} in PatchOp request body`);
             
-            // Make sure value attribute is specified for "add" operations
-            if ("add" === op.toLowerCase() && value === undefined)
-                throw new Types.Error(400, "invalidValue", `Missing required attribute 'value' for 'add' op of operation ${index} in PatchOp request body`);
+            // Make sure value attribute is specified for "add" and "replace" operations
+            if (["add", "replace"].includes(op.toLowerCase()) && value === undefined)
+                throw new Types.Error(400, "invalidValue", `Missing required attribute 'value' for '${op.toLowerCase()}' op of operation ${index} in PatchOp request body`);
             // Make sure path attribute is specified for "remove" operations
             if ("remove" === op.toLowerCase() && path === undefined)
                 throw new Types.Error(400, "noTarget", `Missing required attribute 'path' for 'remove' op of operation ${index} in PatchOp request body`);
