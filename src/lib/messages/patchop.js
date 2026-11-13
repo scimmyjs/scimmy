@@ -243,7 +243,8 @@ export class PatchOp {
         while (paths.length > 0) {
             // Work out if path contains a filter expression
             const path = paths.shift();
-            const [, key = path, filter] = multiValuedFilter.exec(path) ?? [];
+            const [, attributeName = path, filter] = multiValuedFilter.exec(path) ?? [];
+            const key = attributeName.toLowerCase();
             
             // We have arrived at our destination
             if (paths.length === 0) {
