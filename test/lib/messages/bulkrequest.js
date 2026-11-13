@@ -75,6 +75,12 @@ describe("SCIMMY.Messages.BulkRequest", () => {
                 {name: "SCIMError", status: 400, scimType: "invalidSyntax",
                     message: `BulkRequest request body messages must exclusively specify schema as '${params.id}'`},
                 "BulkRequest instantiated with invalid 'schemas' property");
+            for (const schemas of [null, {length: 1}]) {
+                assert.throws(() => new BulkRequest({...template, schemas}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax",
+                        message: `BulkRequest request body messages must exclusively specify schema as '${params.id}'`},
+                    "BulkRequest instantiated with non-array 'schemas' property");
+            }
         });
         
         it("should expect 'Operations' attribute of 'request' argument to be an array", () => {

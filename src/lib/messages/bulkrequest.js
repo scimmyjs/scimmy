@@ -64,7 +64,7 @@ export class BulkRequest {
         const {schemas = [], Operations: operations = [], failOnErrors = 0} = request ?? {};
         
         // Make sure specified schema is valid
-        if (schemas.length !== 1 || !schemas.includes(BulkRequest.#id))
+        if (!Array.isArray(schemas) || schemas.length !== 1 || !schemas.includes(BulkRequest.#id))
             throw new Types.Error(400, "invalidSyntax", `BulkRequest request body messages must exclusively specify schema as '${BulkRequest.#id}'`);
         // Make sure failOnErrors is a valid integer
         if (typeof failOnErrors !== "number" || !Number.isInteger(failOnErrors) || failOnErrors < 0)
