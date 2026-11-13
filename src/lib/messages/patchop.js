@@ -104,11 +104,11 @@ export class PatchOp {
         // Make sure all specified operations are valid
         for (let operation of operations) {
             const index = (operations.indexOf(operation) + 1);
-            const {op, path, value} = operation;
             
             // Make sure operation is of type 'complex' (i.e. it's an object)
             if (Object(operation) !== operation || Array.isArray(operation))
-                throw new Types.Error(400, "invalidValue", `PatchOp request body expected value type 'complex' for operation ${index} but found type '${Array.isArray(operation) ? "collection" : typeof operation}'`);
+                throw new Types.Error(400, "invalidValue", `PatchOp request body expected value type 'complex' for operation ${index} but found type '${operation === null ? "null" : Array.isArray(operation) ? "collection" : typeof operation}'`);
+            const {op, path, value} = operation;
             // Make sure all operations have a valid action defined
             if (op === undefined)
                 throw new Types.Error(400, "invalidValue", `Missing required attribute 'op' from operation ${index} in PatchOp request body`);
