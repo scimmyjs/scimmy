@@ -296,7 +296,7 @@ export class PatchOp {
     #add(index, path, value) {
         if (path === undefined) {
             // If path is unspecified, value must be a plain object
-            if (typeof value !== "object" || Array.isArray(value))
+            if (value === null || typeof value !== "object" || Array.isArray(value))
                 throw new Types.Error(400, "invalidValue", `Attribute 'value' must be an object when 'path' is empty for 'add' op of operation ${index} in PatchOp request body`);
             
             // Go through and add the data specified by value

@@ -259,14 +259,14 @@ describe("SCIMMY.Messages.PatchOp", () => {
             
             if (["add", "replace"].includes(op)) {
                 it(`should expect 'value' to be an object when 'path' is not specified in '${op}' operations`, async () => {
-                    const Operations = [{op, value: false}];
                     const target = new TestSchema({id: "1234", userName: "asdf"});
-                    const message = new PatchOp({...template, Operations});
-                    
-                    await assert.rejects(() => message.apply(target),
-                        {name: "SCIMError", status: 400, scimType: "invalidValue",
-                            message: `Attribute 'value' must be an object when 'path' is empty for '${op}' op of operation 1 in PatchOp request body`},
-                        `Instance method 'apply' did not expect 'value' to be an object when 'path' was not specified in '${op}' operations`);
+                    for (const value of [false, null, []]) {
+                        const message = new PatchOp({...template, Operations: [{op, value}]});
+                        await assert.rejects(() => message.apply(target),
+                            {name: "SCIMError", status: 400, scimType: "invalidValue",
+                                message: `Attribute 'value' must be an object when 'path' is empty for '${op}' op of operation 1 in PatchOp request body`},
+                            `Instance method 'apply' did not expect 'value' to be an object when 'path' was not specified in '${op}' operations`);
+                    }
                 });
                 
                 it(`should rethrow extensibility errors as SCIMErrors when 'path' points to nonexistent attribute in '${op}' operations`, async () => {
