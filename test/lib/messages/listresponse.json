@@ -8,8 +8,20 @@
     },
     {
       "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      "totalResults": 16, "startIndex": 2, "itemsPerPage": 2, "Resources": [
+        {"id": 2, "userName": "GradyA"}, {"id": 3, "userName": "LynneR"}
+      ]
+    },
+    {
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
       "totalResults": 16, "startIndex": 3, "itemsPerPage": 2, "Resources": [
         {"id": 3, "userName": "LynneR"}, {"id": 4, "userName": "MeganB"}
+      ]
+    },
+    {
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      "totalResults": 2, "startIndex": 11, "itemsPerPage": 2, "Resources": [
+        {"id": 11, "userName": "NestorW"}, {"id": 12, "userName": "LeeG"}
       ]
     }
   ],
@@ -66,6 +78,12 @@
         }
       ],
       "startIndex": [
+        {
+          "length": 3,
+          "startIndex": 4,
+          "itemsPerPage": 2,
+          "expected": []
+        },
         {
           "startIndex": 11,
           "expected": [11, 12, 13, 14, 15, 16]
