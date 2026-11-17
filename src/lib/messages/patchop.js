@@ -319,9 +319,11 @@ export class PatchOp {
                     }
                     // The target is a complex attribute - add specified values to it
                     else if (complex) {
-                        if (!property) Object.assign(target, value);
-                        else if (target[property] === undefined) target[property] = value;
-                        else Object.assign(target[property], value);
+                        const isObject = (Object(value) === value && !Array.isArray(value));
+                        const values = (isObject ? Object.fromEntries(Object.entries(value).map(([key, val]) => [key.toLowerCase(), val])) : value);
+                        if (!property) Object.assign(target, values);
+                        else if (!isObject || target[property] === undefined) target[property] = values;
+                        else Object.assign(target[property], values);
                     }
                     // The target is not a collection or a complex attribute - assign the value
                     else target[property] = value;
@@ -421,9 +423,12 @@ export class PatchOp {
                 // ...by iterating over properties in the value and replacing them
                 for (const [key, val] of Object.entries(value)) this.#replace(index, key, val);
             } else {
-                // Call remove, then call add!
+                // Clear collections and selected records; #add overwrites single-valued attributes and merges complex ones
                 try {
-                    if (path !== undefined) this.#remove(index, path);
+                    if (path !== undefined) {
+                        const {multiValued, property} = this.#resolve(index, path, "remove");
+                        if (multiValued || !property) this.#remove(index, path);
+                    }
                 } catch {
                     // Do nothing, as we're immediately adding a new value, which will enforce actual attribute validity
                 }

@@ -218,7 +218,7 @@ export class Schema {
                 set: (value) => {
                     try {
                         // If no actual values, remove extension schema ID from schemas and unset value
-                        if (!hasActualValues(value)) {
+                        if (!hasActualValues(value ?? {})) {
                             resource.schemas = resource.schemas.filter(id => id !== extension.id);
                             delete resource[extension.id];
                         }
