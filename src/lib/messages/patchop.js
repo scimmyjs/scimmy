@@ -416,24 +416,30 @@ export class PatchOp {
      */
     #replace(index, path, value) {
         try {
-            // Call remove, then call add!
-            try {
-                if (path !== undefined) this.#remove(index, path);
-            } catch {
-                // Do nothing, as we're immediately adding a new value, which will enforce actual attribute validity
-            }
-            
-            try {
-                // Try set the value at the path
-                this.#add(index, path, value);
-            } catch (ex) {
-                // If it's a multi-value target that doesn't exist, add to the collection instead
-                if (ex.scimType === "noTarget") {
-                    this.#add(index, path.split(pathSeparator).filter(p => p)
-                        .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+            // Handle pathless replace operations for multi-valued attributes...
+            if (path === undefined && value !== null && typeof value === "object" && !Array.isArray(value)) {
+                // ...by iterating over properties in the value and replacing them
+                for (const [key, val] of Object.entries(value)) this.#replace(index, key, val);
+            } else {
+                // Call remove, then call add!
+                try {
+                    if (path !== undefined) this.#remove(index, path);
+                } catch {
+                    // Do nothing, as we're immediately adding a new value, which will enforce actual attribute validity
                 }
-                // Otherwise, rethrow the error
-                else throw ex;
+                
+                try {
+                    // Try set the value at the path
+                    this.#add(index, path, value);
+                } catch (ex) {
+                    // If it's a multi-value target that doesn't exist, add to the collection instead
+                    if (ex.scimType === "noTarget") {
+                        this.#add(index, path.split(pathSeparator).filter(p => p)
+                            .map((p, i, s) => (i < s.length - 1 ? p : p.replace(multiValuedFilter, "$1"))).join("."), value);
+                    }
+                    // Otherwise, rethrow the error
+                    else throw ex;
+                }
             }
         } catch (ex) {
             // Rethrow exceptions with 'replace' instead of 'add' or 'remove'
