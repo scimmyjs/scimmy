@@ -74,6 +74,10 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 {name: "SCIMError", status: 400, scimType: "invalidValue",
                     message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'collection'"},
                 `PatchOp instantiated with invalid patch op '[]' in 'Operations' attribute of 'request' parameter`);
+            assert.throws(() => new PatchOp({...template, Operations: [{op: "add", value: {}}, null]}),
+                {name: "SCIMError", status: 400, scimType: "invalidValue",
+                    message: "PatchOp request body expected value type 'complex' for operation 2 but found type 'null'"},
+                `PatchOp instantiated with invalid patch op 'null' in 'Operations' attribute of 'request' parameter`);
         });
         
         it("should expect all patch ops to have an 'op' value in 'Operations' attribute of 'request' parameter", () => {
