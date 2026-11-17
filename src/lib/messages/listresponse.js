@@ -135,12 +135,11 @@ export class ListResponse {
             if (sortOrder === "descending") this.Resources.reverse();
         }
         
-        // Apply startIndex offset if results are not already paginated
-        // and startIndex is within the bounds of the resources array
+        // Apply startIndex offset if results are not already paginated, and startIndex is within the bounds of the resources array
         if ((this.Resources.length >= this.startIndex) && (this.totalResults !== this.Resources.length + this.startIndex - 1)) {
             this.Resources = this.Resources.slice(this.startIndex-1);
         }
-        // If results are not pre-paginated and startIndex exceeds resources, return empty array
+        // If results are not already paginated, and startIndex exceeds resources, empty the resources array
         else if ((this.Resources.length < this.startIndex) && (this.totalResults === this.Resources.length)) {
             this.Resources = [];
         }
