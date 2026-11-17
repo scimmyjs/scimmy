@@ -266,13 +266,11 @@ if (process.argv[1] === url.fileURLToPath(import.meta.url)) {
             break;
         
         case "test":
-            await Packager.test(config.testFilter, "spec");
+            Packager.test(config.testFilter, "spec").finally(() => process.exit(0));
             break;
         
         case "test:ci":
-            Packager.test(config.testFilter, {name: "json", options: {output: "./test/results-report.json"}}).finally(() => {
-                process.exit(0);
-            });
+            Packager.test(config.testFilter, {name: "json", options: {output: "./test/results-report.json"}}).finally(() => process.exit(0));
             
             break;
         
