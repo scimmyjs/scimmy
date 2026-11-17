@@ -122,6 +122,12 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 "PatchOp instantiated with missing 'value' value for 'add' op in 'Operations' attribute of 'request' parameter");
         });
         
+        it("should require a value for replace operations without rejecting explicit null", () => {
+            assert.throws(() => new PatchOp({...template, Operations: [{op: "replace", path: "displayName"}]}),
+                {name: "SCIMError", status: 400, scimType: "invalidValue"});
+            assert.doesNotThrow(() => new PatchOp({...template, Operations: [{op: "replace", path: "displayName", value: null}]}));
+        });
+
         it("should expect all 'remove' ops to have a 'path' value in 'Operations' attribute of 'request' parameter", () => {
             assert.throws(() => new PatchOp({...template, Operations: [{op: "remove", path: "test"}, {op: "remove"}]}),
                 {name: "SCIMError", status: 400, scimType: "noTarget",
@@ -354,7 +360,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
             });
             
             it(`should respect attribute mutability in '${op}' operations`, async () => {
-                const Operations = [{op, path: "id", ...(op === "add" ? {value: "asdf"} : {})}];
+                const Operations = [{op, path: "id", ...(op !== "remove" ? {value: "asdf"} : {})}];
                 const target = new TestSchema({id: "1234", userName: "asdf"});
                 const message = new PatchOp({...template, Operations});
                 
@@ -365,7 +371,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
             });
             
             it(`should not remove required attributes in '${op}' operations`, async () => {
-                const Operations = [{op, path: "userName", ...(op === "add" ? {value: null} : {})}];
+                const Operations = [{op, path: "userName", ...(op !== "remove" ? {value: null} : {})}];
                 const target = new TestSchema({id: "1234", userName: "asdf"});
                 const message = new PatchOp({...template, Operations});
                 
@@ -376,7 +382,7 @@ describe("SCIMMY.Messages.PatchOp", () => {
             });
             
             it(`should expect all targeted attributes to exist in '${op}' operations`, async () => {
-                const Operations = [{op, path: "test", ...(op === "add" ? {value: null} : {})}];
+                const Operations = [{op, path: "test", ...(op !== "remove" ? {value: null} : {})}];
                 const target = new TestSchema({id: "1234", userName: "asdf"});
                 const message = new PatchOp({...template, Operations});
                 
