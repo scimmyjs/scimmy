@@ -226,7 +226,9 @@ export class PatchOp {
      */
     #resolve(index, path, op) {
         // Work out parts of the supplied path
-        const paths = path.split(pathSeparator).filter(p => p);
+        const prefix = `${this.#schema.id}:`;
+        const localPath = path.toLowerCase().startsWith(prefix.toLowerCase()) ? path.slice(prefix.length) : path;
+        const paths = localPath.split(pathSeparator).filter(p => p);
         const targets = [this.#target];
         let property, attribute, multiValued;
         
