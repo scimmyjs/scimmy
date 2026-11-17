@@ -256,6 +256,27 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 }
             });
             
+            it(`should resolve mixed-case attribute names in '${op}' operations`, async () => {
+                const source = new TestSchema({userName: "asdf", name: {formatted: "Original", honorificPrefix: "Ms"}});
+                const Operations = [{op, path: "NaMe.HoNoRiFiCpReFiX", ...(op !== "remove" ? {value: "Dr"} : {})}];
+                const actual = await new PatchOp({...template, Operations}).apply(source);
+                assert.strictEqual(actual.name.honorificPrefix, op === "remove" ? undefined : "Dr");
+                assert.strictEqual(actual.name.formatted, "Original");
+                assert.strictEqual(source.name.honorificPrefix, "Ms");
+            });
+
+            it(`should preserve filter literal case while resolving mixed-case paths in '${op}' operations`, async () => {
+                const source = new TestSchema({userName: "asdf", emails: [
+                    {value: "Mixed.Case@example.com", type: "home"}, {value: "other@example.com", type: "work"}
+                ]});
+                const Operations = [{op, path: 'EMAILS[value eq "Mixed.Case@example.com"].TYPE',
+                    ...(op !== "remove" ? {value: "other"} : {})}];
+                const actual = await new PatchOp({...template, Operations}).apply(source);
+                assert.strictEqual(actual.emails[0].type, op === "remove" ? undefined : "other");
+                assert.strictEqual(actual.emails[0].value, "Mixed.Case@example.com");
+                assert.strictEqual(actual.emails[1].type, "work");
+            });
+
             it(`should support namespaced attributes in '${op}' operations`, async () => {
                 const attributes = [new Attribute("string", "organization"), new Attribute("string", "test")];
                 const extension = new SchemaDefinition("Extension", TestSchema.definition.id.replace("Test", "Extension"), "", attributes);
