@@ -92,7 +92,7 @@ export class PatchOp {
         this.#dispatched = (request !== undefined);
         
         // Make sure specified schema is valid
-        if (this.#dispatched && (schemas.length !== 1 || !schemas.includes(PatchOp.#id)))
+        if (this.#dispatched && (!Array.isArray(schemas) || schemas.length !== 1 || !schemas.includes(PatchOp.#id)))
             throw new Types.Error(400, "invalidSyntax", `PatchOp request body messages must exclusively specify schema as '${PatchOp.#id}'`);
         
         // Make sure request body contains valid operations to perform

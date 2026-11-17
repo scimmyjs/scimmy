@@ -43,6 +43,13 @@ describe("SCIMMY.Messages.PatchOp", () => {
                 "PatchOp instantiated with invalid 'schemas' property");
         });
         
+        it("should reject non-array schemas with a SCIM syntax error", () => {
+            for (const schemas of [null, {length: 1}]) {
+                assert.throws(() => new PatchOp({schemas, Operations: [{op: "add", value: {}}]}),
+                    {name: "SCIMError", status: 400, scimType: "invalidSyntax"});
+            }
+        });
+
         it("should expect 'Operations' attribute of 'request' parameter to be an array", () => {
             assert.throws(() => new PatchOp({...template, Operations: "a string"}),
                 {name: "SCIMError", status: 400, scimType: "invalidValue",
