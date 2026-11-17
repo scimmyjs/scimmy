@@ -135,12 +135,13 @@ export class ListResponse {
             if (sortOrder === "descending") this.Resources.reverse();
         }
         
-        // Outbound requests beyond the final result have no resources
-        if (outbound && this.startIndex > this.totalResults) this.Resources = [];
-
-        // Offset outbound results to startIndex; inbound resources are already paginated
+        // Offset outbound results only; inbound resources are already paginated
         if (outbound && (this.Resources.length >= this.startIndex) && (this.totalResults !== this.Resources.length + this.startIndex - 1)) {
             this.Resources = this.Resources.slice(this.startIndex-1);
+        }
+        // Empty unpaginated outbound results when startIndex exceeds resources
+        else if (outbound && (this.Resources.length < this.startIndex) && (this.totalResults === this.Resources.length)) {
+            this.Resources = [];
         }
         
         // If there are more resources than items per page, paginate the resources

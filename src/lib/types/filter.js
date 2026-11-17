@@ -39,6 +39,7 @@ const isoDate = /^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12
 
 /**
  * SCIM Filter Type
+ * @template {Object} [T=SCIMMY.Types.Schema] - type of objects the filter is being applied to
  * @alias SCIMMY.Types.Filter
  * @summary
  * *   Parses SCIM [filter expressions](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.2) into object representations of the filter expression.
@@ -278,8 +279,8 @@ export class Filter extends Array {
     
     /**
      * Compare and filter a given set of values against this filter instance
-     * @param {Object[]} values - values to evaluate filters against
-     * @returns {Object[]} subset of values that match any expressions of this filter instance
+     * @param {T[]} values - values to evaluate filters against
+     * @returns {T[]} subset of values that match any expressions of this filter instance
      */
     match(values) {
         // Match against any of the filters in the set

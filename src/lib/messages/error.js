@@ -18,7 +18,7 @@ const validScimTypes = [
 ];
 
 // Map of valid scimType codes for each HTTP status code (where applicable)
-const validCodeTypes = {400: validScimTypes.slice(2), 409: ["uniqueness"], 413: ["tooMany"]};
+const validCodeTypes = {400: validScimTypes.slice(1), 409: ["uniqueness"]};
 
 /**
  * SCIM Error Message
